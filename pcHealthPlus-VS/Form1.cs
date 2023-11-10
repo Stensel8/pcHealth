@@ -24,17 +24,22 @@ namespace pcHealthPlus_VS
 
         }
 
+        private void whatIsForm1(object sender, EventArgs e)
+        {
+            var Forms1 = new Form1();
+        }
+
         // Menu items and their respective functions:
 
         private void label1_timeLoad(object sender, EventArgs e)
         {
             labelTimer1.Start();
-            timeLabel.Text = DateTime.Now.ToString("HH:mm:ss");
+            timeLabel.Text = DateTime.Now.ToString("HH:mm");
         }
 
         private void timeLabel_timer1(object sender, EventArgs e)
         {
-            timeLabel.Text = DateTime.Now.ToString("HH:mm:ss");
+            timeLabel.Text = DateTime.Now.ToString("HH:mm");
             labelTimer1.Start();
         }
 
