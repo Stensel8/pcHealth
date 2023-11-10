@@ -1,8 +1,8 @@
-# pcHealthPlus-VS-VS
+# pcHealthPlus-VS
 
 The overall updated version of pcHealth; Check the health of your Windows installation, battery health and much more!
 
-![GitHub](https://img.shields.io/github/license/REALSDEALS/pcHealthPlus-VS-VS?label=License) ![GitHub Top Language](https://img.shields.io/github/languages/top/REALSDEALS/pcHealthPlus-VS?color=green&label=Batchfile) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/REALSDEALS/pcHealthPlus-VS?label=Release) ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/REALSDEALS/pcHealthPlus-VS?include_prereleases&label=Release) ![GitHub Repo Size](https://img.shields.io/github/repo-size/REALSDEALS/pcHealthPlus-VS?label=Repo%20Size)
+![GitHub](https://img.shields.io/github/license/REALSDEALS/pcHealthPlus-VS?label=License) ![GitHub Top Language](https://img.shields.io/github/languages/top/REALSDEALS/pcHealthPlus-VS?color=green&label=Batchfile) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/REALSDEALS/pcHealthPlus-VS?label=Release) ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/REALSDEALS/pcHealthPlus-VS?include_prereleases&label=Release) ![GitHub Repo Size](https://img.shields.io/github/repo-size/REALSDEALS/pcHealthPlus-VS?label=Repo%20Size)
 
 ## What is the main purpose of pcHealthPlus-VS?
 
