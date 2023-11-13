@@ -26,5 +26,16 @@ namespace pcHealthPlus_VS
         {
 
         }
+        // This label is invisible; small error on my side...
+        private void learnMoreLabel_Click(object sender, EventArgs e)
+        {
+            
+        }
+
+        // Learn more link
+        private void learnMoreLinkLabel_onClick(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/REALSDEALS/pcHealthPlus-VS/wiki");
+        }
     }
 }
