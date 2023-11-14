@@ -14,6 +14,16 @@ This is an example changelog entry. This is how the changelog will look like. Th
 
 ## Changelog
 
+### 14-11-2023 || 1.0.2-alpha || Toolmenu || @REALSDEALS
+The toolmenu; the menu within the tools form has been updated and has the same functionality as the menu in the main form.
+- The program menu in the program form is the next one to recive an update regarding to the main functionality of the main menu in its form.
+
+### 13-11-2023 || 1.0.1-alpha || Copyright Image & Wiki Link || @REALSDEALS
+Changed the general logo to a new rebranded logo. Logo has been created with AI; it may not be definitive.
+
+In the copyright form there is now a link to the wiki; behind the 'Learn More' button.
+- The wiki behind this page will get its structure in the future. For now it is just a placeholder.
+
 ### 10-11-2023 || 1.0.0-alpha || GUI & Menu || @REALSDEALS
 The base of the code and the 'solution' as it is called has been build.
 The GUI has been build and the menu has been build. The menu is not yet fully functional and will change in the future. But for now it is a good start.

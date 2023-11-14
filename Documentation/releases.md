@@ -7,7 +7,7 @@ For now only the version names will be displayed, in the future there might be e
 
 Full Release - x
 Beta Release - x
-Alpha Release - 1.0.0-alpha
+Alpha Release - 1.0.2-alpha
 
 ## How versions are numbered:
 Example: v8.4.6
@@ -29,4 +29,5 @@ Here you can see a overview of the older version, when there are releases releas
 
 ### Alpha Release(s) 
 
+- 1.0.2-alpha
 - 1.0.0-alpha
