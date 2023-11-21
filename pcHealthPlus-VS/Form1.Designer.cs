@@ -41,9 +41,11 @@
             this.timeLabel = new System.Windows.Forms.Label();
             this.labelTimer1 = new System.Windows.Forms.Timer(this.components);
             this.colourMenuPanel1 = new System.Windows.Forms.Panel();
+            this.ProgramBtn2 = new System.Windows.Forms.Button();
+            this.toolsBtn1 = new System.Windows.Forms.Button();
             this.logoHolderInMenu = new System.Windows.Forms.Panel();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.programNameInMenu = new System.Windows.Forms.Label();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.programMenu.SuspendLayout();
             this.colourMenuPanel1.SuspendLayout();
             this.logoHolderInMenu.SuspendLayout();
@@ -151,12 +153,44 @@
             // colourMenuPanel1
             // 
             this.colourMenuPanel1.BackColor = System.Drawing.Color.CornflowerBlue;
+            this.colourMenuPanel1.Controls.Add(this.ProgramBtn2);
+            this.colourMenuPanel1.Controls.Add(this.toolsBtn1);
             this.colourMenuPanel1.Controls.Add(this.logoHolderInMenu);
             this.colourMenuPanel1.Dock = System.Windows.Forms.DockStyle.Left;
             this.colourMenuPanel1.Location = new System.Drawing.Point(0, 30);
             this.colourMenuPanel1.Name = "colourMenuPanel1";
             this.colourMenuPanel1.Size = new System.Drawing.Size(225, 524);
             this.colourMenuPanel1.TabIndex = 2;
+            this.colourMenuPanel1.Paint += new System.Windows.Forms.PaintEventHandler(this.colourMenuPanel1_Paint);
+            // 
+            // ProgramBtn2
+            // 
+            this.ProgramBtn2.Dock = System.Windows.Forms.DockStyle.Top;
+            this.ProgramBtn2.FlatAppearance.BorderSize = 0;
+            this.ProgramBtn2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ProgramBtn2.Font = new System.Drawing.Font("Bahnschrift SemiBold", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ProgramBtn2.Location = new System.Drawing.Point(0, 145);
+            this.ProgramBtn2.Name = "ProgramBtn2";
+            this.ProgramBtn2.Size = new System.Drawing.Size(225, 45);
+            this.ProgramBtn2.TabIndex = 5;
+            this.ProgramBtn2.Text = "Programs";
+            this.ProgramBtn2.UseVisualStyleBackColor = true;
+            this.ProgramBtn2.Click += new System.EventHandler(this.programsSideMenuBtn2_onClick);
+            // 
+            // toolsBtn1
+            // 
+            this.toolsBtn1.BackColor = System.Drawing.Color.CornflowerBlue;
+            this.toolsBtn1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.toolsBtn1.FlatAppearance.BorderSize = 0;
+            this.toolsBtn1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.toolsBtn1.Font = new System.Drawing.Font("Bahnschrift SemiBold", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.toolsBtn1.Location = new System.Drawing.Point(0, 100);
+            this.toolsBtn1.Name = "toolsBtn1";
+            this.toolsBtn1.Size = new System.Drawing.Size(225, 45);
+            this.toolsBtn1.TabIndex = 4;
+            this.toolsBtn1.Text = "Tools";
+            this.toolsBtn1.UseVisualStyleBackColor = false;
+            this.toolsBtn1.Click += new System.EventHandler(this.toolsSideMenuBtn1_onClick);
             // 
             // logoHolderInMenu
             // 
@@ -168,16 +202,6 @@
             this.logoHolderInMenu.Size = new System.Drawing.Size(225, 100);
             this.logoHolderInMenu.TabIndex = 3;
             // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(3, 7);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(86, 86);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
-            // 
             // programNameInMenu
             // 
             this.programNameInMenu.AutoSize = true;
@@ -188,6 +212,16 @@
             this.programNameInMenu.Size = new System.Drawing.Size(119, 25);
             this.programNameInMenu.TabIndex = 1;
             this.programNameInMenu.Text = "pcHealthPlus";
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
+            this.pictureBox1.Location = new System.Drawing.Point(3, 7);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(86, 86);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pictureBox1.TabIndex = 0;
+            this.pictureBox1.TabStop = false;
             // 
             // Form1
             // 
@@ -232,6 +266,8 @@
         private System.Windows.Forms.Panel logoHolderInMenu;
         private System.Windows.Forms.Label programNameInMenu;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.Button toolsBtn1;
+        private System.Windows.Forms.Button ProgramBtn2;
     }
 }
 

@@ -76,9 +76,26 @@ namespace pcHealthPlus_VS
             Application.Exit();
         }
 
+        // Side panel menu:
+
+        private void toolsSideMenuBtn1_onClick(object sender, EventArgs e)
+        {
+
+        }
+
+        private void programsSideMenuBtn2_onClick(object sender, EventArgs e)
+        {
+
+        }
+
         // Close Menu Items when new Menu is Opened
 
         private void closeMainMenu(object sender, EventArgs e)
+        {
+
+        }
+
+        private void colourMenuPanel1_Paint(object sender, PaintEventArgs e)
         {
 
         }

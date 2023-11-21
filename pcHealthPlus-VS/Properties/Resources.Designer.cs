@@ -69,5 +69,15 @@ namespace pcHealthPlus_VS.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CP___pcHealthPlus_VS_NoLearnMore {
+            get {
+                object obj = ResourceManager.GetObject("CP___pcHealthPlus_VS_NoLearnMore", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }
