@@ -47,6 +47,7 @@ namespace pcHealthPlus_VS
         {
             var Forms2 = new toolForm();
             Forms2.Show();
+            this.Hide();
         }
 
         private void programMenu_ItemClicked(object sender, EventArgs e)
@@ -58,6 +59,7 @@ namespace pcHealthPlus_VS
         {
             var Forms3 = new programForm();
             Forms3.Show();
+            this.Hide();
         }
 
         private void helpToolStripMenuItem_Click(object sender, EventArgs e)
