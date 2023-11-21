@@ -152,7 +152,7 @@
             // 
             // colourMenuPanel1
             // 
-            this.colourMenuPanel1.BackColor = System.Drawing.Color.CornflowerBlue;
+            this.colourMenuPanel1.BackColor = System.Drawing.Color.SkyBlue;
             this.colourMenuPanel1.Controls.Add(this.ProgramBtn2);
             this.colourMenuPanel1.Controls.Add(this.toolsBtn1);
             this.colourMenuPanel1.Controls.Add(this.logoHolderInMenu);
@@ -179,7 +179,7 @@
             // 
             // toolsBtn1
             // 
-            this.toolsBtn1.BackColor = System.Drawing.Color.CornflowerBlue;
+            this.toolsBtn1.BackColor = System.Drawing.Color.SkyBlue;
             this.toolsBtn1.Dock = System.Windows.Forms.DockStyle.Top;
             this.toolsBtn1.FlatAppearance.BorderSize = 0;
             this.toolsBtn1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -227,7 +227,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.Silver;
+            this.BackColor = System.Drawing.Color.SteelBlue;
             this.ClientSize = new System.Drawing.Size(933, 554);
             this.Controls.Add(this.colourMenuPanel1);
             this.Controls.Add(this.timeLabel);
