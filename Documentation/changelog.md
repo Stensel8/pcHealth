@@ -14,6 +14,11 @@ This is an example changelog entry. This is how the changelog will look like. Th
 
 ## Changelog
 
+### 21-11-2023 || 1.1.0-alpha || Side Menu Panel || @REALSDEALS
+The top bar menu will not longer contain the Tools en Programs menu. These menus will be moved to the side menu panel. The menu buttons Tools and Programs will not open a new form menu like the 'old' (still available) menu buttons do/did. These buttons will open a new 'panel' in the respected 'main' form.
+
+Besides these changes the colours have been changed too. I'm moving towards a blue colour scheme. The colours are not final and will change in the future.
+
 ### 14-11-2023 || 1.0.2-alpha || Toolmenu || @REALSDEALS
 The toolmenu; the menu within the tools form has been updated and has the same functionality as the menu in the main form.
 - The program menu in the program form is the next one to recive an update regarding to the main functionality of the main menu in its form.
