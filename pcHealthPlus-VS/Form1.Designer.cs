@@ -35,9 +35,6 @@
             this.helpMenuButton = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.gitHubToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.programsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timeLabel = new System.Windows.Forms.Label();
             this.labelTimer1 = new System.Windows.Forms.Timer(this.components);
             this.colourMenuPanel1 = new System.Windows.Forms.Panel();
@@ -60,8 +57,7 @@
             this.programMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.quitToolStripMenuItem,
             this.helpMenuButton,
-            this.aboutToolStripMenuItem,
-            this.menuToolStripMenuItem});
+            this.aboutToolStripMenuItem});
             this.programMenu.Location = new System.Drawing.Point(0, 0);
             this.programMenu.Name = "programMenu";
             this.programMenu.Padding = new System.Windows.Forms.Padding(6, 2, 0, 5);
@@ -103,34 +99,6 @@
             this.gitHubToolStripMenuItem.Size = new System.Drawing.Size(126, 24);
             this.gitHubToolStripMenuItem.Text = "&GitHub";
             this.gitHubToolStripMenuItem.Click += new System.EventHandler(this.gitHubToolStripMenuItem_Click);
-            // 
-            // menuToolStripMenuItem
-            // 
-            this.menuToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolsToolStripMenuItem,
-            this.programsToolStripMenuItem});
-            this.menuToolStripMenuItem.Font = new System.Drawing.Font("Bahnschrift SemiBold", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.menuToolStripMenuItem.Name = "menuToolStripMenuItem";
-            this.menuToolStripMenuItem.Size = new System.Drawing.Size(60, 23);
-            this.menuToolStripMenuItem.Text = "&Menu";
-            // 
-            // toolsToolStripMenuItem
-            // 
-            this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(151, 24);
-            this.toolsToolStripMenuItem.Text = "&Tools";
-            this.toolsToolStripMenuItem.TextDirection = System.Windows.Forms.ToolStripTextDirection.Horizontal;
-            this.toolsToolStripMenuItem.Click += new System.EventHandler(this.toolsToolStripMenuItem_Click);
-            // 
-            // programsToolStripMenuItem
-            // 
-            this.programsToolStripMenuItem.Name = "programsToolStripMenuItem";
-            this.programsToolStripMenuItem.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.programsToolStripMenuItem.Size = new System.Drawing.Size(151, 24);
-            this.programsToolStripMenuItem.Text = "&Programs";
-            this.programsToolStripMenuItem.TextDirection = System.Windows.Forms.ToolStripTextDirection.Horizontal;
-            this.programsToolStripMenuItem.Click += new System.EventHandler(this.programsToolStripMenuItem_Click);
             // 
             // timeLabel
             // 
@@ -175,7 +143,7 @@
             this.ProgramBtn2.TabIndex = 5;
             this.ProgramBtn2.Text = "Programs";
             this.ProgramBtn2.UseVisualStyleBackColor = true;
-            this.ProgramBtn2.Click += new System.EventHandler(this.programsSideMenuBtn2_onClick);
+            this.ProgramBtn2.Click += new System.EventHandler(this.programsToolStripMenuItem_Click);
             // 
             // toolsBtn1
             // 
@@ -190,7 +158,7 @@
             this.toolsBtn1.TabIndex = 4;
             this.toolsBtn1.Text = "Tools";
             this.toolsBtn1.UseVisualStyleBackColor = false;
-            this.toolsBtn1.Click += new System.EventHandler(this.toolsSideMenuBtn1_onClick);
+            this.toolsBtn1.Click += new System.EventHandler(this.toolsToolStripMenuItem_Click);
             // 
             // logoHolderInMenu
             // 
@@ -257,9 +225,6 @@
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem helpMenuButton;
         private System.Windows.Forms.ToolStripMenuItem gitHubToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem menuToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem programsToolStripMenuItem;
         private System.Windows.Forms.Label timeLabel;
         private System.Windows.Forms.Timer labelTimer1;
         private System.Windows.Forms.Panel colourMenuPanel1;
