@@ -43,24 +43,14 @@ namespace pcHealthPlus_VS
             labelTimer1.Start();
         }
 
-        private void toolsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var Forms2 = new toolForm();
-            Forms2.Show();
-            this.Hide();
-        }
+
 
         private void programMenu_ItemClicked(object sender, EventArgs e)
         {
             
         }
 
-        private void programsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var Forms3 = new programForm();
-            Forms3.Show();
-            this.Hide();
-        }
+        
 
         private void helpToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -80,18 +70,28 @@ namespace pcHealthPlus_VS
 
         // Side panel menu:
 
-        private void toolsSideMenuBtn1_onClick(object sender, EventArgs e)
+        private void toolsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            var Forms2 = new toolForm();
+            Forms2.Show();
+            this.Hide();
         }
 
-        private void programsSideMenuBtn2_onClick(object sender, EventArgs e)
+        private void programsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            var Forms3 = new programForm();
+            Forms3.Show();
+            this.Hide();
         }
 
         // Close Menu Items when new Menu is Opened
 
+        // Opening Forms in Form
+        
+        // Not yet initialized.
+
+
+        // Close menu
         private void closeMainMenu(object sender, EventArgs e)
         {
 
