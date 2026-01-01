@@ -18,7 +18,7 @@ Add-Type -AssemblyName WindowsBase
 # GENERIC KEY DATABASE
 # ============================================================================
 # These are KMS client setup keys (GVLK) - basically Windows' "demo mode" keys.
-# If you find one of these, congrats! You found a placeholder key that won't
+# If you find one of these, congrats; You found a placeholder key that won't
 # actually activate Windows. Time to dig deeper or check that sticker!
 # ============================================================================
 $GenericKeys = @{
@@ -165,7 +165,7 @@ function Get-ProductKeyFromDigitalProductId {
 # - Automatic activation on first boot
 #
 # RETRIEVAL METHOD:
-# Uses WMI/CIM to query the SoftwareLicensingService class which reads
+# Uses CIM to query the SoftwareLicensingService class which reads
 # the OA3xOriginalProductKey property from UEFI firmware.
 #
 # NOTE:
@@ -192,16 +192,32 @@ function Get-ProductKeyFromOA3 {
 # ============================================================================
 # FUNCTION: Get-WindowsVersion
 # ============================================================================
-# Gets Windows version info. Thanks to Microsoft's "creativity", Windows 11
-# shares the same registry paths as Windows 10, so we check the build number.
-# Build 22000+ = Windows 11. Below that = Windows 10 (or a time traveler).
+# Gets Windows version info using native CIM for best accuracy.
+#
+# Uses Win32_OperatingSystem.Caption for the OS name - this is the proper
+# Windows API way to get the friendly product name (e.g., "Microsoft Windows 11 Pro")
+# instead of trying to build it manually from registry EditionID values.
+#
+# This automatically handles all Windows editions correctly:
+# - Client: Home, Pro, Enterprise, Education, etc.
+# - Server: Standard, Datacenter, Essentials, etc.
+# - Special: Eval versions, LTSC, N editions, etc.
 # ============================================================================
 function Get-WindowsVersion {
-    $RegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
-    $props = Get-ItemProperty $RegPath
-    $CurrentBuild = [int]$props.CurrentBuild
-    $ProductName = if ($CurrentBuild -ge 22000) { "Windows 11 $($props.EditionID)" } else { "Windows 10 $($props.EditionID)" }
-    return @{ Name = $ProductName; Build = $CurrentBuild; ProductID = $props.ProductID }
+    try {
+        $OS = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+        $ProductID = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").ProductID
+
+        return @{
+            Name = $OS.Caption       # Native OS name from Windows API
+            Build = $OS.BuildNumber  # Build number
+            ProductID = $ProductID
+        }
+    }
+    catch {
+        Write-Host "  ERROR: Failed to retrieve Windows version: $($_.Exception.Message)" -ForegroundColor Red
+        return @{ Name = "Unknown Windows Version"; Build = "Unknown"; ProductID = "Unknown" }
+    }
 }
 
 # ============================================================================
