@@ -493,13 +493,11 @@ IF %Q%==3 GOTO CLOSE
 cls
 color 0A
 echo.
-echo Running VBS script to retrieve Windows license. Expect a new window to pop up.
-cscript //nologo "%~dp0..\VBS\KeyGrabber.vbs"
-color 0E
+echo Launching Windows Product Key Grabber (PowerShell)...
 echo.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\PS1\KeyGrabber.ps1"
 echo.
-cls
-SET /p R=If you want to return to the previous sub-menu, enter number 1. To return to the main-menu, enter number 2. To exit the script, enter the number 3. Enter: 
+SET /p R=If you want to return to the previous sub-menu, enter number 1. To return to the main-menu, enter number 2. To exit the script, enter the number 3. Enter:
 IF %R%==1 GOTO TOOLS
 IF %R%==2 GOTO MENU
 IF %R%==3 GOTO CLOSE

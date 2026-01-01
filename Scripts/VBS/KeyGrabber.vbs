@@ -1,9 +1,15 @@
-' VBS-Helper function to get Windows version and activation information.
-' Reason: Microsoft Windows won't allow us to read out the product key directly, so we need to convert that ourselves.
-' Also: Microsoft hasn't made the necessary Registry changes when they introduced Windows 11,
-' so we need to check the build number to determine if it's Windows 10 or Windows 11.
+' ============================================================================
+' VBScript Windows Product Key Grabber - pcHealth (LEGACY EDITION)
+' ============================================================================
 '
-' This script is called: KeyGrabber.vbs
+' This is the OLD SCHOOL version for ancient systems from the MBR/BIOS era.
+' If you're running Windows 11, you probably want KeyGrabber.ps1 instead!
+'
+' Fun fact: This VBS script is older than UEFI firmware. It only knows about
+' the registry method - no fancy OA3/UEFI key extraction here!
+'
+' Recommended for: Legacy systems (Windows 7/8/10) from the BIOS/MBR era.
+' ============================================================================
 
 Option Explicit
 
@@ -53,50 +59,58 @@ End If
 ' -------------------------------
 ' Function: ConvertToKey
 ' Converts the binary DigitalProductId into a human-readable product key
+' Now includes Windows 8+ N-character encoding support
 ' -------------------------------
 Function ConvertToKey(Key)
     Const KeyOffset = 52
-    Dim isWin8, Maps, i, j, Current, KeyOutput, Last, keyPart1, insert
+    Dim Maps, i, j, r, KeyOutput, keyBytes(14), isWin8Plus, nIndex, firstChar, tempKey
 
-    ' Determine if the OS is Windows 8 (or newer) based on the key data
-    isWin8 = (Key(66) \ 6) And 1
-    Key(66) = (Key(66) And &HF7) Or ((isWin8 And 2) * 4)
-    
-    i = 24
+    ' Extract key bytes (15 bytes from offset 52-66)
+    For i = 0 To 14
+        keyBytes(i) = Key(KeyOffset + i)
+    Next
+
     Maps = "BCDFGHJKMPQRTVWXY2346789"
+
+    ' Check for Windows 8+ key (has special N-character encoding)
+    isWin8Plus = (keyBytes(14) \ 8) And 1
+    keyBytes(14) = (keyBytes(14) And 247) Or ((isWin8Plus And 2) * 4)
+
     KeyOutput = ""
-    
-    ' Loop through the key bytes to decode the product key
-    Do 
-        Current = 0
-        j = 14
-        Do 
-            Current = Current * 256
-            Current = Key(j + KeyOffset) + Current
-            Key(j + KeyOffset) = (Current \ 24)
-            Current = Current Mod 24
-            j = j - 1
-        Loop While j >= 0
-        i = i - 1
-        ' Prepend the corresponding character from Maps to KeyOutput
-        KeyOutput = Mid(Maps, Current + 1, 1) & KeyOutput
-        Last = Current
-    Loop While i >= 0
-    
-    ' Adjust the output for Windows 8 and later
-    If isWin8 = 1 Then
-        keyPart1 = Mid(KeyOutput, 2, Last)
-        insert = "N"
-        KeyOutput = Replace(KeyOutput, keyPart1, keyPart1 & insert, 2, 1, 0)
-        If Last = 0 Then KeyOutput = insert & KeyOutput
+
+    ' Decode the key using Base24 algorithm
+    For i = 24 To 0 Step -1
+        r = 0
+
+        For j = 14 To 0 Step -1
+            ' Multiply by 256 and add current byte (FIXED: was XOR)
+            r = (r * 256) + keyBytes(j)
+            keyBytes(j) = Int(r / 24)
+            r = r Mod 24
+        Next
+
+        KeyOutput = Mid(Maps, r + 1, 1) & KeyOutput
+    Next
+
+    ' Insert 'N' for Windows 8+ keys
+    If isWin8Plus = 1 Then
+        firstChar = Left(KeyOutput, 1)
+        nIndex = InStr(Maps, firstChar) - 1
+        tempKey = Right(KeyOutput, Len(KeyOutput) - 1)
+        KeyOutput = Left(tempKey, nIndex) & "N" & Right(tempKey, Len(tempKey) - nIndex)
     End If
-    
-    ' Insert dashes to format the key in groups of 5 characters
-    ConvertToKey = Mid(KeyOutput, 1, 5) & "-" & _
-                    Mid(KeyOutput, 6, 5) & "-" & _
-                    Mid(KeyOutput, 11, 5) & "-" & _
-                    Mid(KeyOutput, 16, 5) & "-" & _
-                    Mid(KeyOutput, 21, 5)
+
+    ' Format with dashes
+    Dim formattedKey, charPos
+    formattedKey = ""
+    For charPos = 1 To 25
+        formattedKey = formattedKey & Mid(KeyOutput, charPos, 1)
+        If (charPos Mod 5) = 0 And charPos < 25 Then
+            formattedKey = formattedKey & "-"
+        End If
+    Next
+
+    ConvertToKey = formattedKey
 End Function
 
 ' -------------------------------
