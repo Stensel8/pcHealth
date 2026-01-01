@@ -318,9 +318,10 @@ $WarningBg, $WarningFg = $colors.WarningBg, $colors.WarningFg
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="pcHealth | Windows Key Grabber"
     Width="720" Height="720"
+    MinWidth="600" MinHeight="600"
     WindowStartupLocation="CenterScreen"
     Background="$BgColor"
-    ResizeMode="NoResize">
+    ResizeMode="CanResize">
     
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -435,15 +436,17 @@ $WarningBg, $WarningFg = $colors.WarningBg, $colors.WarningFg
         </Border>
         
         <!-- Status Message Box -->
-        <Border Grid.Row="5" Name="msgBox" BorderThickness="1" 
+        <Border Grid.Row="5" Name="msgBox" BorderThickness="1"
                 Padding="15" CornerRadius="6" Margin="0,0,0,15">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Name="msgTitle" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                <TextBlock Grid.Row="1" Name="msgBody" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <TextBlock Name="msgBody" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
+                </ScrollViewer>
             </Grid>
         </Border>
         
@@ -574,7 +577,7 @@ if ($ProductKey) {
         $msgBox.Background = $WarningBg
         $msgTitle.Foreground = $msgBody.Foreground = $WarningFg
         $msgTitle.Text = "WARNING: Generic/Placeholder Key Detected"
-        $msgBody.Text = "This is a generic $GenericKeyType key used by OEMs and system integrators for pre-installation.`n`nThis key WILL NOT WORK for re-activation after a clean install!`n`nFind your real product key via:`n- Sticker on your PC/laptop case`n- Email receipt from Microsoft/retailer`n- UEFI/BIOS (try: Get-CimInstance SoftwareLicensingService | select OA3xOriginalProductKey)`n- Digital license (linked to Microsoft account)"
+        $msgBody.Text = "This is a generic $GenericKeyType key used by OEMs and system integrators for pre-installation.`n`nThis key WILL NOT WORK for re-activation after a clean install!`n`nPOSSIBLE EXPLANATION (Not 100% certain):`nYour system may have been activated using unauthorized methods (e.g., AutoKMS, MassGravel scripts, or similar tools). These methods force Windows to accept non-genuine keys. We cannot be certain, but this is a common scenario.`n`nLEGITIMATE OPTIONS:`n`n1. Find your original product key:`n   - Sticker on your PC/laptop case`n   - Email receipt from purchase`n   - Digital license (linked to Microsoft account)`n`n2. Purchase a legitimate Windows 11 Pro RETAIL key:`n   - Search on key indexers like AllKeyShop`n   - Look for 'Windows 11 Pro Retail' keys`n   - AVOID OEM keys - they're for system builders only and won't work after Windows setup`n   - Retail keys can be transferred between computers"
     } elseif ($multipleKeysFound) {
         $msgBox.Background = $SuccessBg
         $msgTitle.Foreground = $msgBody.Foreground = $SuccessFg
@@ -624,7 +627,7 @@ $btnSave.Add_Click({
 
             # Add warnings if applicable
             if ($IsGenericKey) {
-                $Content += "`n`nWARNING: GENERIC/PLACEHOLDER KEY DETECTED!`n------------------------------------------------`nThis is a $GenericKeyType generic key.`nThis key WILL NOT WORK for re-activation!`n`nFind your real product key from:`n- Sticker on your PC/laptop`n- Email receipt from Microsoft/retailer`n- UEFI/BIOS firmware`n- Microsoft account (digital license)`n"
+                $Content += "`n`nWARNING: GENERIC/PLACEHOLDER KEY DETECTED!`n------------------------------------------------`nThis is a $GenericKeyType generic key.`nThis key WILL NOT WORK for re-activation!`n`nPOSSIBLE EXPLANATION (Not 100% certain):`nYour system may have been activated using unauthorized methods (e.g., AutoKMS,`nMassGravel scripts, or similar tools). These methods force Windows to accept`nnon-genuine keys. We cannot be certain, but this is a common scenario.`n`nLEGITIMATE OPTIONS:`n`n1. Find your original product key from:`n   - Sticker on your PC/laptop case`n   - Email receipt from purchase`n   - UEFI/BIOS firmware`n   - Microsoft account (digital license)`n`n2. Purchase a legitimate Windows 11 Pro RETAIL key:`n   - Search on key indexers like AllKeyShop`n   - Look for 'Windows 11 Pro Retail' keys`n   - AVOID OEM keys - they're for system builders only and won't work after setup`n   - Retail keys can be transferred between computers`n"
             }
 
             # Add footer
