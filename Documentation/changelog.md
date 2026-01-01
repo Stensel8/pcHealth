@@ -1,5 +1,12 @@
 # Changelog.md - pcHealth
 
+## 01-01-2026 - @Stensel8
+
+- Improved Admin elevation by not relying on VBS anymore. This should fix issues on some systems/builds where the VBS is already removed.
+- Improved the KeyGrabber functionality by not relying on VBS anymore. The script now uses PowerShell to extract the Windows license key information.
+- Made a simple GUI for the KeyGrabber functionality to make it more user-friendly. Co-developed with [@Claude Code](https://github.com/anthropics/claude-code).
+- Synced the codebase with [pcHealthPlus](https://github.com/REALSDEALS/pcHealthPlus).
+
 ## 11-07-2025 - @REALSDEALS
 
 Audited the contribution of @Stensel8 and everything seems to work as intended.

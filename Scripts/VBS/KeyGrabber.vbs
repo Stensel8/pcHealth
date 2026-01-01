@@ -6,7 +6,7 @@
 ' If you're running Windows 11, you probably want KeyGrabber.ps1 instead!
 '
 ' Fun fact: This VBS script is older than UEFI firmware. It only knows about
-' the registry method - no fancy OA3/UEFI key extraction here!
+' the registry method - no fallback key extraction methods supported here.
 '
 ' Recommended for: Legacy systems (Windows 7/8/10) from the BIOS/MBR era.
 ' ============================================================================
