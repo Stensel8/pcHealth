@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{D1E61EA1-12EB-4C58-B202-F842564B2750}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>pcHealthPlus_VS</RootNamespace>
-    <AssemblyName>pcHealthPlus-VS</AssemblyName>
+    <RootNamespace>pcHealth</RootNamespace>
+    <AssemblyName>pcHealth</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

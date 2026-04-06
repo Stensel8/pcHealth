@@ -1,4 +1,4 @@
-# Changelog: pcHealthPlus
+# Changelog: pcHealth
 
 ## How to read the changelog?
 The changelog will contain the following information in the following order:

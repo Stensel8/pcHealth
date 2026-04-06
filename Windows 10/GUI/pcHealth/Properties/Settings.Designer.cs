@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace pcHealthPlus_VS.Properties
+namespace pcHealth.Properties
 {
 
 

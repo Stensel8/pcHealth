@@ -481,7 +481,7 @@ $btnSave.Add_Click({
 
         if ($SaveDialog.ShowDialog()) {
             # Build detailed report
-            $Content = "==============================================================================`npcHealthPlus-VS | Windows Product Key Report`n==============================================================================`n`nSYSTEM INFORMATION:`n-------------------`nWindows Version:     $($WinVersion.Name)`nBuild Number:        $($WinVersion.Build)`nProduct ID:          $($WinVersion.ProductID)`n`nPRODUCT KEY:`n------------`nKey:                 $($ProductKey -or 'Not found')`nSource:              $KeySource`n`nEXTRACTION METHODS:`n-------------------"
+            $Content = "==============================================================================`npcHealth | Windows Product Key Report`n==============================================================================`n`nSYSTEM INFORMATION:`n-------------------`nWindows Version:     $($WinVersion.Name)`nBuild Number:        $($WinVersion.Build)`nProduct ID:          $($WinVersion.ProductID)`n`nPRODUCT KEY:`n------------`nKey:                 $($ProductKey -or 'Not found')`nSource:              $KeySource`n`nEXTRACTION METHODS:`n-------------------"
 
             # Add method results table
             foreach ($method in $MethodResults) {

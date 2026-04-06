@@ -1,4 +1,4 @@
-﻿namespace pcHealthPlus_VS
+﻿namespace pcHealth
 {
     partial class copyrightForm
     {
@@ -82,7 +82,7 @@
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "copyrightForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "pcHealthPlus | Copyright";
+            this.Text = "pcHealth | Copyright";
             this.Load += new System.EventHandler(this.copyrightForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);

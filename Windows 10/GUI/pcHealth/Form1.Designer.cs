@@ -1,4 +1,4 @@
-﻿namespace pcHealthPlus_VS
+﻿namespace pcHealth
 {
     partial class Form1
     {
@@ -179,7 +179,7 @@
             this.programNameInMenu.Name = "programNameInMenu";
             this.programNameInMenu.Size = new System.Drawing.Size(119, 25);
             this.programNameInMenu.TabIndex = 1;
-            this.programNameInMenu.Text = "pcHealthPlus";
+            this.programNameInMenu.Text = "pcHealth";
             // 
             // pictureBox1
             // 
@@ -205,7 +205,7 @@
             this.MainMenuStrip = this.programMenu;
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "Form1";
-            this.Text = "pcHealthPlus";
+            this.Text = "pcHealth";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.programMenu.ResumeLayout(false);
             this.programMenu.PerformLayout();

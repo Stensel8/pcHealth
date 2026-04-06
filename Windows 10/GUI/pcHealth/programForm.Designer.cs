@@ -1,4 +1,4 @@
-﻿namespace pcHealthPlus_VS
+﻿namespace pcHealth
 {
     partial class programForm
     {
@@ -40,7 +40,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "programForm";
-            this.Text = "pcHealthPlus | Programs";
+            this.Text = "pcHealth | Programs";
             this.ResumeLayout(false);
 
         }

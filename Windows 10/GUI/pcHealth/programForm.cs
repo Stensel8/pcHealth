@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace pcHealthPlus_VS
+namespace pcHealth
 {
     public partial class programForm : Form
     {

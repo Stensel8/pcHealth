@@ -1,4 +1,4 @@
-﻿namespace pcHealthPlus_VS
+﻿namespace pcHealth
 {
     partial class toolForm
     {
@@ -151,7 +151,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "toolForm";
-            this.Text = "pcHealthPlus | Tools";
+            this.Text = "pcHealth | Tools";
             this.Load += new System.EventHandler(this.toolForm_Load);
             this.toolsMenu2.ResumeLayout(false);
             this.toolsMenu2.PerformLayout();

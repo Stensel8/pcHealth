@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace pcHealthPlus_VS
+namespace pcHealth
 {
     public partial class copyrightForm : Form
     {
@@ -35,7 +35,7 @@ namespace pcHealthPlus_VS
         // Learn more link
         private void learnMoreLinkLabel_onClick(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start("https://github.com/REALSDEALS/pcHealthPlus-VS/wiki");
+            System.Diagnostics.Process.Start("https://github.com/REALSDEALS/pcHealth");
         }
     }
 }

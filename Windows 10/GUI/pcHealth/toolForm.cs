@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace pcHealthPlus_VS
+namespace pcHealth
 {
     public partial class toolForm : Form
     {
@@ -64,7 +64,7 @@ namespace pcHealthPlus_VS
 
         private void gitHubToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start("https://github.com/REALSDEALS/pcHealthPlus-VS");
+            System.Diagnostics.Process.Start("https://github.com/REALSDEALS/pcHealth");
         }
 
         private void helpMenuButton_Click(object sender, EventArgs e)
