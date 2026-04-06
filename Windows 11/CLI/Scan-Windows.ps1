@@ -1,5 +1,5 @@
 # ============================================================================
-# pcHealth - Windows 11 - V1.9.1
+# pcHealth - Windows 11 - V2.0.0
 # ============================================================================
 # Windows System File Scanner
 # Scans for corrupt or missing system files using SFC and DISM.

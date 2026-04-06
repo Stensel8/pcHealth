@@ -1,5 +1,5 @@
 # ============================================================================
-# pcHealth - Windows 11 - V1.9.1
+# pcHealth - Windows 11 - V2.0.0
 # ============================================================================
 # Retrieves CPU, GPU, and RAM information using modern CIM interfaces.
 # Note: WMIC is deprecated since Windows 11 — this script uses Get-CimInstance.

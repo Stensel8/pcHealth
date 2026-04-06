@@ -1,5 +1,31 @@
 # Changelog.md - pcHealth
 
+## 06-04-2026 - @Stensel8 - Full Version Release v2.0.0 stable
+
+This release marks a full restructure and rebrand of the pcHealth project.
+Three separate repositories (pcHealth, pcHealthPlus-VS, Win_Scan) have been merged into this single unified repository.
+
+### Repository restructure
+- Merged pcHealthPlus-VS (WinForms GUI) and Win_Scan into pcHealth.
+- New folder structure: `Windows 10/CLI`, `Windows 10/GUI`, `Windows 11/CLI`, `Windows 11/GUI`.
+- Windows 10 contains all legacy tooling (CMD/batch, VBS, WinForms, WPF) — no longer actively maintained, targeting build 22H2.
+- Windows 11 contains modern PowerShell scripts — actively maintained, targeting build 25H2.
+- Windows 11/GUI reserved for a future WinUI 3 application.
+
+### New scripts
+- Added `Scan-Windows.ps1` (Windows 11/CLI): modern SFC + DISM scanner, replacing the standalone Win_Scan repository.
+
+### Rebrand
+- All scripts now carry a unified `pcHealth - Windows 10/11 - V2.0.0` header.
+- Removed all references to pcHealthPlus, pcHealthPlus-VS and Win_Scan across scripts, documentation, C# source, assembly info and form titles.
+- Renamed C# project folder, solution and namespace from `pcHealthPlus-VS` / `pcHealthPlus_VS` to `pcHealth`.
+
+### Fixes
+- Fixed two unresolved git merge conflict markers (`=======`) in pcHealth.bat.
+- Fixed a broken `SET /P` statement in the `CLOSEACT` label (variable name was missing).
+- Fixed all PowerShell script paths in pcHealth.bat to reflect the new folder structure.
+- Enforced LF line endings across the entire repository via `.gitattributes`.
+
 ## 01-01-2026 - @Stensel8
 
 - Improved Admin elevation by not relying on VBS anymore. This should fix issues on some systems/builds where the VBS is already removed.
@@ -11,7 +37,7 @@
 
 Audited the contribution of @Stensel8 and everything seems to work as intended.
 
-## 22-06-2025 - @Stensel
+## 22-06-2025 - @Stensel8
 
 Added a new feature to the script: reset network settings.
 This feature will reset the network settings on the host machine, which can help resolve various network-related issues.
