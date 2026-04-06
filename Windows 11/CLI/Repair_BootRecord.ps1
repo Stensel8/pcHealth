@@ -1,7 +1,13 @@
-Write-Host "Boot Record Repair Script"
-Write-Host "As part of the pcHealth script: check GitHub for more info; github.com/realsdeals/pcHealth"
-Write-Host "-------------------------"
-# -------------------------------
+# ============================================================================
+# pcHealth - Windows 11 - V1.9.1
+# ============================================================================
+# Boot Record Repair
+# Attempts to repair the boot record using CHKDSK, SFC, BOOTREC and BCDBOOT.
+# Run from a recovery environment (WinRE/CMD) with Administrator privileges.
+# ============================================================================
+
+Write-Host "pcHealth - Windows 11 - Boot Record Repair" -ForegroundColor Cyan
+Write-Host "============================================================`n"
 Write-Host "Starting Boot Record Repair..."
 
 function Get-WindowsDrive {

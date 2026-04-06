@@ -2,7 +2,7 @@
 
 Check the health of your Windows installation and much more!
 
-![GitHub](https://img.shields.io/github/license/REALSDEALS/pcHealth?label=License) ![GitHub Top Language](https://img.shields.io/github/languages/top/REALSDEALS/pcHealth?color=green&label=Batchfile) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?label=Release) ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?include_prereleases&label=Release) ![GitHub Repo Size](https://img.shields.io/github/repo-size/REALSDEALS/pcHealth?label=Repo%20Size)
+![GitHub](https://img.shields.io/github/license/REALSDEALS/pcHealth?label=License) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?label=Release) ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?include_prereleases&label=Release) ![GitHub Repo Size](https://img.shields.io/github/repo-size/REALSDEALS/pcHealth?label=Repo%20Size)
 
 ## What is the main purpose of pcHealth?
 
@@ -16,17 +16,18 @@ It really means a lot to me!
 If you have any tips/tricks or remarks? 
 Feel free to contact me on discord: **REALSDEALS**.
 
-**Sidenote**: since version 1.6 and onwards, the Powershell section has been removed from the script. To read more about this decision, please read the changelog.
-
 ### More information regarding on how to install and use it:
 
-- Download this repository.
-- Extract it to the desktop to be sure that it will run with full permissions.
-- Open the `scripts` folder and open the CMD folder in there.
-- Open the file in the CMD folder and read the rules/commands carefully.
-- Enter in the number of the desired command that you want to run. (Number + ENTER)
-- Patiently wait for the script to finish. Some menu-options may take some time to finish.
-- You can chose, depending on the command, what you want to do next. (Open logs ect.)
+**Windows 10 (CMD/batch):**
+- Download this repository and extract it.
+- Open the `Windows 10/CLI` folder and run `pcHealth.bat` as administrator.
+- Enter the number of the desired command and press ENTER.
+- Some options may take a few minutes — wait for the script to finish.
+
+**Windows 11 (PowerShell):**
+- Open the `Windows 11/CLI` folder.
+- Right-click the desired `.ps1` script and select *Run with PowerShell* (as administrator).
+- Or run directly from an elevated PowerShell terminal.
 
 ### For users that are not that known about what everything may or may not do...
 
@@ -92,13 +93,3 @@ My username is: **REALSDEALS**.
 
 There is also a possibility to e-mail me, if that's what you desire (check my GitHub profile for that).
 
-## pcHealthPlus
-pcHealthPlus is my other repository, where I plan to gradually migrate the technology currently implemented here. My goal is to transition to PowerShell 7.5, as Microsoft is set to drop support for batch (.bat/.cmd) files in upcoming Windows releases.
-
-Link to pcHealthPlus: [REALSDEALS/pcHealthPlus](https://github.com/REALSDEALS/pcHealthPlus)
-
-## Win_Scan
-~~Win_Scan is my other repository, but the functionality provided by Win_Scan has been implemented here...~~
-~~The functionality is now fully integrated into this script. The old repository still exists, but it is deprecated.~~
-
-~~Link to Win_Scan: [REALSDEALS/Win_Scan](https://github.com/REALSDEALS/Win_Scan)~~

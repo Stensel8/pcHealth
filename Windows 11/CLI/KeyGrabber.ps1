@@ -1,13 +1,9 @@
 # ============================================================================
-# PowerShell Windows Product Key Grabber - pcHealth
+# pcHealth - Windows 11 - V1.9.1
 # ============================================================================
-#
-# This is the MODERN version - uses PowerShell with simple, but fancy GUI and triple
-# extraction methods (OA3, Registry, SLMGR). Recommended for Windows 11+.
-#
-# If this doesn't work or you're stuck in the MBR/BIOS stone age, try the
-# VBS Version - The legacy VBScript version may still work on older systems.
-#
+# Windows Product Key Grabber (CLI — launches WPF GUI)
+# Extracts the Windows product key via OA3 (UEFI/BIOS) and registry decode.
+# For legacy systems, use the VBS version in Windows 10/CLI.
 # ============================================================================
 
 Add-Type -AssemblyName PresentationFramework

@@ -1,10 +1,9 @@
 # ============================================================================
-# PowerShell Windows Product Key Grabber - pcHealthPlus-VS (GUI Version)
+# pcHealth - Windows 11 - V1.9.1
 # ============================================================================
-#
-# This is the GUI version using WPF - designed for pcHealthPlus-VS project.
-# For the command-line version, see the pcHealthPlus repository.
-#
+# Windows Product Key Grabber (Standalone WPF GUI)
+# Extracts the Windows product key via OA3 (UEFI/BIOS) and registry decode.
+# Run directly — no batch wrapper required.
 # ============================================================================
 
 Add-Type -AssemblyName PresentationFramework
@@ -193,7 +192,7 @@ $colors = if ($Theme -eq "Dark") {
 <Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="pcHealthPlus-VS | Windows Key Grabber"
+    Title="pcHealth | Windows Key Grabber"
     Width="820" Height="850"
     MinWidth="600" MinHeight="500"
     WindowStartupLocation="CenterScreen"
@@ -225,7 +224,7 @@ $colors = if ($Theme -eq "Dark") {
                     <StackPanel>
                         <TextBlock Text="Windows Product Key Grabber"
                                    FontSize="20" FontWeight="Bold" Foreground="$($colors.FgColor)"/>
-                        <TextBlock Text="pcHealthPlus-VS"
+                        <TextBlock Text="pcHealth"
                                    FontSize="11" Foreground="$($colors.FgColor)" Opacity="0.7" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
@@ -418,7 +417,7 @@ foreach ($i in 0..([Math]::Min($MethodResults.Count, 2) - 1)) {
         $keyToCopy = $method.Result
         $btn.Add_Click({
             Set-Clipboard -Value $keyToCopy
-            [System.Windows.MessageBox]::Show("Key copied to clipboard!`n$keyToCopy", "pcHealthPlus-VS | Copied", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+            [System.Windows.MessageBox]::Show("Key copied to clipboard!`n$keyToCopy", "pcHealth | Copied", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
         }.GetNewClosure())
         [System.Windows.Controls.Grid]::SetColumn($btn, 3)
         $grid.Children.Add($btn) | Out-Null
@@ -495,10 +494,10 @@ $btnSave.Add_Click({
             }
 
             # Add footer
-            $Content += "`n`n==============================================================================`nGenerated:           $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`nTool:                pcHealthPlus-VS Key Grabber`n=============================================================================="
+            $Content += "`n`n==============================================================================`nGenerated:           $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`nTool:                pcHealth Key Grabber`n=============================================================================="
 
             $Content | Out-File -FilePath $SaveDialog.FileName -Encoding UTF8
-            [System.Windows.MessageBox]::Show("Report saved to:`n$($SaveDialog.FileName)", "pcHealthPlus-VS | Saved", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+            [System.Windows.MessageBox]::Show("Report saved to:`n$($SaveDialog.FileName)", "pcHealth | Saved", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
         }
     }
 })
