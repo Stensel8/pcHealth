@@ -3,7 +3,10 @@
     "allow": [
       "Bash(git subtree:*)",
       "Bash(git mv:*)",
-      "Read(//c/Users/Admin/.claude/projects/c--Users-Admin-Documents-GitHub-pcHealth/memory//**)"
+      "Read(//c/Users/Admin/.claude/projects/c--Users-Admin-Documents-GitHub-pcHealth/memory//**)",
+      "Bash(rm -rf /c/Users/Admin/Documents/GitHub/pcHealthPlus)",
+      "Bash(rm -rf /c/Users/Admin/Documents/GitHub/pcHealthPlus-VS)",
+      "Bash(git config:*)"
     ]
   }
 }
