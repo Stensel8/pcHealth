@@ -1,9 +1,8 @@
 # ============================================================================
-# pcHealth - Windows 11 - V1.9.1
+# pcHealth - Windows 10 - V1.9.1
 # ============================================================================
-# Windows Product Key Grabber (CLI — launches WPF GUI)
+# Windows Product Key Grabber (WPF GUI)
 # Extracts the Windows product key via OA3 (UEFI/BIOS) and registry decode.
-# For legacy systems, use the VBS version in Windows 10/CLI.
 # ============================================================================
 
 Add-Type -AssemblyName PresentationFramework

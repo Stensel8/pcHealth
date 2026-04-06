@@ -244,7 +244,7 @@ color 0A
 echo Gathering CPU, GPU and RAM information. Please be patient...
 timeout /t 4 >nul
 cls
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\PS1\Get-CPU_GPU_RAM.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\..\Windows 11\CLI\Get-CPU_GPU_RAM.ps1"
 echo --------------------------------------------------------
 echo.
 echo.
@@ -491,7 +491,7 @@ color 0A
 echo.
 echo Launching Windows Product Key Grabber (PowerShell)...
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\PS1\KeyGrabber.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0KeyGrabber.ps1"
 echo.
 SET /p R=If you want to return to the previous sub-menu, enter number 1. To return to the main-menu, enter number 2. To exit the script, enter the number 3. Enter:
 IF %R%==1 GOTO TOOLS
@@ -550,7 +550,7 @@ color 0C
 echo.
 echo Starting the boot record repair...
 echo.
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\PS1\Repair_BootRecord.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Repair_BootRecord.ps1"
 echo.
 pause
 

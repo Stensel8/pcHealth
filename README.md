@@ -4,27 +4,27 @@ Check the health of your Windows installation and much more!
 
 ![GitHub](https://img.shields.io/github/license/REALSDEALS/pcHealth?label=License) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?label=Release) ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?include_prereleases&label=Release) ![GitHub Repo Size](https://img.shields.io/github/repo-size/REALSDEALS/pcHealth?label=Repo%20Size)
 
+## Supported Versions
+
+| Platform   | Latest Supported Build | Status |
+|------------|------------------------|--------|
+| Windows 10 | 22H2                   | ![Maintenance](https://img.shields.io/badge/status-no%20longer%20maintained-red) These scripts are no longer actively maintained. Be aware of this when using or running them. |
+| Windows 11 | 25H2                   | ![Active](https://img.shields.io/badge/status-active-brightgreen) These scripts target the current stable branch of Windows 11. |
+
 ## What is the main purpose of pcHealth?
 
-The main purpose of pcHealth is to assist 'users' that are working in the IT business to run some simple things to check the system on defaults. Besides that you can download some simple programs (that are well known) to assist you in a deeper investigation of the system. This script is purely to enlighten the work in the workfield, exspecially for repetetive things like this.
+The main purpose of pcHealth is to assist users working in IT to quickly check and repair Windows systems. It covers system scans, hardware info, network tools, key grabbing, and common program downloads — all from a single interface.
 
 ## How to use?
 
-First of all I want to thank you, for downloading and using this script!
-It really means a lot to me!
+If you have any tips/tricks or remarks, feel free to contact me on Discord: **REALSDEALS**.
 
-If you have any tips/tricks or remarks? 
-Feel free to contact me on discord: **REALSDEALS**.
-
-### More information regarding on how to install and use it:
-
-**Windows 10 (CMD/batch):**
+### Windows 10 (CMD/batch — legacy, no longer maintained):
 - Download this repository and extract it.
 - Open the `Windows 10/CLI` folder and run `pcHealth.bat` as administrator.
 - Enter the number of the desired command and press ENTER.
-- Some options may take a few minutes — wait for the script to finish.
 
-**Windows 11 (PowerShell):**
+### Windows 11 (PowerShell — actively maintained):
 - Open the `Windows 11/CLI` folder.
 - Right-click the desired `.ps1` script and select *Run with PowerShell* (as administrator).
 - Or run directly from an elevated PowerShell terminal.

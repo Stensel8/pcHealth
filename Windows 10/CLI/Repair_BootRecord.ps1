@@ -1,5 +1,5 @@
 # ============================================================================
-# pcHealth - Windows 11 - V1.9.1
+# pcHealth - Windows 10 - V1.9.1
 # ============================================================================
 # Boot Record Repair
 # Attempts to repair the boot record using CHKDSK, SFC, BOOTREC and BCDBOOT.
