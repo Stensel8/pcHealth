@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git subtree:*)",
+      "Bash(git mv:*)",
+      "Read(//c/Users/Admin/.claude/projects/c--Users-Admin-Documents-GitHub-pcHealth/memory//**)"
+    ]
+  }
+}
