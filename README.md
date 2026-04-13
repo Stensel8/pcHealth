@@ -121,27 +121,6 @@ All menus and option numbers are identical across platforms. The underlying impl
 
 ---
 
-## Repository Structure
-
-```
-pcHealth/
-├── Windows 11/
-│   └── CLI/
-│       ├── Start.ps1          # Entry point (PS7+, requires admin)
-│       ├── menus/             # Main, Tools, Programs, Helpers
-│       └── tools/             # One script per function
-├── Windows 10/
-│   ├── CLI/
-│   │   ├── pcHealth.bat       # Entry point
-│   │   └── *.ps1              # Helper scripts called by the BAT
-│   └── GUI/                   # WinForms application
-└── Documentation/
-    ├── changelog.md
-    └── releases.md
-```
-
----
-
 ## Contributing
 
 Contributions are welcome. Follow the existing naming conventions: `Verb-Noun.ps1` for tools, consistent `Write-PcOption` / `Set-PcTheme` calls for UI. New tool scripts go in `Windows 11/CLI/tools/` and must be registered in `menus/Tools.ps1`. Open an issue before starting larger changes to avoid duplicate work.
