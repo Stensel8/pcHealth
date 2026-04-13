@@ -36,7 +36,7 @@ cls
 
 :MENU
 cls
-color f3
+color 03
 echo.
 echo Thanks for downloading and using pcHealth!
 echo Please be sure that you are running this Batch file in Administrator mode.
@@ -67,7 +67,7 @@ IF %A%==5 GOTO CLOSE
 
 :TOOLS
 cls 
-color fc
+color 0c
 echo.
 echo        You are now in the Tools menu:
 echo.
@@ -131,7 +131,7 @@ IF %B%==26 GOTO CLOSE
 
 :PROGRAMS
 cls
-color fA
+color 0A
 echo.
 echo        You are now in the Programs menu:
 echo.

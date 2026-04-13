@@ -13,9 +13,9 @@ function Set-PcTheme {
     param([string]$Theme)
     $Global:PcTheme = $Theme
     switch ($Theme) {
-        'Main'     { $Host.UI.RawUI.BackgroundColor = 'White';  $Host.UI.RawUI.ForegroundColor = 'DarkCyan'  }
-        'Tools'    { $Host.UI.RawUI.BackgroundColor = 'White';  $Host.UI.RawUI.ForegroundColor = 'DarkRed'   }
-        'Programs' { $Host.UI.RawUI.BackgroundColor = 'White';  $Host.UI.RawUI.ForegroundColor = 'DarkGreen' }
+        'Main'     { $Host.UI.RawUI.BackgroundColor = 'Black';  $Host.UI.RawUI.ForegroundColor = 'Cyan'      }
+        'Tools'    { $Host.UI.RawUI.BackgroundColor = 'Black';  $Host.UI.RawUI.ForegroundColor = 'Red'       }
+        'Programs' { $Host.UI.RawUI.BackgroundColor = 'Black';  $Host.UI.RawUI.ForegroundColor = 'Green'     }
         'Action'   { $Host.UI.RawUI.BackgroundColor = 'Black';  $Host.UI.RawUI.ForegroundColor = 'Green'     }
         'Danger'   { $Host.UI.RawUI.BackgroundColor = 'Black';  $Host.UI.RawUI.ForegroundColor = 'Red'       }
         'Warning'  { $Host.UI.RawUI.BackgroundColor = 'Black';  $Host.UI.RawUI.ForegroundColor = 'Yellow'    }
@@ -27,10 +27,10 @@ function Write-PcHeader {
     $line = '=' * 60
     # Header accent colour matches the active theme so each section feels distinct.
     $headerColor = switch ($Global:PcTheme) {
-        'Main'     { 'DarkCyan'  }
-        'Tools'    { 'DarkRed'   }
-        'Programs' { 'DarkGreen' }
-        default    { 'Cyan'      }
+        'Main'     { 'Cyan'   }
+        'Tools'    { 'Red'    }
+        'Programs' { 'Green'  }
+        default    { 'Cyan'   }
     }
     Write-Host "`n$line" -ForegroundColor $headerColor
     Write-Host "  pcHealth  *  Windows 11  *  $Title" -ForegroundColor $headerColor
@@ -53,10 +53,10 @@ function Write-PcOption {
     $pad = ' ' * [Math]::Max(1, 4 - $Key.Length)
     # Key bracket colour matches the active theme for visual consistency.
     $keyColor = switch ($Global:PcTheme) {
-        'Main'     { 'DarkCyan'  }
-        'Tools'    { 'DarkRed'   }
-        'Programs' { 'DarkGreen' }
-        default    { 'Yellow'    }  # Action / Danger / Warning — yellow on black
+        'Main'     { 'Cyan'   }
+        'Tools'    { 'Red'    }
+        'Programs' { 'Green'  }
+        default    { 'Yellow' }  # Action / Danger / Warning — yellow on black
     }
     Write-Host '  ' -NoNewline
     Write-Host "[$Key]" -ForegroundColor $keyColor -NoNewline
