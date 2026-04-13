@@ -6,6 +6,7 @@ function Show-ToolsMenu {
     $t = Join-Path $Global:pcHealthRoot 'tools'
 
     while ($true) {
+        Set-PcTheme 'Tools'
         Clear-Host
         Write-PcHeader 'Tools'
 
@@ -33,15 +34,15 @@ function Show-ToolsMenu {
         Write-PcOption '22'  'Repair Boot Record'                  '(use with caution!)'
         Write-PcOption '23'  'Shutdown / Reboot / Log Off'
         Write-PcDivider
-        Write-PcOption  'B'  'Back to Main Menu'
-        Write-PcOption  'X'  'Exit'
+        Write-PcOption '24' 'Programs Menu'
+        Write-PcOption '25' 'Back to Main Menu'
+        Write-PcOption '26' 'Exit'
         Write-PcDivider
 
-        $choice = (Read-Host "`n  Choice").Trim().ToUpper()
+        $choice = (Read-Host "`n  Choice").Trim()
 
         # $script starts as $null. The switch sets it to a filename for valid numeric
-        # choices, and directly returns/exits for 'B' and 'X'. After the switch,
-        # $script still being $null means the input was not recognised.
+        # choices, and directly returns for 24, 25, and 26.
         $script = $null
         switch ($choice) {
             '1'  { $script = 'Get-SystemInfo.ps1' }
@@ -67,21 +68,27 @@ function Show-ToolsMenu {
             '21' { $script = 'Show-BIOSPasswordTool.ps1' }
             '22' { $script = 'Invoke-BootRepair.ps1' }
             '23' { $script = 'Invoke-PowerOptions.ps1' }
-            'B'  { return 'back' }  # Back to Main — Main.ps1 just re-loops, same effect
-            'X'  { return 'exit' }  # Tells Main.ps1 to call exit 0
+            '24' { return 'programs' }  # Cross-navigate to Programs menu
+            '25' { return 'main' }      # Back to Main
+            '26' { return 'exit' }      # Tells Main.ps1 to call exit 0
         }
 
         if ($script) {
-            # & is the call operator — runs the script file in the current session
-            # so it inherits all dot-sourced functions and the global pcHealthRoot variable.
+            # Switch to action theme (black bg, green fg) before running the tool —
+            # mirrors the BAT file's `color 0A` at the top of each action section.
+            # Individual tools (Boot Repair, BIOS PW) override the theme themselves.
+            Set-PcTheme 'Action'
+            Clear-Host
+            # & is the call operator — runs the script in the current session so it
+            # inherits all dot-sourced functions including Set-PcTheme.
             & "$t\$script"
             $nav = Read-PcNavChoice 'Back to Tools Menu'
-            if ($nav -eq 'M') { return 'main' }
-            if ($nav -eq 'X') { return 'exit' }
-            # 'B' → fall through to the top of the while loop (stay in Tools menu)
-        } elseif ($choice -notin 'B','X') {
-            # 'B' and 'X' already returned above, so this branch is purely for
-            # inputs that didn't match any case in the switch.
+            switch ($nav) {
+                '2' { return 'main' }
+                '3' { return 'exit' }
+                # '1' → fall through to the top of the while loop (stay in Tools)
+            }
+        } elseif ($choice -notin '24','25','26') {
             Write-Host "`n  Invalid choice." -ForegroundColor Red
             Start-Sleep -Milliseconds 800
         }

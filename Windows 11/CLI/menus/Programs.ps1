@@ -4,6 +4,7 @@
 
 function Show-ProgramsMenu {
     while ($true) {
+        Set-PcTheme 'Programs'
         Clear-Host
         Write-PcHeader 'Programs'
 
@@ -15,38 +16,58 @@ function Show-ProgramsMenu {
         Write-PcOption '6' 'Prime95'                  '(opens download page)'
         Write-PcOption '7' 'Windows PowerToys'
         Write-PcDivider
-        Write-PcOption 'B' 'Back to Main Menu'
-        Write-PcOption 'X' 'Exit'
+        Write-PcOption '8'  'Tools Menu'
+        Write-PcOption '9'  'Back to Main Menu'
+        Write-PcOption '10' 'Exit'
         Write-PcDivider
 
-        $choice = (Read-Host "`n  Choice").Trim().ToUpper()
+        $choice = (Read-Host "`n  Choice").Trim()
 
         switch ($choice) {
-            '1' { winget install --id REALix.HWiNFO          --accept-source-agreements --accept-package-agreements }
-            '2' { winget install --id CPUID.HWMonitor         --accept-source-agreements --accept-package-agreements }
-            '3' { winget install --id Malwarebytes.AdwCleaner --accept-source-agreements --accept-package-agreements }
-            '4' { winget install --id CrystalDewWorld.CrystalDiskInfo --accept-source-agreements --accept-package-agreements }
-            '5' { winget install --id CrystalDewWorld.CrystalDiskMark --accept-source-agreements --accept-package-agreements }
+            '1' {
+                Set-PcTheme 'Action'; Clear-Host
+                winget install --id REALix.HWiNFO          --accept-source-agreements --accept-package-agreements
+            }
+            '2' {
+                Set-PcTheme 'Action'; Clear-Host
+                winget install --id CPUID.HWMonitor         --accept-source-agreements --accept-package-agreements
+            }
+            '3' {
+                Set-PcTheme 'Action'; Clear-Host
+                winget install --id Malwarebytes.AdwCleaner --accept-source-agreements --accept-package-agreements
+            }
+            '4' {
+                Set-PcTheme 'Action'; Clear-Host
+                winget install --id CrystalDewWorld.CrystalDiskInfo --accept-source-agreements --accept-package-agreements
+            }
+            '5' {
+                Set-PcTheme 'Action'; Clear-Host
+                winget install --id CrystalDewWorld.CrystalDiskMark --accept-source-agreements --accept-package-agreements
+            }
             '6' { Start-Process 'https://prime95.net/download/' }
-            '7' { winget install --id Microsoft.PowerToys     --accept-source-agreements --accept-package-agreements }
-            'B' { return 'back' }
-            'X' { return 'exit' }
+            '7' {
+                Set-PcTheme 'Action'; Clear-Host
+                winget install --id Microsoft.PowerToys     --accept-source-agreements --accept-package-agreements
+            }
+            '8'  { return 'tools' }   # Cross-navigate to Tools menu
+            '9'  { return 'main' }
+            '10' { return 'exit' }
             default {
                 Write-Host "`n  Invalid choice." -ForegroundColor Red
                 Start-Sleep -Milliseconds 800
-                # 'continue' skips the rest of the loop body (the nav block below)
-                # and jumps straight back to the top of the while loop.
                 continue
             }
         }
 
-        # Only show the navigation footer after an install or download completed.
-        # 'B' and 'X' already returned from the function above; 'default' used
-        # continue — so reaching this line means choices 1–7 ran successfully.
+        # Show the navigation footer after an install or download completed.
+        # 8, 9, and 10 already returned; 'default' used continue.
         if ($choice -in '1','2','3','4','5','6','7') {
             $nav = Read-PcNavChoice 'Back to Programs Menu'
-            if ($nav -eq 'M') { return 'main' }
-            if ($nav -eq 'X') { return 'exit' }
+            switch ($nav) {
+                '2' { return 'main' }
+                '3' { return 'exit' }
+                # '1' → fall through to the top of the while loop (stay in Programs)
+            }
         }
     }
 }

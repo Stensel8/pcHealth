@@ -5,6 +5,10 @@
 # Best run from a recovery environment (WinRE/CMD) with Administrator rights.
 # ============================================================================
 
+# Danger theme (red) — mirrors the BAT file's `color 0C` for this section.
+Set-PcTheme 'Danger'
+Clear-Host
+
 Write-Host "`n$('=' * 60)" -ForegroundColor Red
 Write-Host "  Boot Record Repair" -ForegroundColor Red
 Write-Host "$('=' * 60)`n" -ForegroundColor Red

@@ -4,9 +4,13 @@
 # Credits: @bacher09 — https://github.com/bacher09/pwgen-for-bios
 # ============================================================================
 
-Write-Host "`n$('=' * 60)" -ForegroundColor Cyan
-Write-Host "  BIOS Password Recovery" -ForegroundColor Cyan
-Write-Host "$('=' * 60)`n" -ForegroundColor Cyan
+# Yellow theme — mirrors the BAT file's `color 0E` for this section.
+Set-PcTheme 'Warning'
+Clear-Host
+
+Write-Host "`n$('=' * 60)" -ForegroundColor Yellow
+Write-Host "  BIOS Password Recovery" -ForegroundColor Yellow
+Write-Host "$('=' * 60)`n" -ForegroundColor Yellow
 Write-Host "  This tool links to bios-pw.org — a website that generates"
 Write-Host "  recovery codes for locked BIOS passwords."
 Write-Host "  Credits for this tool go to: @bacher09`n" -ForegroundColor DarkGray
