@@ -19,11 +19,10 @@ The project targets **feature parity across all supported platforms**. Windows 1
 
 ## Supported Versions
 
-| Platform   | Variant          | Target OS | Status                          |
-|------------|------------------|-----------|---------------------------------|
-| Windows 11 | CLI (PowerShell) | 25H2      | ✅ Actively maintained           |
-| Windows 10 | CLI (CMD/Batch)  | 22H2      | ⛔ Legacy - no longer maintained |
-| Windows 10 | GUI (WinForms)   | 22H2      | ⛔ Legacy - no longer maintained |
+| Platform   | Target OS | Status                           |
+|------------|-----------|----------------------------------|
+| Windows 11 | 25H2      | ✅ Actively maintained            |
+| Windows 10 | 22H2      | ⛔ Legacy - no longer maintained  |
 
 > Windows 10 reached end of support on **October 14, 2025**. The `Windows 10/` folder is kept for reference only. See [SECURITY.md](SECURITY.md) for full version and build details.
 
