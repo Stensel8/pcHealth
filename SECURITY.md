@@ -17,7 +17,7 @@ Windows 10 reached end of Microsoft support on October 14, 2025 and is no longer
 
 | Platform | Status      | Notes                                      |
 |----------|-------------|--------------------------------------------|
-| Linux    | Planned     | Targeting parity with the Windows 11 CLI   |
+| Linux 7  | Planned     | Targeting parity with the Windows 11 CLI   |
 
 ---
 
