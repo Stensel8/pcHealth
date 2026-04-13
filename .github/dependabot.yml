@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # --------------------------------------------------------
+  # GitHub Actions
+  # Dependabot checks weekly whether action versions in
+  # .github/workflows/ can be updated.
+  # --------------------------------------------------------
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "ci"
+    assignees:
+      - "Stensel8"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "actions/*"
+      third-party-actions:
+        patterns:
+          - "DavidAnson/*"
+          - "lycheeverse/*"
+          - "trufflesecurity/*"
+          - "amannn/*"
+          - "webiny/*"

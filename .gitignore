@@ -1,0 +1,51 @@
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE and editor files
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build output (C# / .NET)
+[Bb]in/
+[Oo]bj/
+*.exe
+*.dll
+*.pdb
+*.cache
+
+# NuGet packages
+packages/
+*.nupkg
+project.lock.json
+
+# Visual Studio crash dumps
+*.pidb
+*.svclog
+*.scc
+
+# PowerShell
+*.psm1.bak
+
+# Test output
+TestResults/
+coverage.xml
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+~$*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+/.claude

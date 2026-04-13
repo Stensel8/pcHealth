@@ -1,0 +1,190 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+# Default minimal permissions — each job overrides only what it actually needs.
+# This follows the least-privilege principle.
+permissions: read-all
+
+# Cancel in-progress runs for the same branch/PR when a new push arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ============================================================
+# Overview of checks:
+#
+#  powershell-lint  → PSScriptAnalyzer (Windows 11/CLI scripts)
+#  pr-title         → conventional commits (PR title format)
+#  commit-lint      → conventional commits (commit message format)
+#  markdown-lint    → markdownlint (README, SECURITY, .github docs)
+#  link-check       → lychee (broken links in markdown)
+#  secrets-scan     → TruffleHog (API keys, passwords, tokens)
+# ============================================================
+
+jobs:
+
+  # ----------------------------------------------------------
+  # POWERSHELL LINT
+  # Runs PSScriptAnalyzer on all Windows 11 CLI scripts.
+  # Settings: .github/PSScriptAnalyzerSettings.psd1
+  # ----------------------------------------------------------
+  powershell-lint:
+    name: PowerShell lint (PSScriptAnalyzer)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $settings = ".github/PSScriptAnalyzerSettings.psd1"
+          $results  = Invoke-ScriptAnalyzer -Path "Windows 11/CLI/" -Recurse `
+                        -Settings $settings -Severity Warning,Error
+
+          if ($results) {
+            $results | Format-Table -AutoSize
+            Write-Host "PSScriptAnalyzer found $($results.Count) issue(s)." -ForegroundColor Red
+            exit 1
+          }
+
+          Write-Host "PSScriptAnalyzer: no issues found." -ForegroundColor Green
+
+  # ----------------------------------------------------------
+  # PR TITLE CHECK
+  # Enforces conventional commit format in pull request titles.
+  # ----------------------------------------------------------
+  pr-title:
+    name: PR title (conventional commits)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            chore
+            refactor
+            style
+            perf
+            test
+            revert
+            ci
+            deps
+            build
+
+  # ----------------------------------------------------------
+  # COMMIT LINT
+  # Validates commit messages follow conventional commits on push.
+  # ----------------------------------------------------------
+  commit-lint:
+    name: Commit messages (conventional commits)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check conventional commits
+        uses: webiny/action-conventional-commits@v1.3.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          allowed-commit-types: "feat,fix,docs,chore,refactor,style,perf,test,revert,ci,deps,build"
+
+  # ----------------------------------------------------------
+  # MARKDOWN LINT
+  # Checks README, SECURITY and .github markdown files.
+  # Settings: .markdownlint.jsonc
+  # ----------------------------------------------------------
+  markdown-lint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: "README.md SECURITY.md .github/**/*.md"
+
+  # ----------------------------------------------------------
+  # BROKEN LINK CHECK
+  # Checks whether links in markdown files are still reachable.
+  # Ignored patterns: .lycheeignore
+  # ----------------------------------------------------------
+  link-check:
+    name: Broken link check (markdown)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --include-fragments
+            README.md SECURITY.md .github/**/*.md
+          format: markdown
+          output: lychee/out.md
+          fail: true
+          jobSummary: true
+
+  # ----------------------------------------------------------
+  # SECRET SCAN
+  # Searches for API keys, passwords and tokens in the code.
+  # Only reports verified secrets to reduce false positives.
+  # ----------------------------------------------------------
+  secrets-scan:
+    name: Secret scan (TruffleHog)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Pull request: scan exactly the PR diff (base → head SHA).
+      - name: Scan for secrets (pull request)
+        if: github.event_name == 'pull_request'
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+          extra_args: --only-verified
+
+      # Push: scan only newly added commits.
+      # Skip when it is a new branch (before = all-zeros) since those
+      # commits were already scanned in their PR.
+      - name: Scan for secrets (push)
+        if: >
+          github.event_name == 'push' &&
+          github.event.before != '0000000000000000000000000000000000000000'
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          path: ./
+          base: ${{ github.event.before }}
+          head: ${{ github.sha }}
+          extra_args: --only-verified
