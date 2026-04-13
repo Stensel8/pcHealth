@@ -6,13 +6,10 @@ The table below lists each supported platform, the OS build it targets, and its 
 
 | Platform   | Target OS | Last Tested Build | Status                        | Project support ends |
 |------------|-----------|-------------------|-------------------------------|----------------------|
-| Windows 11 | 25H2      | 26200.8037        | ✅ Actively maintained        | n/a                  |
+| Windows 11 | 25H2      | 26200.8037        | ✅ Actively maintained        | October 12, 2027     |
 | Windows 10 | 22H2      | 19045.x           | ⛔ No longer maintained       | October 14, 2025     |
 
-> **Windows 10 reached end of support on October 14, 2025.**
-> Microsoft no longer releases feature updates for Windows 10. The `Windows 10/` folder in this repository is kept for reference only. No new features, bug fixes, or security patches will be backported to it.
-
-> **Windows 11** scripts target the current stable branch (25H2) and are validated against build **26200.8037**. Builds older than 22H2 are not tested and may not function correctly.
+Windows 10 reached end of Microsoft support on October 14, 2025 and is no longer maintained in this project. The `Windows 10/` folder is kept for reference only; no fixes or new features will be backported to it.
 
 ---
 

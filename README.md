@@ -13,41 +13,39 @@ Check the health of your Windows or Linux installation, drivers, updates, batter
 
 pcHealth is a CLI toolkit for IT technicians and power users to quickly diagnose and repair Windows systems. It provides system scans, hardware information, network tools, license key retrieval, common program downloads, and more, all from a single menu-driven interface.
 
-The project targets **feature parity across all supported platforms**. Windows 11 is the actively maintained reference; Windows 10 is kept for legacy use only.
+The project targets **feature parity across all supported platforms**, with the same option numbers and functionality on every OS.
 
 ---
 
 ## Supported Versions
 
-| Platform   | Target OS | Status                           |
-|------------|-----------|----------------------------------|
-| Windows 11 | 25H2      | ✅ Actively maintained            |
-| Windows 10 | 22H2      | ⛔ Legacy - no longer maintained  |
+| Platform   | Target OS | Status                  |
+|------------|-----------|-------------------------|
+| Windows 11 | 25H2      | ✅ Actively maintained   |
+| Windows 10 | 22H2      | ⛔ No longer maintained  |
 
-> Windows 10 reached end of support on **October 14, 2025**. The `Windows 10/` folder is kept for reference only. See [SECURITY.md](SECURITY.md) for full version and build details.
+See [SECURITY.md](SECURITY.md) for full version, build, and end-of-life details.
 
 ---
 
 ## Getting Started
 
-### Windows 11 - CLI (actively maintained)
+### Windows 11
 
 Requirements: **PowerShell 7+**, run as **Administrator**.
 
 1. Download or clone this repository.
-2. Open an elevated PowerShell terminal (`Run as Administrator`).
+2. Open an elevated PowerShell terminal.
 3. Navigate to `Windows 11/CLI/` and run:
 
 ```powershell
 .\Start.ps1
 ```
 
-### Windows 10 - CLI (legacy, no longer maintained)
-
-> ⚠️ These scripts are no longer actively developed. Use the Windows 11 version where possible.
+### Windows 10
 
 1. Download or clone this repository.
-2. Open `Windows 10/CLI/` and right-click `pcHealth.bat` → **Run as administrator**.
+2. Open `Windows 10/CLI/`, right-click `pcHealth.bat` and select **Run as administrator**.
 3. Enter the number of the desired option and press **Enter**.
 
 ---
@@ -134,9 +132,9 @@ pcHealth/
 │       └── tools/             # One script per function
 ├── Windows 10/
 │   ├── CLI/
-│   │   ├── pcHealth.bat       # Monolithic entry point (legacy)
+│   │   ├── pcHealth.bat       # Entry point
 │   │   └── *.ps1              # Helper scripts called by the BAT
-│   └── GUI/                   # WinForms application (legacy)
+│   └── GUI/                   # WinForms application
 └── Documentation/
     ├── changelog.md
     └── releases.md
@@ -146,13 +144,9 @@ pcHealth/
 
 ## Contributing
 
-Contributions are welcome for the **Windows 11** platform. The Windows 10 scripts are in maintenance mode and will not receive new features.
+Contributions are welcome. Follow the existing naming conventions: `Verb-Noun.ps1` for tools, consistent `Write-PcOption` / `Set-PcTheme` calls for UI. New tool scripts go in `Windows 11/CLI/tools/` and must be registered in `menus/Tools.ps1`. Open an issue before starting larger changes to avoid duplicate work.
 
-- Follow the existing naming conventions: `Verb-Noun.ps1` for tools, consistent `Write-PcOption` / `Set-PcTheme` calls for UI.
-- New tool scripts go in `Windows 11/CLI/tools/` and must be registered in `menus/Tools.ps1`.
-- New programs go in `menus/Programs.ps1`.
-- Open an issue before starting larger changes to avoid duplicate work.
-- See [SECURITY.md](SECURITY.md) for responsible disclosure of vulnerabilities.
+See [SECURITY.md](SECURITY.md) for responsible disclosure of vulnerabilities.
 
 ---
 
