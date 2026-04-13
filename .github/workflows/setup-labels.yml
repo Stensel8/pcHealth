@@ -19,7 +19,7 @@ jobs:
       issues: write
     steps:
       - name: Create / update labels
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             const labels = [

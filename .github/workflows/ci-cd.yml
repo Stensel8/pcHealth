@@ -40,7 +40,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Install PSScriptAnalyzer
         shell: pwsh
@@ -72,7 +72,7 @@ jobs:
     permissions:
       pull-requests: read
     steps:
-      - uses: amannn/action-semantic-pull-request@v5
+      - uses: amannn/action-semantic-pull-request@v6.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -120,9 +120,9 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
-      - uses: DavidAnson/markdownlint-cli2-action@v19
+      - uses: DavidAnson/markdownlint-cli2-action@v23.0.0
         with:
           globs: "README.md SECURITY.md .github/**/*.md"
 
@@ -137,10 +137,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Check links
-        uses: lycheeverse/lychee-action@v2
+        uses: lycheeverse/lychee-action@v2.8.0
         with:
           args: >-
             --include-fragments
@@ -161,14 +161,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
       # Pull request: scan exactly the PR diff (base → head SHA).
       - name: Scan for secrets (pull request)
         if: github.event_name == 'pull_request'
-        uses: trufflesecurity/trufflehog@v3
+        uses: trufflesecurity/trufflehog@v3.94.3
         with:
           path: ./
           base: ${{ github.event.pull_request.base.sha }}
@@ -182,7 +182,7 @@ jobs:
         if: >
           github.event_name == 'push' &&
           github.event.before != '0000000000000000000000000000000000000000'
-        uses: trufflesecurity/trufflehog@v3
+        uses: trufflesecurity/trufflehog@v3.94.3
         with:
           path: ./
           base: ${{ github.event.before }}
