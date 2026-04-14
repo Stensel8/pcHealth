@@ -1,0 +1,71 @@
+using System.Diagnostics;
+using System.IO;
+
+namespace pcHealth;
+
+/// <summary>
+/// Launches CLI tools and system applications from the GUI.
+/// Because the app runs as Administrator, spawned processes inherit elevation.
+/// </summary>
+internal static class CliRunner
+{
+    private static string? _toolsDir;
+
+    /// <summary>
+    /// Locates the Windows 11/CLI/tools directory by walking up from the
+    /// executable location. This works from both the bin/Debug|Release output
+    /// folder and from any ancestor folder, so no hard-coded paths are needed.
+    /// </summary>
+    private static string GetToolsDir()
+    {
+        if (_toolsDir is not null) return _toolsDir;
+
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            var candidate = Path.Combine(dir.FullName, "Windows 11", "CLI", "tools");
+            if (Directory.Exists(candidate))
+                return _toolsDir = candidate;
+            dir = dir.Parent;
+        }
+
+        throw new DirectoryNotFoundException(
+            "Cannot locate Windows 11/CLI/tools.\n" +
+            "Make sure the app is run from within the pcHealth repository.");
+    }
+
+    /// <summary>Runs a PowerShell 7 script in a new visible terminal window.</summary>
+    public static void RunScript(string scriptFileName)
+    {
+        var path = Path.Combine(GetToolsDir(), scriptFileName);
+        Process.Start(new ProcessStartInfo
+        {
+            FileName        = "pwsh.exe",
+            Arguments       = $"-NoProfile -ExecutionPolicy Bypass -File \"{path}\"",
+            UseShellExecute = true,
+        });
+    }
+
+    /// <summary>Opens a URI (ms-settings:, https://, etc.) via the Windows shell.</summary>
+    public static void OpenUri(string uri) =>
+        Process.Start(new ProcessStartInfo { FileName = uri, UseShellExecute = true });
+
+    /// <summary>Launches a named system application (e.g. dfrgui.exe).</summary>
+    public static void OpenApp(string appName) =>
+        Process.Start(new ProcessStartInfo { FileName = appName, UseShellExecute = true });
+
+    /// <summary>
+    /// Runs a winget command in a new PowerShell 7 window and pauses after
+    /// completion so the user can read the output before closing.
+    /// </summary>
+    public static void RunWinget(string wingetArguments)
+    {
+        var cmd = $"winget {wingetArguments}; Write-Host ''; Read-Host 'Press Enter to close'";
+        Process.Start(new ProcessStartInfo
+        {
+            FileName        = "pwsh.exe",
+            Arguments       = $"-NoProfile -Command \"{cmd}\"",
+            UseShellExecute = true,
+        });
+    }
+}

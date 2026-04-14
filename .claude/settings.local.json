@@ -16,7 +16,10 @@
       "Bash(xargs sed:*)",
       "Bash(sed -i 's/pcHealthPlus-VS | Windows Product Key Report/pcHealth | Windows Product Key Report/g' \"Windows 10/GUI/Get-WindowsProductKey-GUI.ps1\")",
       "Bash(sed -i '1s/.*/# Changelog: pcHealth/' \"Windows 10/GUI/Documentation/changelog.md\")",
-      "Bash(sed -i '1s/.*/# Releases: pcHealth/' \"Windows 10/GUI/Documentation/releases.md\")"
+      "Bash(sed -i '1s/.*/# Releases: pcHealth/' \"Windows 10/GUI/Documentation/releases.md\")",
+      "WebFetch(domain:api.nuget.org)",
+      "Bash(dotnet build:*)",
+      "Bash(Out-String)"
     ]
   }
 }

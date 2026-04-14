@@ -11,6 +11,8 @@ Check the health of your Windows or Linux installation, drivers, updates, batter
 
 ## Overview
 
+![Preview](Preview.avif)
+
 pcHealth is a CLI toolkit for IT technicians and power users to quickly diagnose and repair Windows systems. It provides system scans, hardware information, network tools, license key retrieval, common program downloads, and more, all from a single menu-driven interface.
 
 The project targets **feature parity across all supported platforms**, with the same option numbers and functionality on every OS.
@@ -30,7 +32,7 @@ See [SECURITY.md](SECURITY.md) for full version, build, and end-of-life details.
 
 ## Getting Started
 
-### Windows 11
+### Windows 11 — CLI
 
 Requirements: **PowerShell 7+**, run as **Administrator**.
 
@@ -41,6 +43,30 @@ Requirements: **PowerShell 7+**, run as **Administrator**.
 ```powershell
 .\Start.ps1
 ```
+
+### Windows 11 — GUI
+
+The GUI app is a WinUI 3 desktop application that mirrors the full CLI menu in a native Windows 11 interface. It provides the same Tools and Programs menus as the CLI, with Mica backdrop, dark/light theme support, and in-app display for the Windows License Key tool. All other tools launch in an elevated PowerShell 7 terminal window.
+
+Requirements: **Windows 11** (build 22000+), **PowerShell 7+**, run as **Administrator**.
+
+The app ships self-contained — no separate Windows App SDK runtime installation is required.
+
+**Build dependencies:**
+
+| Tool | winget install command |
+|------|------------------------|
+| .NET 10 SDK | `winget install Microsoft.DotNet.SDK.10` |
+| Visual Studio 2022 (recommended) | `winget install Microsoft.VisualStudio.2022.Community` |
+
+1. Download or clone this repository.
+2. Build with Visual Studio 2022 or the .NET CLI:
+
+```powershell
+dotnet build "Windows 11/GUI/pcHealth/pcHealth.csproj" -c Release
+```
+
+3. Run the produced `pcHealth.exe` as Administrator.
 
 ### Windows 10
 
