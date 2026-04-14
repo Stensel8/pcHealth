@@ -3,11 +3,7 @@
 # GitHub automatically requests a review when a pull request touches these files.
 # Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# Default: all files require review from @Stensel8
+# Default: all files require review from code owners
+* @REALSDEALS
 * @Stensel8
 
-# CI/CD and GitHub configuration are sensitive — always review
-.github/ @Stensel8
-
-# Core PowerShell scripts
-Windows 11/ @Stensel8
