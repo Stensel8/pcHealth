@@ -1,12 +1,12 @@
 # ============================================================================
-# pcHealth - Windows 10 - V1.9.1
+# pcHealth - Windows 10 - V2.0.0
 # ============================================================================
 # Boot Record Repair
 # Attempts to repair the boot record using CHKDSK, SFC, BOOTREC and BCDBOOT.
 # Run from a recovery environment (WinRE/CMD) with Administrator privileges.
 # ============================================================================
 
-Write-Host "pcHealth - Windows 11 - Boot Record Repair" -ForegroundColor Cyan
+Write-Host "pcHealth - Windows 10 - Boot Record Repair" -ForegroundColor Cyan
 Write-Host "============================================================`n"
 Write-Host "Starting Boot Record Repair..."
 

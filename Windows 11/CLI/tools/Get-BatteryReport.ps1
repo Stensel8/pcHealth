@@ -1,0 +1,20 @@
+﻿#Requires -Version 7.0
+# ============================================================================
+# pcHealth — Windows 11 — Battery Report
+# ============================================================================
+
+$reportPath = "$env:TEMP\pcHealth-battery-report.html"
+
+Write-Host "`nGenerating battery report...`n" -ForegroundColor Cyan
+Write-Host "Note: This report is based on OS data and may differ from" -ForegroundColor DarkGray
+Write-Host "      hardware-based reports provided by some laptops.`n"   -ForegroundColor DarkGray
+
+powercfg /batteryreport /output $reportPath
+
+if (Test-Path $reportPath) {
+    Write-Host "[OK] Report saved to: $reportPath`n" -ForegroundColor Green
+    $open = (Read-Host "Open the report now? (y/n)").Trim().ToLower()
+    if ($open -eq 'y') { Start-Process $reportPath }
+} else {
+    Write-Host "[!] Report could not be generated. This PC may not have a battery.`n" -ForegroundColor Yellow
+}

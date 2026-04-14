@@ -1,95 +1,176 @@
 # pcHealth
 
-Check the health of your Windows installation and much more!
+Check the health of your Windows or Linux installation, drivers, updates, battery health and much more!
 
-![GitHub](https://img.shields.io/github/license/REALSDEALS/pcHealth?label=License) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?label=Release) ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?include_prereleases&label=Release) ![GitHub Repo Size](https://img.shields.io/github/repo-size/REALSDEALS/pcHealth?label=Repo%20Size)
+![License](https://img.shields.io/github/license/REALSDEALS/pcHealth?label=License)
+![Latest Release](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?label=Release)
+![Pre-release](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?include_prereleases&label=Pre-release)
+![Repo Size](https://img.shields.io/github/repo-size/REALSDEALS/pcHealth?label=Repo%20Size)
+
+---
+
+## Overview
+
+![Preview](Preview.avif)
+
+pcHealth is a CLI toolkit for IT technicians and power users to quickly diagnose and repair Windows systems. It provides system scans, hardware information, network tools, license key retrieval, common program downloads, and more, all from a single menu-driven interface.
+
+The project targets **feature parity across all supported platforms**, with the same option numbers and functionality on every OS.
+
+---
 
 ## Supported Versions
 
-| Platform   | Latest Supported Build | Status |
-|------------|------------------------|--------|
-| Windows 10 | 22H2                   | ![Maintenance](https://img.shields.io/badge/status-no%20longer%20maintained-red) These scripts are no longer actively maintained. Be aware of this when using or running them. |
-| Windows 11 | 25H2                   | ![Active](https://img.shields.io/badge/status-active-brightgreen) These scripts target the current stable branch of Windows 11. |
+| Platform   | Target OS | Status                  |
+|------------|-----------|-------------------------|
+| Windows 11 | 25H2      | ✅ Actively maintained   |
+| Windows 10 | 22H2      | ⛔ No longer maintained  |
 
-## What is the main purpose of pcHealth?
+See [SECURITY.md](SECURITY.md) for full version, build, and end-of-life details.
 
-The main purpose of pcHealth is to assist users working in IT to quickly check and repair Windows systems. It covers system scans, hardware info, network tools, key grabbing, and common program downloads — all from a single interface.
+---
 
-## How to use?
+## Getting Started
 
-If you have any tips/tricks or remarks, feel free to contact me on Discord: **REALSDEALS**.
+### Windows 11 — CLI
 
-### Windows 10 (CMD/batch — legacy, no longer maintained):
-- Download this repository and extract it.
-- Open the `Windows 10/CLI` folder and run `pcHealth.bat` as administrator.
-- Enter the number of the desired command and press ENTER.
+Requirements: **PowerShell 7+**, run as **Administrator**.
 
-### Windows 11 (PowerShell — actively maintained):
-- Open the `Windows 11/CLI` folder.
-- Right-click the desired `.ps1` script and select *Run with PowerShell* (as administrator).
-- Or run directly from an elevated PowerShell terminal.
+1. Download or clone this repository.
+2. Open an elevated PowerShell terminal.
+3. Navigate to `Windows 11/CLI/` and run:
 
-### For users that are not that known about what everything may or may not do...
+```powershell
+.\Start.ps1
+```
 
-## Tools Menu:
-The entries that you may enter in this menu will execute some standard line of code.
-So keep in mind that the .exe (this script) needs to be in administrator mode, it will prompt you when you open the program.
+### Windows 11 — GUI
 
-You have my promise, that I won't do anything malicious to your pc.
-But I can only keep that promise if you are sure to have downloaded pcHealth.bat from my repo: https://github.com/REALSDEALS/pcHealth 
-Otherwise I can keep no promise to that statement.
+The GUI app is a WinUI 3 desktop application that mirrors the full CLI menu in a native Windows 11 interface. It provides the same Tools and Programs menus as the CLI, with Mica backdrop, dark/light theme support, and in-app display for the Windows License Key tool. All other tools launch in an elevated PowerShell 7 terminal window.
 
-1. Gather generic information about the system.
-2. Show CPU, GPU and RAM information.
-3. Run a scan for corrupt and/or missing files. (Windows ISO/DISM related)
-4. When option 3. can't repair the corrupt/missing files, you can try this option. (DISM)
-5. Option 3. and 4. combined. (Puts both commands behind eachother)
-6. Generate a battery report. (To see how your laptop battery is doing)
-7. Shortcut to Windows Update.
-8. Open a menu regarding disk optimization, this is a standard Windows function.
-9. Opens and starts a disk clean program, this is a standard Windows function.
-10. Short ping test. (Do I have internet?)
-11. Continues ping test. (Does my internet stop at certain times?)
-12. Starts the function 'TRACERT' and traces how many hops your system has to make before establishing an connection with the host. (Google)
-13. Fetches updates for system programs, updates them too if needed.
-14. Fetches updates for HP software and hardware, by running the HPIA tool. This tool will only work on HPE devices, such as ProBooks, EliteBooks, ZBooks, etc. The source URL is hpia.hpcloud.hp.com. View full list of hardware supported by HPIA: https://ftp.ext.hp.com/pub/caps-softpaq/cmit/imagepal/ref/platformList.html
-14. Re-enables the drivers, it restarts the audio drivers. (Having issues with sound?)
-15. Re-open the battery report. (Can't find my generated report anymore? Try opening it this way)
-16. Re-open the CBS.log (DISM log, report from option 4.) 
-17. Get your Ninite! (Standard program downloader/updater; Chrome, Edge, VLC and 7Zip)
-18. Check your Windows License Key.
-19. BIOS password recovery.
-20. Shutdown, reboot and/or logout from the system.
-21. Open the other menu, it's called 'Programs'.
-22. Returning to the previous menu, main-menu.
-23. Close the script.
+Requirements: **Windows 11** (build 22000+), **PowerShell 7+**, run as **Administrator**.
 
+The app ships self-contained — no separate Windows App SDK runtime installation is required.
 
-## Programs menu:
-The entries that you may put in here will redirect you to the download page of the program.
-This is a combination of winget packages and direct download links, since not all programs are available in winget.
+**Build dependencies:**
 
-While I understand that some of you may have questions about this decision, my goal was to simplify the process for you. You’re welcome to review the source code at any time to see exactly how it works. Additionally, if you prefer to download your software manually, that option is always available.
+| Tool | winget install command |
+|------|------------------------|
+| .NET 10 SDK | `winget install Microsoft.DotNet.SDK.10` |
+| Visual Studio 2022 (recommended) | `winget install Microsoft.VisualStudio.2022.Community` |
 
-1. Hardware Info - This program will check which hardware is in your PC.
-2. HWMonitor - This program will check the temperature of your hardware.
-3. ADW Cleaner - This program will scan for malicious software (adware, malware, spyware).
-4. CrystalDiskInfo - This program will check information about your HDD/SDD (serial etc.)
-5. CrystalDiskMark - This program will test your HDD/SDD on possible malfunctions.
-6. Prime95 - This program will stress test your CPU. Useful for overclocking and performance tests.
-7. Windows PowerToys - Makes configuration in- and around Windows a tad easier. Adds some new features to your Windows.
-8. Open the other menu, it's called 'Tools'.
-9. Return to the previous menu. 
-10. Close the script.
+1. Download or clone this repository.
+2. Build with Visual Studio 2022 or the .NET CLI:
 
-## KeyGrabber
-The key grabber script does what it says!
+```powershell
+dotnet build "Windows 11/GUI/pcHealth/pcHealth.csproj" -c Release
+```
 
-It grabs the license key (windows) that's on your pc, and gives you an option to save it to your desktop.
+3. Run the produced `pcHealth.exe` as Administrator.
 
-## Questions
-If you still have questions, you can send me a message on Discord as mentioned above.
-My username is: **REALSDEALS**.
+### Windows 10
 
-There is also a possibility to e-mail me, if that's what you desire (check my GitHub profile for that).
+1. Download or clone this repository.
+2. Open `Windows 10/CLI/`, right-click `pcHealth.bat` and select **Run as administrator**.
+3. Enter the number of the desired option and press **Enter**.
 
+---
+
+## Menu Reference
+
+All menus and option numbers are identical across platforms. The underlying implementation differs (CMD/Batch on Windows 10, PowerShell 7 on Windows 11) but the user experience is the same.
+
+<details>
+<summary><strong>Main Menu</strong></summary>
+
+| Key | Option                 |
+|-----|------------------------|
+| 1   | Tools Menu             |
+| 2   | Programs Menu          |
+| 3   | Go to repository       |
+| 4   | Check for pre-releases |
+| 5   | Exit                   |
+
+</details>
+
+<details>
+<summary><strong>Tools Menu (26 options)</strong></summary>
+
+| Key | Function                    | Notes                                          |
+|-----|-----------------------------|------------------------------------------------|
+| 1   | System Information          | `systeminfo` / `Get-ComputerInfo`              |
+| 2   | CPU / GPU / RAM Info        |                                                |
+| 3   | System File Scan            | SFC `/scannow`                                 |
+| 4   | DISM Health Check           | Check + Scan health                            |
+| 5   | Scan + Repair               | SFC + DISM combined                            |
+| 6   | Battery Report              | Laptop only                                    |
+| 7   | Windows Update              | Opens Windows Update                           |
+| 8   | Disk Optimization           | Opens `dfrgui.exe`                             |
+| 9   | Disk Cleanup                | Opens `cleanmgr.exe`                           |
+| 10  | Short Ping Test             | 4-packet ping to 8.8.8.8                       |
+| 11  | Continuous Ping Test        | Continuous ping to 8.8.8.8                     |
+| 12  | Traceroute to Google        | `tracert www.google.com`                       |
+| 13  | Reset Network Stack         | Flushes DNS, resets Winsock                    |
+| 14  | Update System Programs      | `winget upgrade --all`                         |
+| 15  | Update HP Drivers           | Installs HP Image Assistant (HP devices only)  |
+| 16  | Restart Audio Drivers       | Restarts audio services                        |
+| 17  | Open Battery Report         | Opens previously generated report              |
+| 18  | Open CBS Log                | Opens `C:\Windows\Logs\CBS\CBS.log`            |
+| 19  | Get Ninite                  | Downloads Edge, Chrome, VLC, 7-Zip             |
+| 20  | Windows License Key         | Reads key from registry                        |
+| 21  | BIOS Password Recovery      | Links to bios-pw.org - credits: @bacher09      |
+| 22  | Repair Boot Record          | CHKDSK + SFC + BOOTREC - **use with caution**  |
+| 23  | Shutdown / Reboot / Log Off |                                                |
+| 24  | Programs Menu               |                                                |
+| 25  | Back to Main Menu           |                                                |
+| 26  | Exit                        |                                                |
+
+</details>
+
+<details>
+<summary><strong>Programs Menu (10 options)</strong></summary>
+
+| Key | Program                  | Install method      |
+|-----|--------------------------|---------------------|
+| 1   | HWiNFO64                 | winget              |
+| 2   | HWMonitor                | winget              |
+| 3   | Malwarebytes ADW Cleaner | winget              |
+| 4   | CrystalDiskInfo          | winget              |
+| 5   | CrystalDiskMark          | winget              |
+| 6   | Prime95                  | Opens download page |
+| 7   | Windows PowerToys        | winget              |
+| 8   | Tools Menu               |                     |
+| 9   | Back to Main Menu        |                     |
+| 10  | Exit                     |                     |
+
+</details>
+
+---
+
+## Contributing
+
+Contributions are welcome. Follow the existing naming conventions: `Verb-Noun.ps1` for tools, consistent `Write-PcOption` / `Set-PcTheme` calls for UI. New tool scripts go in `Windows 11/CLI/tools/` and must be registered in `menus/Tools.ps1`. Open an issue before starting larger changes to avoid duplicate work.
+
+See [SECURITY.md](SECURITY.md) for responsible disclosure of vulnerabilities.
+
+---
+
+## Contact
+
+Questions or feedback? Reach out on Discord: **REALSDEALS**
+
+Or open an [issue](https://github.com/REALSDEALS/pcHealth/issues) on GitHub.
+
+---
+
+*Licensed under [GNU GPL v3](LICENSE). You are free to use this project, but you may not remove the attribution or re-license it.*
+
+---
+
+## Inspired by
+
+pcHealth consolidates and replaces the following earlier projects:
+
+- [pcHealthPlus](https://github.com/REALSDEALS/pcHealthPlus) — original batch-based health toolkit
+- [pcHealthPlus-VS](https://github.com/REALSDEALS/pcHealthPlus-VS) — Visual Studio variant of pcHealthPlus
+- [Win_Scan](https://github.com/REALSDEALS/Win_Scan) — standalone Windows scanning utility

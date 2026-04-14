@@ -1,5 +1,38 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+
+  "description": "Renovate manages NuGet packages only. GitHub Actions updates are handled by Dependabot (see .github/dependabot.yml).",
+
   "extends": ["config:recommended"],
-  "enabledManagers": ["nuget"]
+
+  "enabledManagers": ["nuget"],
+
+  "schedule": ["on monday"],
+
+  "labels": ["dependencies", "dotnet"],
+
+  "assignees": ["Stensel8"],
+
+  "commitMessagePrefix": "deps",
+
+  "packageRules": [
+    {
+      "description": "Group all Windows App SDK packages into a single PR.",
+      "matchPackagePatterns": ["^Microsoft\\.WindowsAppSDK", "^Microsoft\\.Windows\\.SDK"],
+      "groupName": "Windows App SDK",
+      "labels": ["dependencies", "dotnet", "winui3"]
+    },
+    {
+      "description": "Group .NET BCL packages (System.*) into a single PR.",
+      "matchPackagePatterns": ["^System\\."],
+      "groupName": ".NET BCL",
+      "labels": ["dependencies", "dotnet"]
+    },
+    {
+      "description": "Auto-merge patch updates that pass CI, to reduce review noise.",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    }
+  ]
 }

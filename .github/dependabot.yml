@@ -1,8 +1,39 @@
 version: 2
+
+# Dependency update strategy (no overlap between tools):
+#
+#   Dependabot  ->  GitHub Actions (.github/workflows/)
+#   Renovate    ->  NuGet packages  (Windows 11/GUI/KeyGrabber/)
+#
+# Each tool handles what it does best. Renovate is configured
+# in renovate.json at the repo root.
+
 updates:
-  - package-ecosystem: "nuget"
-    directory: "/Windows 10/GUI"
+  # GitHub Actions
+  # Dependabot checks weekly whether action versions in
+  # .github/workflows/ can be updated.
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "ci"
+    assignees:
+      - "Stensel8"
     commit-message:
-      prefix: "chore"
+      prefix: "ci"
+      include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "actions/*"
+      third-party-actions:
+        patterns:
+          - "DavidAnson/*"
+          - "lycheeverse/*"
+          - "trufflesecurity/*"
+          - "amannn/*"
+          - "webiny/*"
