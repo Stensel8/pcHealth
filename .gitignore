@@ -57,6 +57,7 @@ project.fragment.lock.json
 
 # PowerShell
 *.psm1.bak
+psa.xml
 
 # Test output
 TestResults/
