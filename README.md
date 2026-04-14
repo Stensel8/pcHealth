@@ -164,3 +164,13 @@ Or open an [issue](https://github.com/REALSDEALS/pcHealth/issues) on GitHub.
 ---
 
 *Licensed under [GNU GPL v3](LICENSE). You are free to use this project, but you may not remove the attribution or re-license it.*
+
+---
+
+## Inspired by
+
+pcHealth consolidates and replaces the following earlier projects:
+
+- [pcHealthPlus](https://github.com/REALSDEALS/pcHealthPlus) — original batch-based health toolkit
+- [pcHealthPlus-VS](https://github.com/REALSDEALS/pcHealthPlus-VS) — Visual Studio variant of pcHealthPlus
+- [Win_Scan](https://github.com/REALSDEALS/Win_Scan) — standalone Windows scanning utility
