@@ -5,6 +5,8 @@
 
   "extends": ["config:recommended"],
 
+  "forkProcessing": "enabled",
+
   "enabledManagers": ["nuget"],
 
   "schedule": ["on monday"],
