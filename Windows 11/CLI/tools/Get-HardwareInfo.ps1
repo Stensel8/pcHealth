@@ -12,7 +12,7 @@ if ($cpuData) {
                               @{N='Cores';    E={$_.NumberOfCores}},
                               @{N='Threads';  E={$_.NumberOfLogicalProcessors}},
                               @{N='Base Speed (MHz)'; E={$_.MaxClockSpeed}} |
-              Format-Table -AutoSize
+              Format-Table -AutoSize | Out-Host
 } else {
     Write-Warning "CPU information not available."
 }
@@ -42,7 +42,7 @@ if ($gpuData) {
             'Driver Ver.'   = $gpu.DriverVersion
             'VRAM (GB)'     = $vramGB
         }
-    } | Format-Table -AutoSize
+    } | Format-Table -AutoSize | Out-Host
 } else {
     Write-Warning "GPU information not available."
 }
@@ -55,7 +55,7 @@ if ($ramData) {
                               @{N='Capacity(GB)'; E={[Math]::Round($_.Capacity / 1GB, 2)}},
                               @{N='Speed(MHz)';   E={$_.Speed}},
                               @{N='Manufacturer'; E={$_.Manufacturer}} |
-               Format-Table -AutoSize
+               Format-Table -AutoSize | Out-Host
 
     $totalGB = [Math]::Round(($ramData | Measure-Object -Property Capacity -Sum).Sum / 1GB, 2)
     Write-Host "Total Installed RAM: $totalGB GB`n" -ForegroundColor Green

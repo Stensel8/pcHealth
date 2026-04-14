@@ -22,4 +22,4 @@ $cpu = Get-CimInstance -ClassName Win32_Processor | Select-Object -First 1
     'Last Boot'          = $os.LastBootUpTime
     'System Directory'   = $os.SystemDirectory
     'Windows Directory'  = $os.WindowsDirectory
-} | Format-List
+} | Format-List | Out-Host
