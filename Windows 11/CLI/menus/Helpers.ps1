@@ -3,6 +3,32 @@
 # Shared display and navigation utilities used by all menu scripts.
 # ============================================================================
 
+# Write to both the console and a persistent log file under C:\pcHealth\Logs\.
+# The log filename is derived from $MyInvocation so each tool gets its own file.
+# Use -IsError to emit a warning-coloured line on the console.
+function Write-PcLog {
+    param(
+        [string]$Message,
+        [switch]$IsError
+    )
+    try {
+        $logDir = 'C:\pcHealth\Logs'
+        if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+        $scriptName = if ($MyInvocation.ScriptName) {
+            [System.IO.Path]::GetFileNameWithoutExtension($MyInvocation.ScriptName)
+        } else { 'pcHealth' }
+        $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        "[$timestamp] $Message" | Out-File -FilePath (Join-Path $logDir "$scriptName.log") -Append -ErrorAction Stop
+    } catch {
+        Write-Debug "Write-PcLog: failed to write to log file: $_"
+    }
+    if ($IsError) {
+        Write-Host $Message -ForegroundColor Red
+    } else {
+        Write-Host $Message
+    }
+}
+
 # Global theme — set by each menu before it renders.
 # Valid values: 'Main', 'Tools', 'Programs', 'Action', 'Danger', 'Warning'
 $Global:PcTheme = 'Main'

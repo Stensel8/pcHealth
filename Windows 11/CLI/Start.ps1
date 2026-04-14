@@ -1,12 +1,33 @@
-﻿#Requires -Version 7.0
-#Requires -RunAsAdministrator
-
-# ============================================================================
+﻿# ============================================================================
 # pcHealth — Windows 11 — V2.1.0
 # Entry point. Requires PowerShell 7+ and Administrator privileges.
 # ============================================================================
 
 $ErrorActionPreference = 'Stop'
+
+# --- Admin check: re-launch elevated if not already running as administrator.
+# This replaces #Requires -RunAsAdministrator, which would just crash with a
+# cryptic error. Instead we silently re-launch so the user only sees one UAC prompt.
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator
+)
+if (-not $isAdmin) {
+    Write-Host 'Administrator privileges required. Relaunching elevated...' -ForegroundColor Yellow
+    # Prefer pwsh (PS7) for the elevated session; fall back to Windows PowerShell 5.
+    $shell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell' }
+    Start-Process -FilePath $shell `
+        -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$PSCommandPath`"" `
+        -Verb RunAs
+    exit
+}
+
+# --- PS7 check: give a clear download hint instead of a cryptic parse error.
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host 'ERROR: PowerShell 7 or higher is required to run pcHealth.' -ForegroundColor Red
+    Write-Host 'Download the latest version at: https://aka.ms/powershell' -ForegroundColor Yellow
+    Read-Host "`nPress Enter to exit"
+    exit 1
+}
 
 # $Global:pcHealthRoot is used by Tools.ps1 to build paths to the tools/ folder.
 # It must be set before dot-sourcing the menus so they can reference it at call time.
