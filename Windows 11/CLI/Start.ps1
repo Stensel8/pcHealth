@@ -29,6 +29,18 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     exit 1
 }
 
+# --- Console resize: wide enough for hardware tables, tall enough for menus.
+try {
+    $ui  = $Host.UI.RawUI
+    $buf = $ui.BufferSize
+    $buf.Width = 220
+    $ui.BufferSize = $buf          # buffer must be set before window (window <= buffer)
+    $win         = $ui.WindowSize
+    $win.Width   = [Math]::Min(220, $ui.MaxPhysicalWindowSize.Width)
+    $win.Height  = [Math]::Min(50,  $ui.MaxPhysicalWindowSize.Height)
+    $ui.WindowSize = $win
+} catch { <# non-interactive host — ignore #> }
+
 # $Global:pcHealthRoot is used by Tools.ps1 to build paths to the tools/ folder.
 # It must be set before dot-sourcing the menus so they can reference it at call time.
 $Global:pcHealthRoot = $PSScriptRoot

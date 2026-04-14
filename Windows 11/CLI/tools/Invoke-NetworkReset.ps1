@@ -5,20 +5,22 @@
 
 Write-Host "`nResetting and flushing the network stack...`n" -ForegroundColor Cyan
 
-# Clear-DnsClientCache is the PS7 equivalent of 'ipconfig /flushdns'
 Write-Host "[>>] Flushing DNS cache..." -ForegroundColor Yellow
 Clear-DnsClientCache
 Write-Host "[OK] DNS cache flushed." -ForegroundColor Green
 
-# Register-DnsClient re-sends the hostname to the DNS server (like 'ipconfig /registerdns')
 Write-Host "[>>] Re-registering DNS..." -ForegroundColor Yellow
 Register-DnsClient
 Write-Host "[OK] DNS re-registered." -ForegroundColor Green
 
-Write-Host "[>>] Releasing and renewing IP address..." -ForegroundColor Yellow
-ipconfig /release | Out-Null
-ipconfig /renew   | Out-Null
-Write-Host "[OK] IP address renewed." -ForegroundColor Green
+Write-Host "[>>] Releasing and renewing DHCP leases..." -ForegroundColor Yellow
+Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration |
+    Where-Object { $_.DHCPEnabled -and $_.IPEnabled } |
+    ForEach-Object {
+        Invoke-CimMethod -InputObject $_ -MethodName ReleaseDHCPLease | Out-Null
+        Invoke-CimMethod -InputObject $_ -MethodName RenewDHCPLease  | Out-Null
+    }
+Write-Host "[OK] DHCP leases renewed." -ForegroundColor Green
 
 # Winsock reset rebuilds the Windows Sockets catalog from scratch.
 # Fixes issues caused by malware or broken LSP (Layered Service Provider) entries.

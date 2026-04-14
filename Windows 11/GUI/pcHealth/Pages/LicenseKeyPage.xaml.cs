@@ -18,11 +18,20 @@ public sealed partial class LicenseKeyPage : Page
     // Run key extraction when the page is first shown.
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // WMI queries can block for a short time, so run them on a thread pool thread.
-        // The continuation back on the UI thread is guaranteed by the captured
-        // SynchronizationContext from the async/await machinery.
-        _result = await Task.Run(KeyExtractor.Extract);
-        PopulateUi();
+        try
+        {
+            // WMI queries can block for a short time, so run them on a thread pool thread.
+            // The continuation back on the UI thread is guaranteed by the captured
+            // SynchronizationContext from the async/await machinery.
+            _result = await Task.Run(KeyExtractor.Extract);
+            PopulateUi();
+        }
+        catch (Exception ex)
+        {
+            PrimaryKeyText.Text       = "Key extraction failed.";
+            PrimaryKeyText.Foreground = (Brush)App.Current.Resources["SystemFillColorCriticalBrush"];
+            KeySourceText.Text        = ex.Message;
+        }
     }
 
     // Fill all UI elements with the extraction results.

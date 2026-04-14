@@ -13,7 +13,7 @@ function Show-ProgramsMenu {
         Write-PcOption '3' 'Malwarebytes ADW Cleaner'
         Write-PcOption '4' 'CrystalDiskInfo'
         Write-PcOption '5' 'CrystalDiskMark'
-        Write-PcOption '6' 'Prime95'                  '(opens download page)'
+        Write-PcOption '6' 'Prime95'
         Write-PcOption '7' 'Windows PowerToys'
         Write-PcDivider
         Write-PcOption '8'  'Tools Menu'
@@ -44,7 +44,10 @@ function Show-ProgramsMenu {
                 Set-PcTheme 'Action'; Clear-Host
                 winget install --id CrystalDewWorld.CrystalDiskMark --accept-source-agreements --accept-package-agreements
             }
-            '6' { Start-Process 'https://prime95.net/download/' }
+            '6' {
+                Set-PcTheme 'Action'; Clear-Host
+                winget install --id mersenne.prime95 --accept-source-agreements --accept-package-agreements
+            }
             '7' {
                 Set-PcTheme 'Action'; Clear-Host
                 winget install --id Microsoft.PowerToys     --accept-source-agreements --accept-package-agreements
