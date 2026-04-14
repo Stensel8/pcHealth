@@ -1,11 +1,14 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth — Windows 11 — Traceroute to Google
 # ============================================================================
+param(
+    [string]$Target = 'google.com'
+)
 
-Write-Host "`nTraceroute to google.com (max 30 hops)...`n" -ForegroundColor Cyan
+Write-Host "`nTraceroute to $Target (max 30 hops)...`n" -ForegroundColor Cyan
 
-$result = Test-NetConnection -ComputerName 'google.com' -TraceRoute -ErrorAction SilentlyContinue
+$result = Test-NetConnection -ComputerName $Target -TraceRoute -ErrorAction SilentlyContinue
 
 if ($result) {
     $hop = 1

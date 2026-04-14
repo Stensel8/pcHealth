@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth — Windows 11 — Boot Record Repair
 # Attempts to repair the boot record via CHKDSK, SFC, BOOTREC and BCDBOOT.

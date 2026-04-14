@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth — Windows 11 — Disk Optimization
 # Opens the built-in Disk Optimization (Defragment and Optimize Drives) GUI.

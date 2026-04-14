@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth — Windows 11 — Windows Update
 # Opens the Windows Update settings page.
