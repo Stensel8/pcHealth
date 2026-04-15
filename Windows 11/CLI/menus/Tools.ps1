@@ -61,7 +61,7 @@ function Show-ToolsMenu {
             '16' { $script = 'Open-CBSLog.ps1' }
             '17' { $script = 'Get-Ninite.ps1' }
             '18' { $script = 'Get-LicenseKey.ps1' }
-            '19' { $script = 'Show-BIOSPasswordTool.ps1' }
+            '19' { $script = 'Open-BIOSPasswordTool.ps1' }
             '20' { $script = 'Invoke-BootRepair.ps1' }
             '21' { $script = 'Invoke-PowerOptions.ps1' }
             '22' { return 'programs' }  # Cross-navigate to Programs menu

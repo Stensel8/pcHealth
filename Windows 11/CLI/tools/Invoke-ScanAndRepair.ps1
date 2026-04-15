@@ -119,5 +119,5 @@ foreach ($key in $results.Keys) {
 
 Write-Host ""
 Write-Host "$('=' * 60)" -ForegroundColor Cyan
-Write-Host "  Full log: C:\Windows\Logs\CBS\CBS.log" -ForegroundColor DarkGray
+Write-Host "  Full log: $env:SystemRoot\Logs\CBS\CBS.log" -ForegroundColor DarkGray
 Write-Host "$('=' * 60)`n" -ForegroundColor Cyan

@@ -1,5 +1,5 @@
 # ============================================================================
-# pcHealth - Windows 10 - V2.0.0
+# pcHealth - Windows 10 - V2.1.1
 # ============================================================================
 # Windows Product Key Grabber (WPF GUI)
 # Extracts the Windows product key via OA3 (UEFI/BIOS) and registry decode.
@@ -85,12 +85,7 @@ function Get-ProductKeyFromDigitalProductId {
         $RegPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
         $DigitalProductId = (Get-ItemProperty -Path $RegPath -ErrorAction Stop).DigitalProductId
 
-        if (-not $DigitalProductId) {
-            Write-Host "  DEBUG: DigitalProductId is null/empty" -ForegroundColor Yellow
-            return $null
-        }
-
-        Write-Host "  DEBUG: DigitalProductId found, length: $($DigitalProductId.Length) bytes" -ForegroundColor Green
+        if (-not $DigitalProductId) { return $null }
 
         # Extract the key portion (bytes 52-66 = 15 bytes)
         $key = $DigitalProductId[52..66]
@@ -137,10 +132,8 @@ function Get-ProductKeyFromDigitalProductId {
             }
         }
 
-        Write-Host "  DEBUG: Decoded key: $formattedKey" -ForegroundColor Green
         return $formattedKey
     } catch {
-        Write-Host "  DEBUG: Error in DigitalProductId: $($_.Exception.Message)" -ForegroundColor Red
         return $null
     }
 }
@@ -174,12 +167,10 @@ function Get-ProductKeyFromDigitalProductId {
 # ============================================================================
 function Get-ProductKeyFromOA3 {
     try {
-        Write-Host "  DEBUG: Querying SoftwareLicensingService..." -ForegroundColor Cyan
         $key = (Get-CimInstance -Query 'SELECT * FROM SoftwareLicensingService' -ErrorAction Stop).OA3xOriginalProductKey
-        if ($key) { Write-Host "  DEBUG: OA3 key found: $key" -ForegroundColor Green; return $key }
-        Write-Host "  DEBUG: OA3xOriginalProductKey is null (not an OEM system)" -ForegroundColor Yellow
+        if ($key) { return $key }
     } catch {
-        Write-Host "  DEBUG: OA3 query failed: $($_.Exception.Message)" -ForegroundColor Red
+        # OA3 not available on this system
     }
     return $null
 }
@@ -258,7 +249,6 @@ function Invoke-AllKeyMethods {
     $methods = @()
 
     # METHOD 1: OA3 (UEFI/BIOS) - Plaintext readout
-    Write-Host "Attempting Method 1: OA3 (UEFI/BIOS)..." -ForegroundColor Cyan
     $oa3Key = Get-ProductKeyFromOA3
     if ($oa3Key -and (Test-ProductKeyFormat $oa3Key)) {
         $methods += @{ Name = "OA3 (UEFI/BIOS) - Plaintext"; Status = "Success"; Result = $oa3Key; Icon = "[+]" }
@@ -267,7 +257,6 @@ function Invoke-AllKeyMethods {
     }
 
     # METHOD 2: DigitalProductId (Registry) - Decoded with reverse-engineered algorithm
-    Write-Host "Attempting Method 2: DigitalProductId (Registry)..." -ForegroundColor Cyan
     $regKey = Get-ProductKeyFromDigitalProductId
     if ($regKey -and (Test-ProductKeyFormat $regKey)) {
         $methods += @{ Name = "DigitalProductId (Registry) - Decoded"; Status = "Success"; Result = $regKey; Icon = "[+]" }
@@ -303,7 +292,6 @@ if ($IsGenericKey) { Write-Host "WARNING: Generic/Placeholder key detected!" -Fo
 
 # Detect system theme for UI colors
 $Theme = Get-SystemTheme
-Write-Host "System Theme: $Theme Mode`n" -ForegroundColor Cyan
 
 # Define UI colors based on theme
 $colors = if ($Theme -eq "Dark") {
@@ -656,5 +644,4 @@ $btnClose.Add_Click({
 })
 
 # Show window
-Write-Host "Opening GUI...`n" -ForegroundColor Green
 $Window.ShowDialog() | Out-Null

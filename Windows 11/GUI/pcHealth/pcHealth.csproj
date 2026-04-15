@@ -6,6 +6,7 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>pcHealth</RootNamespace>
     <AssemblyName>pcHealth</AssemblyName>
+    <ApplicationIcon>pcplushealthpluspluslogo.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Unpackaged deployment — no MSIX required -->
     <WindowsPackageType>None</WindowsPackageType>
@@ -19,6 +20,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Copy the icon to the output directory so AppWindow.SetIcon() can find it at runtime. -->
+    <Content Include="pcplushealthpluspluslogo.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK"    Version="1.8.260317003" />

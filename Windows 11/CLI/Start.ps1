@@ -1,5 +1,5 @@
 ﻿# ============================================================================
-# pcHealth — Windows 11 — V2.1.0
+# pcHealth — Windows 11 — V2.1.1
 # Entry point. Requires PowerShell 7+ and Administrator privileges.
 # ============================================================================
 

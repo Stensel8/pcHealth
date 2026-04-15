@@ -19,7 +19,7 @@ function Write-SectionHeader {
 function Find-Smartctl {
     $inPath = Get-Command smartctl -ErrorAction SilentlyContinue
     if ($inPath) { return $inPath.Source }
-    $prog = 'C:\Program Files\smartmontools\bin\smartctl.exe'
+    $prog = "$env:ProgramFiles\smartmontools\bin\smartctl.exe"
     if (Test-Path $prog) { return $prog }
     return $null
 }
@@ -88,7 +88,7 @@ try {
             Where-Object { $null -ne (ConvertTo-VramGB $_.'HardwareInformation.qwMemorySize') }
     )
 } catch {
-    Write-Verbose "Registry adapter key unreadable — falling back to AdapterRAM: $_"
+    Write-Warning "Registry adapter key unreadable — falling back to AdapterRAM: $_"
 }
 
 $gpuData = Get-CimInstance -ClassName Win32_VideoController -ErrorAction SilentlyContinue

@@ -29,7 +29,7 @@ if '%errorlevel%' NEQ '0' (
 :--------------------------------------    
 :: MainCode
 @echo off
-title pcHealth - Windows 10 - V2.0.0
+title pcHealth - Windows 10 - V2.1.1
 cd /
 color D
 cls
@@ -42,7 +42,7 @@ echo Thanks for downloading and using pcHealth!
 echo Please be sure that you are running this Batch file in Administrator mode.
 echo.
 echo Made by REALSDEALS - Licensed under GNU-3 (You are free to use, but not to change or to remove this line.)
-echo You are now using pcHealth - Windows 10 - V2.0.0
+echo You are now using pcHealth - Windows 10 - V2.1.1
 echo.
 for /f "skip=2 tokens=1,2,*" %%a in ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI" /v LastLoggedOnDisplayName 2^>nul') do set FullName=%%c
 if "%FullName%"=="" set FullName=%USERNAME%
@@ -187,7 +187,7 @@ color 0A
 winget install --id HP.ImageAssistant
 echo.
 echo -----------------------------------------------------
-echo Please navigate to: C:\SWSetup
+echo Please navigate to: %SystemDrive%\SWSetup
 echo and search for "HPImageAssistant.exe". Running this tool will scan your HP system for outdated drivers and firmware.
 pause
 echo.
@@ -206,7 +206,7 @@ IF "%LR%"=="2" GOTO MENU
 IF "%LR%"=="3" GOTO CLOSE
 IF "%LR%"=="4" (
     echo Opening the HP Image Assistant folder...
-    start "" "C:\SWSetup"
+    start "" "%SystemDrive%\SWSetup"
     pause
     GOTO MENU
 ) else (
@@ -326,7 +326,7 @@ echo.
 echo Please note:
 echo This report is generated from OS data and may differ from the hardware-based battery report offered by some laptops.
 echo.
-powercfg /batteryreport
+powercfg /batteryreport /output "%TEMP%\pcHealth-battery-report.html"
 pause
 echo.
 echo Select an option:
@@ -395,7 +395,7 @@ echo.
 SET /P N=Enter number 1 to return to the previous sub-menu menu, enter number 2 to return to the main-menu or enter number 3 to exit the script. Enter: 
 IF %N%==1 GOTO TOOLS
 IF %N%==2 GOTO MENU
-IF %N%==2 GOTO CLOSE
+IF %N%==3 GOTO CLOSE
 
 :TRACEGOOGLE
 cls
@@ -447,7 +447,7 @@ GOTO TOOLS
 :BATOPEN
 cls
 color 0A
-start %windir%\explorer.exe "C:\battery-report.html"
+start %windir%\explorer.exe "%TEMP%\pcHealth-battery-report.html"
 pause
 echo.
 SET /P O=Enter number 1 to return to the previous sub-menu, enter number 2 to return to the main-menu or enter number 3 to exit the script. Enter: 
@@ -458,7 +458,7 @@ IF %O%==3 GOTO CLOSE
 :OPENCBSLOG
 cls
 color 0A
-start %windir%\explorer.exe "C:\Windows\Logs\CBS\CBS.log"
+start %windir%\explorer.exe "%windir%\Logs\CBS\CBS.log"
 pause
 echo.
 SET /P P=Enter number 1 to return to the previous sub-menu, enter number 2 to return to the main-menu or enter number 3 to exit the script. Enter: 

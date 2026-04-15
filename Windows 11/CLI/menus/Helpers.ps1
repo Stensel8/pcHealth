@@ -12,7 +12,7 @@ function Write-PcLog {
         [switch]$IsError
     )
     try {
-        $logDir = 'C:\pcHealth\Logs'
+        $logDir = "$env:SystemDrive\pcHealth\Logs"
         if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
         $scriptName = if ($MyInvocation.ScriptName) {
             [System.IO.Path]::GetFileNameWithoutExtension($MyInvocation.ScriptName)
