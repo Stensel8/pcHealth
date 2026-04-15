@@ -34,14 +34,16 @@ internal static class CliRunner
             "Make sure the app is run from within the pcHealth repository.");
     }
 
-    /// <summary>Runs a PowerShell 7 script in a new visible terminal window.</summary>
+    /// <summary>Runs a PowerShell 7 script in a new visible terminal window.
+    /// The window pauses after the script finishes so the user can read the output.</summary>
     public static void RunScript(string scriptFileName)
     {
         var path = Path.Combine(GetToolsDir(), scriptFileName);
+        var cmd  = $"& '{path}'; Write-Host ''; Read-Host 'Press Enter to close'";
         Process.Start(new ProcessStartInfo
         {
             FileName        = "pwsh.exe",
-            Arguments       = $"-NoProfile -ExecutionPolicy Bypass -File \"{path}\"",
+            Arguments       = $"-NoProfile -ExecutionPolicy Bypass -Command \"{cmd}\"",
             UseShellExecute = true,
         });
     }

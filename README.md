@@ -137,7 +137,7 @@ All menus and option numbers are identical across platforms. The underlying impl
 | 3   | Malwarebytes ADW Cleaner | winget              |
 | 4   | CrystalDiskInfo          | winget              |
 | 5   | CrystalDiskMark          | winget              |
-| 6   | Prime95                  | Opens download page |
+| 6   | Prime95                  | winget              |
 | 7   | Windows PowerToys        | winget              |
 | 8   | Tools Menu               |                     |
 | 9   | Back to Main Menu        |                     |

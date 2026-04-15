@@ -769,21 +769,11 @@ IF %AL%==3 GOTO CLOSE
 :PRIMEDOWN
 cls
 color 0A
-echo. 
-echo Are you sure that you want to download the latest version of Prime95? Enter: 
-echo. 
-SET /P AM=If yes enter the number 1 to start the download, enter the number 2 to return to the previous sub-menu.
-IF %AM%==1 GOTO PRIMEDOWNLOADLINK
-IF %AM%==2 GOTO PROGRAMS
-
-:PRIMEDOWNLOADLINK
-cls
-color 0A
 echo.
-echo Your download will start now!
-start "" https://prime95.net/download/
+echo Installing Prime95 via winget...
+winget install --id mersenne.prime95 --accept-source-agreements --accept-package-agreements
 echo.
-SET /P AN=To return to the previous sub-menu enter 1, enter number 2 to return to the main-menu or enter number 3 to exit the script. Enter: 
+SET /P AN=To return to the previous sub-menu enter 1, enter number 2 to return to the main-menu or enter number 3 to exit the script. Enter:
 IF %AN%==1 GOTO PROGRAMS
 IF %AN%==2 GOTO MENU
 IF %AN%==3 GOTO CLOSE

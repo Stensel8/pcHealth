@@ -52,7 +52,7 @@ public sealed partial class ProgramsPage : Page
             Name       = "Prime95",
             Glyph      = "\uE9E9",
             Note       = "CPU stress test and stability checker",
-            BrowserUrl = "https://prime95.net/download/",
+            WingetId   = "mersenne.prime95",
         },
         new ProgramItem
         {

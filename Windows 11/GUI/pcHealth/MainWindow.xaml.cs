@@ -13,6 +13,16 @@ public sealed partial class MainWindow : Window
         SystemBackdrop = new MicaBackdrop();
         AppWindow.Resize(new SizeInt32(1100, 720));
 
+        // Hand the title bar over to WinUI 3 so it automatically follows the
+        // system dark/light theme and blends with the Mica backdrop.
+        ExtendsContentIntoTitleBar = true;
+
+        // Set the window icon (AppWindow.SetIcon = title bar corner icon;
+        // ApplicationIcon in csproj covers taskbar / File Explorer).
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "pcplushealthpluspluslogo.ico");
+        if (File.Exists(iconPath))
+            AppWindow.SetIcon(iconPath);
+
         // Keep the NavigationView back button in sync with the frame's back stack.
         ContentFrame.Navigated += ContentFrame_Navigated;
     }
