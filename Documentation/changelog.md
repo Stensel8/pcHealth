@@ -1,36 +1,22 @@
 # Changelog.md - pcHealth
 
-## 06-04-2026 - @Stensel8 - Full Version Release v2.0.0 stable
+## 06-04-2026 - @Stensel8
 
-This release marks a full restructure and rebrand of the pcHealth project.
-Three separate repositories (pcHealth, pcHealthPlus-VS, Win_Scan) have been merged into this single unified repository.
-
-### Repository restructure
-- Merged pcHealthPlus-VS (WinForms GUI) and Win_Scan into pcHealth.
-- New folder structure: `Windows 10/CLI`, `Windows 10/GUI`, `Windows 11/CLI`, `Windows 11/GUI`.
-- Windows 10 contains all legacy tooling (CMD/batch, VBS, WinForms, WPF) — no longer actively maintained, targeting build 22H2.
-- Windows 11 contains modern PowerShell scripts — actively maintained, targeting build 25H2.
-- Windows 11/GUI reserved for a future WinUI 3 application.
-
-### New scripts
-- Added `Scan-Windows.ps1` (Windows 11/CLI): modern SFC + DISM scanner, replacing the standalone Win_Scan repository.
-
-### Rebrand
-- All scripts now carry a unified `pcHealth - Windows 10/11 - V2.0.0` header.
-- Removed all references to pcHealthPlus, pcHealthPlus-VS and Win_Scan across scripts, documentation, C# source, assembly info and form titles.
-- Renamed C# project folder, solution and namespace from `pcHealthPlus-VS` / `pcHealthPlus_VS` to `pcHealth`.
-
-### Fixes
-- Fixed two unresolved git merge conflict markers (`=======`) in pcHealth.bat.
-- Fixed a broken `SET /P` statement in the `CLOSEACT` label (variable name was missing).
-- Fixed all PowerShell script paths in pcHealth.bat to reflect the new folder structure.
-- Enforced LF line endings across the entire repository via `.gitattributes`.
+Restructured the repository: merged pcHealthPlus-VS and Win_Scan into pcHealth.
+Added new folder layout (`Windows 10/CLI`, `Windows 10/GUI`, `Windows 11/CLI`, `Windows 11/GUI`).
+Windows 10 contains legacy tooling (CMD/batch, VBS, WinForms, WPF), Windows 11 contains modern PowerShell scripts.
+Added `Scan-Windows.ps1` for Windows 11 as a modern SFC + DISM replacement for Win_Scan.
+Removed all references to pcHealthPlus, pcHealthPlus-VS and Win_Scan across scripts, documentation, C# source, assembly info and form titles.
+Renamed C# project, solution and namespace from `pcHealthPlus-VS` / `pcHealthPlus_VS` to `pcHealth`.
+Fixed merge conflict markers and a broken `SET /P` statement in pcHealth.bat.
+Fixed all PowerShell script paths in pcHealth.bat to reflect the new folder structure.
+Enforced LF line endings across the repository via `.gitattributes`.
 
 ## 01-01-2026 - @Stensel8
 
-- Improved Admin elevation by not relying on VBS anymore. This should fix issues on some systems/builds where the VBS is already removed.
-- Improved the KeyGrabber functionality by not relying on VBS anymore. The script now uses PowerShell to extract the Windows license key information.
-- Made a simple GUI for the KeyGrabber functionality to make it more user-friendly. Co-developed with [@Claude Code](https://github.com/anthropics/claude-code).
+- Improved Admin elevation to no longer rely on VBS. Fixes elevation issues on systems/builds where VBS has been removed.
+- Improved KeyGrabber to use PowerShell instead of VBS for extracting the Windows license key.
+- Added a simple GUI for the KeyGrabber functionality.
 - Synced the codebase with [pcHealthPlus](https://github.com/REALSDEALS/pcHealthPlus).
 
 ## 11-07-2025 - @REALSDEALS
