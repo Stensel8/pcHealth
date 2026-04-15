@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth — Windows 11 — Repair Winget
 # Credits: @asheroto — https://github.com/asheroto/winget-install

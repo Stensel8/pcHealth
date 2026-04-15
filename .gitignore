@@ -4,7 +4,7 @@ Thumbs.db
 desktop.ini
 
 # IDE and editor files
-.vscode/
+# .vscode/ - Uncommented this one, so it can be used for editor config. This will stop the psscriptanalyzer from crying about the BOM encodings.
 .idea/
 .vs/
 *.suo
