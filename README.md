@@ -94,7 +94,7 @@ All menus and option numbers are identical across platforms. The underlying impl
 </details>
 
 <details>
-<summary><strong>Tools Menu (26 options)</strong></summary>
+<summary><strong>Tools Menu (27 options)</strong></summary>
 
 | Key | Function                    | Notes                                          |
 |-----|-----------------------------|------------------------------------------------|
@@ -121,9 +121,10 @@ All menus and option numbers are identical across platforms. The underlying impl
 | 21  | BIOS Password Recovery      | Links to bios-pw.org - credits: @bacher09      |
 | 22  | Repair Boot Record          | CHKDSK + SFC + BOOTREC - **use with caution**  |
 | 23  | Shutdown / Reboot / Log Off |                                                |
-| 24  | Programs Menu               |                                                |
-| 25  | Back to Main Menu           |                                                |
-| 26  | Exit                        |                                                |
+| 24  | Repair Winget               | via winget-install by @asheroto                |
+| 25  | Programs Menu               |                                                |
+| 26  | Back to Main Menu           |                                                |
+| 27  | Exit                        |                                                |
 
 </details>
 

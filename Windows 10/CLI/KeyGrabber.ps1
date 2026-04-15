@@ -1,5 +1,5 @@
 # ============================================================================
-# pcHealth - Windows 10 - V2.1.1
+# pcHealth - Windows 10
 # ============================================================================
 # Windows Product Key Grabber (WPF GUI)
 # Extracts the Windows product key via OA3 (UEFI/BIOS) and registry decode.

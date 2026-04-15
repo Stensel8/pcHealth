@@ -31,10 +31,11 @@ function Show-ToolsMenu {
         Write-PcOption '19'  'BIOS Password Recovery'
         Write-PcOption '20'  'Repair Boot Record'                  '(use with caution!)'
         Write-PcOption '21'  'Shutdown / Reboot / Log Off'
+        Write-PcOption '22'  'Repair Winget'
         Write-PcDivider
-        Write-PcOption '22' 'Programs Menu'
-        Write-PcOption '23' 'Back to Main Menu'
-        Write-PcOption '24' 'Exit'
+        Write-PcOption '23' 'Programs Menu'
+        Write-PcOption '24' 'Back to Main Menu'
+        Write-PcOption '25' 'Exit'
         Write-PcDivider
 
         $choice = (Read-Host "`n  Choice").Trim()
@@ -64,9 +65,10 @@ function Show-ToolsMenu {
             '19' { $script = 'Open-BIOSPasswordTool.ps1' }
             '20' { $script = 'Invoke-BootRepair.ps1' }
             '21' { $script = 'Invoke-PowerOptions.ps1' }
-            '22' { return 'programs' }  # Cross-navigate to Programs menu
-            '23' { return 'main' }      # Back to Main
-            '24' { return 'exit' }      # Tells Main.ps1 to call exit 0
+            '22' { $script = 'Invoke-WingetRepair.ps1' }
+            '23' { return 'programs' }  # Cross-navigate to Programs menu
+            '24' { return 'main' }      # Back to Main
+            '25' { return 'exit' }      # Tells Main.ps1 to call exit 0
         }
 
         if ($script) {
@@ -84,7 +86,7 @@ function Show-ToolsMenu {
                 '3' { return 'exit' }
                 # '1' → fall through to the top of the while loop (stay in Tools)
             }
-        } elseif ($choice -notin '22','23','24') {
+        } elseif ($choice -notin '23','24','25') {
             Write-Host "`n  Invalid choice." -ForegroundColor Red
             Start-Sleep -Milliseconds 800
         }

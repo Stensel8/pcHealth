@@ -1,5 +1,5 @@
 # ============================================================================
-# pcHealth - Windows 10 - V2.0.0
+# pcHealth - Windows 10
 # ============================================================================
 # Boot Record Repair
 # Attempts to repair the boot record using CHKDSK, SFC, BOOTREC and BCDBOOT.

@@ -2,9 +2,10 @@ namespace pcHealth.Pages;
 
 public sealed partial class ToolsPage : Page
 {
-    // All 23 tool entries that mirror the CLI Tools Menu (options 1-23).
-    // Options 24 (Programs), 25 (Main Menu), and 26 (Exit) are handled
-    // by the NavigationView and are therefore not included here.
+    // All 24 tool entries shown in the GUI. Navigation items (Programs, Main Menu,
+    // Exit) are handled by the NavigationView and are therefore not included here.
+    // Note: the GUI exposes SFC and DISM as separate entries in addition to the
+    // combined Scan + Repair, so the count does not match the CLI 1:1.
     //
     // The backing array is static (allocated once). The instance property
     // is required because x:Bind only works with instance members.
@@ -30,9 +31,10 @@ public sealed partial class ToolsPage : Page
         new ToolItem { Name = "Open CBS Log",                Glyph = "\uE8A5", Kind = ToolActionKind.Script,   Param = "Open-CBSLog.ps1"          },
         new ToolItem { Name = "Get Ninite",                  Glyph = "\uE896", Note = "Edge, Chrome, VLC, 7-Zip", Kind = ToolActionKind.Script, Param = "Get-Ninite.ps1"         },
         new ToolItem { Name = "Windows License Key",         Glyph = "\uE8D7", Kind = ToolActionKind.Navigate                                     },
-        new ToolItem { Name = "BIOS Password Recovery",      Glyph = "\uE72E", Kind = ToolActionKind.Script,   Param = "Show-BIOSPasswordTool.ps1"},
+        new ToolItem { Name = "BIOS Password Recovery",      Glyph = "\uE72E", Kind = ToolActionKind.Script,   Param = "Open-BIOSPasswordTool.ps1"},
         new ToolItem { Name = "Repair Boot Record",          Glyph = "\uE8E4", Note = "use with caution!",     Kind = ToolActionKind.Script,   Param = "Invoke-BootRepair.ps1"    },
         new ToolItem { Name = "Shutdown / Reboot / Log Off", Glyph = "\uE7E8", Kind = ToolActionKind.Script,   Param = "Invoke-PowerOptions.ps1"  },
+        new ToolItem { Name = "Repair Winget",               Glyph = "\uE90F", Note = "via @asheroto",         Kind = ToolActionKind.Script,   Param = "Invoke-WingetRepair.ps1"  },
     };
 
     // Instance property so x:Bind in ToolsPage.xaml can reach it.

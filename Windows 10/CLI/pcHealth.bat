@@ -29,7 +29,8 @@ if '%errorlevel%' NEQ '0' (
 :--------------------------------------    
 :: MainCode
 @echo off
-title pcHealth - Windows 10 - V2.1.1
+set /p PCHEALTH_VERSION=<"%~dp0..\..\VERSION"
+title pcHealth - Windows 10 - V%PCHEALTH_VERSION%
 cd /
 color D
 cls
@@ -42,7 +43,7 @@ echo Thanks for downloading and using pcHealth!
 echo Please be sure that you are running this Batch file in Administrator mode.
 echo.
 echo Made by REALSDEALS - Licensed under GNU-3 (You are free to use, but not to change or to remove this line.)
-echo You are now using pcHealth - Windows 10 - V2.1.1
+echo You are now using pcHealth - Windows 10 - V%PCHEALTH_VERSION%
 echo.
 for /f "skip=2 tokens=1,2,*" %%a in ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI" /v LastLoggedOnDisplayName 2^>nul') do set FullName=%%c
 if "%FullName%"=="" set FullName=%USERNAME%

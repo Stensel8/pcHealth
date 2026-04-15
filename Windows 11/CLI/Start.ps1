@@ -1,5 +1,5 @@
 ﻿# ============================================================================
-# pcHealth — Windows 11 — V2.1.1
+# pcHealth — Windows 11
 # Entry point. Requires PowerShell 7+ and Administrator privileges.
 # ============================================================================
 
@@ -46,6 +46,15 @@ try {
 # $Global:pcHealthRoot is used by Tools.ps1 to build paths to the tools/ folder.
 # It must be set before dot-sourcing the menus so they can reference it at call time.
 $Global:pcHealthRoot = $PSScriptRoot
+
+# Read the central VERSION file from the repo root so menus can display it
+# without hardcoding the version in individual scripts.
+$versionFile = Join-Path $PSScriptRoot '..\..\VERSION'
+$Global:PcVersion = if (Test-Path $versionFile) {
+    (Get-Content $versionFile -Raw).Trim()
+} else {
+    'unknown'
+}
 
 # Dot-sourcing (. operator) loads each file into the current session so all
 # functions defined inside them become available here, just like defining them inline.

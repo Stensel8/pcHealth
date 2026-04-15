@@ -26,7 +26,7 @@ function Show-MainMenu {
 
             Write-Host "  Thanks for downloading and using pcHealth!"
             Write-Host "  Made by REALSDEALS - Licensed under GNU-3" -ForegroundColor DarkGray
-            Write-Host "  You are now using pcHealth - Windows 11 - V2.1.0`n" -ForegroundColor DarkGray
+            Write-Host "  You are now using pcHealth - Windows 11 - V$Global:PcVersion`n" -ForegroundColor DarkGray
             Write-PcDivider
 
             Write-PcOption '1' 'Tools'

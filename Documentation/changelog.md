@@ -1,5 +1,10 @@
 # Changelog.md - pcHealth
 
+## 15-04-2026 - @Stensel8
+
+- Completed the migration to WinUI 3 using .NET 10.
+- Added "Repair Winget" option to the Tools menu. Runs the winget-install module by @asheroto in the background and reports back to the user. See https://github.com/asheroto/winget-install.
+
 ## 06-04-2026 - @Stensel8
 
 Restructured the repository: merged pcHealthPlus-VS and Win_Scan into pcHealth.
