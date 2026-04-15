@@ -39,7 +39,9 @@ try {
     $win.Width   = [Math]::Min(220, $ui.MaxPhysicalWindowSize.Width)
     $win.Height  = [Math]::Min(50,  $ui.MaxPhysicalWindowSize.Height)
     $ui.WindowSize = $win
-} catch { <# non-interactive host — ignore #> }
+} catch {
+    Write-Verbose "Console resize skipped on non-interactive host: $_"
+}
 
 # $Global:pcHealthRoot is used by Tools.ps1 to build paths to the tools/ folder.
 # It must be set before dot-sourcing the menus so they can reference it at call time.

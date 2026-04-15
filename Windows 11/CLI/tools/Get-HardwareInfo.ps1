@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth — Windows 11 — Hardware Information
 # CPU, GPU, Storage (SMART via smartmontools), RAM, Chipset.
@@ -87,7 +87,9 @@ try {
             ForEach-Object { Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue } |
             Where-Object { $null -ne (ConvertTo-VramGB $_.'HardwareInformation.qwMemorySize') }
     )
-} catch { <# registry unreadable — fall back to AdapterRAM #> }
+} catch {
+    Write-Verbose "Registry adapter key unreadable — falling back to AdapterRAM: $_"
+}
 
 $gpuData = Get-CimInstance -ClassName Win32_VideoController -ErrorAction SilentlyContinue
 if ($gpuData) {
