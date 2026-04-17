@@ -1,6 +1,6 @@
 # pcHealth
 
-Check the health of your Windows or Linux installation — drivers, updates, battery health, hardware info, and more, all from a single menu-driven interface.
+Check the health of your Windows or Linux installation, drivers, updates, battery health and much more!
 
 ![License](https://img.shields.io/github/license/REALSDEALS/pcHealth?label=License)
 ![Latest Release](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?label=Release)
@@ -10,6 +10,8 @@ Check the health of your Windows or Linux installation — drivers, updates, bat
 ---
 
 ## Overview
+
+![Preview](Preview.avif)
 
 pcHealth is a cross-platform toolkit for IT technicians and power users. It runs on **Windows and Linux** using a single PowerShell 7 codebase. The goal is to offer the same functionality everywhere: tools are shown or hidden based on the detected OS, and platform-specific actions (like updating packages) automatically use the right method for the current system.
 
@@ -22,12 +24,14 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 | Hardware info | CIM + SMART | lscpu + lspci + SMART |
 | View system logs | — | journalctl |
 
+The project targets **feature parity across all supported platforms**, with the same option numbers and functionality on every OS.
+
 ---
 
 ## Supported Platforms
 
-| Platform | CLI | GUI  | Min. version        |
-|----------|-----|------|---------------------|
+| Platform | CLI | GUI | Min. version        |
+|----------|-----|-----|---------------------|
 | Windows  | ✅  | ✅  | Build 26200 (25H2+) |
 | Linux    | ✅  | ✅  | Kernel 7.0          |
 
@@ -39,22 +43,35 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 **Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum Windows build 26200 (25H2) / Linux kernel 7.0.
 
-### CLI — All Platforms
+### Windows
 
 1. Download or clone this repository.
-2. From an elevated terminal, run `CLI/Start.ps1`:
+2. Run `start.ps1` — it checks for PowerShell 7, installs it via winget if needed, then launches the CLI elevated.
 
-**Windows (elevated PowerShell 7):**
+```powershell
+.\start.ps1
+```
+
+Or launch directly from an elevated PowerShell 7 terminal:
+
 ```powershell
 .\CLI\Start.ps1
 ```
 
-**Linux:**
+### Linux
+
+1. Download or clone this repository.
+2. Run `start.sh` — it checks for PowerShell 7, installs it for your distro if needed, then launches the CLI via sudo.
+
+```bash
+bash start.sh
+```
+
+Or launch directly if PowerShell 7 is already installed:
+
 ```bash
 sudo pwsh ./CLI/Start.ps1
 ```
-
-The script auto-detects the platform and adjusts the menu accordingly. On Windows, it will prompt for elevation automatically if not already running as Administrator.
 
 ### GUI
 
@@ -79,7 +96,7 @@ Or open `GUI/pcHealth/pcHealth.csproj` in Visual Studio 2022.
 
 ## Menu Reference
 
-All menus and option numbers are identical across platforms. Tools that only apply to one OS are shown or hidden automatically.
+All menus and option numbers are identical across platforms. Windows-only tools are hidden on Linux and vice versa, so numbers remain sequential with no gaps.
 
 <details>
 <summary><strong>Main Menu</strong></summary>
@@ -97,34 +114,36 @@ All menus and option numbers are identical across platforms. Tools that only app
 <details>
 <summary><strong>Tools Menu</strong></summary>
 
-| Option | Function                      | Platforms          | Notes                                         |
-|--------|-------------------------------|--------------------|-----------------------------------------------|
-| —      | System Information            | All                | OS, kernel, firmware, TPM, RAM                |
-| —      | Hardware Information          | All                | CPU, GPU, Storage (SMART), RAM, Chipset       |
-| —      | System File Scan              | Windows            | SFC /scannow                                  |
-| —      | DISM Health Check             | Windows            | CheckHealth + ScanHealth + optional Restore   |
-| —      | Scan + Repair                 | Windows            | SFC + DISM combined                           |
-| —      | Battery Report                | Windows            | Laptop only                                   |
-| —      | Windows Update                | Windows            | Opens Windows Update settings                 |
-| —      | Disk Optimization             | Windows            | Opens dfrgui.exe                              |
-| —      | Disk Cleanup                  | Windows            | Opens cleanmgr.exe                            |
-| —      | Short Ping Test               | All                | 4-packet ping to 8.8.8.8                      |
-| —      | Continuous Ping Test          | All                | Continuous ping, Ctrl+C to stop               |
-| —      | Traceroute to Google          | All                | tracert / traceroute                          |
-| —      | Reset Network Stack           | Windows            | DNS flush, Winsock reset, IPv4/IPv6 reset     |
-| —      | Update System Programs        | All                | winget (Windows) / distro package manager (Linux) |
-| —      | Update HP Drivers             | Windows            | HP Image Assistant (HP devices only)          |
-| —      | Restart Audio Drivers         | Windows            | Restarts audio services                       |
-| —      | Open Battery Report           | Windows            | Opens previously generated report             |
-| —      | Open CBS Log                  | Windows            | Opens C:\Windows\Logs\CBS\CBS.log             |
-| —      | Get Ninite                    | Windows            | Downloads Edge, Chrome, VLC, 7-Zip            |
-| —      | Windows License Key           | Windows            | OA3 + DigitalProductId registry decode        |
-| —      | BIOS Password Recovery        | All                | Links to bios-pw.org — credits: @bacher09    |
-| —      | Repair Boot Record            | Windows            | CHKDSK + SFC + BOOTREC — **use with caution** |
-| —      | Shutdown / Reboot / Log Off   | All                |                                               |
-| —      | Repair Winget                 | Windows            | via winget-install by @asheroto               |
-| —      | Update Packages               | Linux              | cachy-update / apt / dnf / pacman / zypper    |
-| —      | View System Logs              | Linux              | journalctl errors/warnings                    |
+Option numbers are assigned sequentially at runtime per platform — Windows-only tools are not shown on Linux and vice versa.
+
+| Function                      | Platforms | Notes                                              |
+|-------------------------------|-----------|----------------------------------------------------|
+| System Information            | All       | OS, kernel, firmware, TPM, RAM                     |
+| Hardware Information          | All       | CPU, GPU, Storage (SMART), RAM, Chipset            |
+| System File Scan              | Windows   | SFC /scannow                                       |
+| DISM Health Check             | Windows   | CheckHealth + ScanHealth + optional Restore        |
+| Scan + Repair                 | Windows   | SFC + DISM combined                                |
+| Battery Report                | Windows   | Laptop only                                        |
+| Windows Update                | Windows   | Opens Windows Update settings                      |
+| Disk Optimization             | Windows   | Opens dfrgui.exe                                   |
+| Disk Cleanup                  | Windows   | Opens cleanmgr.exe                                 |
+| Short Ping Test               | All       | 4-packet ping to 8.8.8.8                           |
+| Continuous Ping Test          | All       | Continuous ping, Ctrl+C to stop                    |
+| Traceroute to Google          | All       | tracert / traceroute                               |
+| Reset Network Stack           | Windows   | DNS flush, Winsock reset, IPv4/IPv6 reset          |
+| Update System Programs        | All       | winget (Windows) / distro package manager (Linux)  |
+| Update HP Drivers             | Windows   | HP Image Assistant (HP devices only)               |
+| Restart Audio Drivers         | Windows   | Restarts audio services                            |
+| Open Battery Report           | Windows   | Opens previously generated report                  |
+| Open CBS Log                  | Windows   | Opens C:\Windows\Logs\CBS\CBS.log                  |
+| Get Ninite                    | Windows   | Downloads Edge, Chrome, VLC, 7-Zip                 |
+| Windows License Key           | Windows   | OA3 + DigitalProductId registry decode             |
+| BIOS Password Recovery        | All       | Links to bios-pw.org - credits: @bacher09          |
+| Repair Boot Record            | Windows   | CHKDSK + SFC + BOOTREC - **use with caution**      |
+| Shutdown / Reboot / Log Off   | All       |                                                    |
+| Repair Winget                 | Windows   | via winget-install by @asheroto                    |
+| Update Packages               | Linux     | cachy-update / apt / dnf / pacman / zypper         |
+| View System Logs              | Linux     | journalctl errors/warnings                         |
 
 </details>
 
@@ -146,15 +165,52 @@ All menus and option numbers are identical across platforms. Tools that only app
 <details>
 <summary><strong>Programs Menu — Linux</strong></summary>
 
-| Key | Program       | Install method          |
-|-----|---------------|-------------------------|
-| 1   | htop          | apt / dnf / pacman      |
-| 2   | iotop         | apt / dnf / pacman      |
-| 3   | smartmontools | apt / dnf / pacman      |
-| 4   | stress-ng     | apt / dnf / pacman      |
-| 5   | nmap          | apt / dnf / pacman      |
+| Key | Program       | Install method     |
+|-----|---------------|--------------------|
+| 1   | htop          | apt / dnf / pacman |
+| 2   | iotop         | apt / dnf / pacman |
+| 3   | smartmontools | apt / dnf / pacman |
+| 4   | stress-ng     | apt / dnf / pacman |
+| 5   | nmap          | apt / dnf / pacman |
 
 </details>
+
+---
+
+## Linux Package Manager Support
+
+The **Update Packages** tool reads `/etc/os-release` to detect the distribution and uses the appropriate update command:
+
+| Distro / Family                    | Command used                   |
+|------------------------------------|--------------------------------|
+| CachyOS                            | `cachy-update`                 |
+| Garuda Linux                       | `garuda-update`                |
+| Manjaro                            | `pamac upgrade`                |
+| Arch / EndeavourOS / Artix         | `paru` / `yay` / `pacman -Syu` |
+| Ubuntu / Debian / Mint / Pop!_OS   | `apt upgrade`                  |
+| Fedora / RHEL / AlmaLinux / Rocky  | `dnf upgrade`                  |
+| openSUSE                           | `zypper update`                |
+| Other Arch-based (`ID_LIKE=arch`)  | `pacman -Syu`                  |
+| Unknown                            | Falls back to first found on PATH |
+
+---
+
+## Repository Structure
+
+```
+CLI/
+  Start.ps1          <- single entry point for all platforms
+  menus/             <- Helpers, Main, Tools, Programs
+  tools/             <- cross-platform tool scripts
+    linux/           <- Linux-only tools
+
+GUI/
+  Start.ps1          <- launcher script
+  pcHealth/          <- WinUI 3 app (Windows 25H2+)
+
+start.ps1            <- Windows bootstrap launcher (checks deps, elevates)
+start.sh             <- Linux bootstrap launcher (checks deps, sudo)
+```
 
 ---
 
