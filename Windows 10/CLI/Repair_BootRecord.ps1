@@ -1,7 +1,13 @@
-Write-Host "Boot Record Repair Script"
-Write-Host "As part of the pcHealth script: check GitHub for more info; github.com/realsdeals/pcHealth"
-Write-Host "-------------------------"
-# -------------------------------
+﻿# ============================================================================
+# pcHealth - Windows 10
+# ============================================================================
+# Boot Record Repair
+# Attempts to repair the boot record using CHKDSK, SFC, BOOTREC and BCDBOOT.
+# Run from a recovery environment (WinRE/CMD) with Administrator privileges.
+# ============================================================================
+
+Write-Host "pcHealth - Windows 10 - Boot Record Repair" -ForegroundColor Cyan
+Write-Host "============================================================`n"
 Write-Host "Starting Boot Record Repair..."
 
 function Get-WindowsDrive {
@@ -27,7 +33,7 @@ function Run_SFC {
     $win = Get-WindowsDrive
     if (-not $win) { Write-Warning "No Windows partition found."; return }
     $windir = Join-Path $win "Windows"
-    cmd /c "sfc /scannow /offbootdir=$win\ /offwindir=$windir"
+    cmd /c "sfc /scannow /offbootdir=`"$win\`" /offwindir=`"$windir`""
     Write-Host "[SFC] Completed.`n"
 }
 
@@ -59,7 +65,7 @@ function Run_Bootrec {
 
     if ($fixboot -match 'Access is denied' -or $fixboot -match 'Toegang geweigerd') {
         Write-Warning "[BOOTREC] Access denied on /fixboot. Attempting BCDBOOT fallback..."
-        Try-EfiRebuild
+        Try_EfiRebuild
     }
 
     Write-Host "[BOOTREC] Boot repair finished.`n"

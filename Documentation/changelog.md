@@ -1,10 +1,34 @@
 # Changelog.md - pcHealth
 
+## 15-04-2026 - @Stensel8
+
+- Completed the migration to WinUI 3 using .NET 10.
+- Added "Repair Winget" option to the Tools menu. Runs the winget-install module by @asheroto in the background and reports back to the user. See https://github.com/asheroto/winget-install.
+
+## 06-04-2026 - @Stensel8
+
+Restructured the repository: merged pcHealthPlus-VS and Win_Scan into pcHealth.
+Added new folder layout (`Windows 10/CLI`, `Windows 10/GUI`, `Windows 11/CLI`, `Windows 11/GUI`).
+Windows 10 contains legacy tooling (CMD/batch, VBS, WinForms, WPF), Windows 11 contains modern PowerShell scripts.
+Added `Scan-Windows.ps1` for Windows 11 as a modern SFC + DISM replacement for Win_Scan.
+Removed all references to pcHealthPlus, pcHealthPlus-VS and Win_Scan across scripts, documentation, C# source, assembly info and form titles.
+Renamed C# project, solution and namespace from `pcHealthPlus-VS` / `pcHealthPlus_VS` to `pcHealth`.
+Fixed merge conflict markers and a broken `SET /P` statement in pcHealth.bat.
+Fixed all PowerShell script paths in pcHealth.bat to reflect the new folder structure.
+Enforced LF line endings across the repository via `.gitattributes`.
+
+## 01-01-2026 - @Stensel8
+
+- Improved Admin elevation to no longer rely on VBS. Fixes elevation issues on systems/builds where VBS has been removed.
+- Improved KeyGrabber to use PowerShell instead of VBS for extracting the Windows license key.
+- Added a simple GUI for the KeyGrabber functionality.
+- Synced the codebase with [pcHealthPlus](https://github.com/REALSDEALS/pcHealthPlus).
+
 ## 11-07-2025 - @REALSDEALS
 
 Audited the contribution of @Stensel8 and everything seems to work as intended.
 
-## 22-06-2025 - @Stensel
+## 22-06-2025 - @Stensel8
 
 Added a new feature to the script: reset network settings.
 This feature will reset the network settings on the host machine, which can help resolve various network-related issues.

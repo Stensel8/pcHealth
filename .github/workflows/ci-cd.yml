@@ -1,0 +1,239 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+# Default minimal permissions — each job overrides only what it actually needs.
+# This follows the least-privilege principle.
+permissions: read-all
+
+# Cancel in-progress runs for the same branch/PR when a new push arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ============================================================
+# Overview of checks:
+#
+#  powershell-lint  → PSScriptAnalyzer (Windows 11/CLI scripts)
+#  dotnet-build     → dotnet build (Windows 11/GUI WinUI 3 app)
+#  pr-title         → conventional commits (PR title format)
+#  commit-lint      → conventional commits (commit message format)
+#  markdown-lint    → markdownlint (README, SECURITY, .github docs)
+#  link-check       → lychee (broken links in markdown)
+#  secrets-scan     → TruffleHog (API keys, passwords, tokens)
+#  trivy-scan       → Trivy (filesystem security scan)
+# ============================================================
+
+jobs:
+
+  # ----------------------------------------------------------
+  # POWERSHELL LINT
+  # Runs PSScriptAnalyzer on all Windows 11 CLI scripts.
+  # Settings: .github/PSScriptAnalyzerSettings.psd1
+  # ----------------------------------------------------------
+  powershell-lint:
+    name: PowerShell lint (PSScriptAnalyzer)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery
+
+      - name: Run PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          $settings = ".github/PSScriptAnalyzerSettings.psd1"
+          $results  = Invoke-ScriptAnalyzer -Path "Windows 11/CLI/" -Recurse `
+                        -Settings $settings -Severity Warning,Error
+
+          if ($results) {
+            $results | Format-Table -AutoSize
+            Write-Host "PSScriptAnalyzer found $($results.Count) issue(s)." -ForegroundColor Red
+            exit 1
+          }
+
+          Write-Host "PSScriptAnalyzer: no issues found." -ForegroundColor Green
+
+  # ----------------------------------------------------------
+  # DOTNET BUILD
+  # Verifies the WinUI 3 app compiles cleanly on every push.
+  # Runs on Windows because WinUI 3 targets windows-only TFMs.
+  # ----------------------------------------------------------
+  dotnet-build:
+    name: .NET build (WinUI 3)
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore "Windows 11/GUI/pcHealth/pcHealth.csproj"
+
+      - name: Build
+        run: dotnet build "Windows 11/GUI/pcHealth/pcHealth.csproj" -c Release --no-restore
+
+  # ----------------------------------------------------------
+  # PR TITLE CHECK
+  # Enforces conventional commit format in pull request titles.
+  # ----------------------------------------------------------
+  pr-title:
+    name: PR title (conventional commits)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            chore
+            refactor
+            style
+            perf
+            test
+            revert
+            ci
+            deps
+            build
+
+  # ----------------------------------------------------------
+  # COMMIT LINT
+  # Validates commit messages follow conventional commits on push.
+  # ----------------------------------------------------------
+  commit-lint:
+    name: Commit messages (conventional commits)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Check conventional commits
+        uses: webiny/action-conventional-commits@faccb24fc2550dd15c0390d944379d2d8ed9690e # v1.3.1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          allowed-commit-types: "feat,fix,docs,chore,refactor,style,perf,test,revert,ci,deps,build"
+
+  # ----------------------------------------------------------
+  # MARKDOWN LINT
+  # Checks README, SECURITY and .github markdown files.
+  # Settings: .markdownlint.jsonc
+  # ----------------------------------------------------------
+  markdown-lint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: DavidAnson/markdownlint-cli2-action@ce4853d43830c74c1753b39f3cf40f71c2031eb9 # v23.0.0
+        with:
+          globs: "README.md SECURITY.md .github/**/*.md"
+
+  # ----------------------------------------------------------
+  # BROKEN LINK CHECK
+  # Checks whether links in markdown files are still reachable.
+  # Ignored patterns: .lycheeignore
+  # ----------------------------------------------------------
+  link-check:
+    name: Broken link check (markdown)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Check links
+        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
+        with:
+          args: >-
+            --include-fragments
+            README.md SECURITY.md .github/**/*.md
+          format: markdown
+          output: lychee/out.md
+          fail: true
+          jobSummary: true
+
+  # ----------------------------------------------------------
+  # SECRET SCAN
+  # Searches for API keys, passwords and tokens in the code.
+  # Only reports verified secrets to reduce false positives.
+  # ----------------------------------------------------------
+  secrets-scan:
+    name: Secret scan (TruffleHog)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      # Pull request: scan exactly the PR diff (base → head SHA).
+      - name: Scan for secrets (pull request)
+        if: github.event_name == 'pull_request'
+        uses: trufflesecurity/trufflehog@47e7b7cd74f578e1e3145d48f669f22fd1330ca6 # v3.94.3
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
+          extra_args: --only-verified
+
+      # Push: scan only newly added commits.
+      # Skip when it is a new branch (before = all-zeros) since those
+      # commits were already scanned in their PR.
+      - name: Scan for secrets (push)
+        if: >
+          github.event_name == 'push' &&
+          github.event.before != '0000000000000000000000000000000000000000'
+        uses: trufflesecurity/trufflehog@47e7b7cd74f578e1e3145d48f669f22fd1330ca6 # v3.94.3
+        with:
+          path: ./
+          base: ${{ github.event.before }}
+          head: ${{ github.sha }}
+          extra_args: --only-verified
+
+  # ----------------------------------------------------------
+  # TRIVY SECURITY SCAN
+  # Scans the repository filesystem for HIGH and CRITICAL
+  # vulnerabilities in dependencies and configuration.
+  # ----------------------------------------------------------
+  trivy-scan:
+    name: Security scan (Trivy)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'

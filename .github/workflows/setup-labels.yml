@@ -1,0 +1,88 @@
+name: Setup Labels
+
+# Creates or updates all repository labels.
+# Run this manually once after cloning / when labels drift from the definitions below.
+#
+# Usage:
+#   GitHub → Actions → Setup Labels → Run workflow
+
+on:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  labels:
+    name: Sync labels
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create / update labels
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const labels = [
+              // ── Upstream labels (REALSDEALS/pcHealth style) ──────────────
+              { name: "bug",           color: "d73a4a", description: "A bug has occurred or a bug has been patched." },
+              { name: "documentation", color: "0075ca", description: "Documentation has been created, edited or moved." },
+              { name: "enhancement",   color: "a2eeef", description: "A new addition or improvement." },
+              { name: "question",      color: "d876e3", description: "A question has arisen or has been answered." },
+              { name: "tweak",         color: "b60205", description: "A tweak or improvement has been made to the code." },
+              { name: "update",        color: "0052cc", description: "Final commit to a release or pre-release build." },
+
+              // ── Type labels (conventional commits) ───────────────────────
+              { name: "type/feature",  color: "0075ca", description: "New feature or functionality." },
+              { name: "type/fix",      color: "d73a4a", description: "Bug fix." },
+              { name: "type/docs",     color: "0075ca", description: "Documentation changes." },
+              { name: "type/chore",    color: "e4e669", description: "Maintenance, cleanup, configuration." },
+              { name: "type/refactor", color: "fbca04", description: "Code restructuring without behavior change." },
+              { name: "type/perf",     color: "d4c5f9", description: "Performance improvement." },
+              { name: "type/style",    color: "bfd4f2", description: "Code style or formatting changes." },
+              { name: "type/revert",   color: "f9d0c4", description: "Reverts a previous commit." },
+              { name: "type/test",     color: "c2e0c6", description: "Test additions or changes." },
+
+              // ── CI / dependency labels ────────────────────────────────────
+              { name: "ci",            color: "006b75", description: "CI/CD workflow changes." },
+              { name: "dependencies",  color: "0366d6", description: "Dependency or action version updates." },
+
+              // ── Status labels ─────────────────────────────────────────────
+              { name: "security",        color: "e11d48", description: "Security-related changes or vulnerabilities." },
+              { name: "breaking-change", color: "b60205", description: "Introduces a breaking change." },
+              { name: "pinned",          color: "cfd3d7", description: "Pinned — never auto-close by stale bot." },
+              { name: "stale",           color: "cfd3d7", description: "Auto-marked as stale due to inactivity." },
+
+              // ── Platform labels ───────────────────────────────────────────
+              { name: "windows-11", color: "0078d4", description: "Windows 11 related." },
+              { name: "windows-10", color: "0067c0", description: "Windows 10 related (legacy)." },
+              { name: "linux",      color: "f97316", description: "Linux related." },
+
+              // ── Language labels ───────────────────────────────────────────
+              { name: "powershell", color: "5c3de4", description: "PowerShell script changes." },
+              { name: "csharp",     color: "178600", description: "C# source code changes." },
+            ];
+
+            for (const label of labels) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo:  context.repo.repo,
+                  ...label,
+                });
+                core.info(`Created: ${label.name}`);
+              } catch (err) {
+                if (err.status === 422) {
+                  // Label already exists — update it
+                  await github.rest.issues.updateLabel({
+                    owner: context.repo.owner,
+                    repo:  context.repo.repo,
+                    ...label,
+                  });
+                  core.info(`Updated: ${label.name}`);
+                } else {
+                  throw err;
+                }
+              }
+            }
+
+            core.info(`Done — ${labels.length} labels synced.`);

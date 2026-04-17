@@ -1,0 +1,76 @@
+# Labeler configuration for actions/labeler@v5
+# Docs: https://github.com/actions/labeler
+
+# ── Type labels (by branch name) ───────────────────────────────────────────
+
+"type/feature":
+  - head-branch: ["^feat/", "^feature/"]
+
+"type/fix":
+  - head-branch: ["^fix/", "^bugfix/", "^hotfix/"]
+
+"type/docs":
+  - head-branch: ["^docs/"]
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - ".github/**/*.md"
+
+"type/chore":
+  - head-branch: ["^chore/", "^build/", "^deps/"]
+
+"type/refactor":
+  - head-branch: ["^refactor/"]
+
+"type/perf":
+  - head-branch: ["^perf/"]
+
+"type/style":
+  - head-branch: ["^style/"]
+
+"type/revert":
+  - head-branch: ["^revert/"]
+
+"type/test":
+  - head-branch: ["^test/"]
+
+# ── CI label ───────────────────────────────────────────────────────────────
+
+"ci":
+  - head-branch: ["^ci/"]
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/workflows/**"
+          - ".github/dependabot.yml"
+          - ".github/PSScriptAnalyzerSettings.psd1"
+          - ".editorconfig"
+          - ".markdownlint.jsonc"
+
+# ── Dependencies (Dependabot branches) ────────────────────────────────────
+
+"dependencies":
+  - head-branch: ["^dependabot/"]
+
+# ── Platform labels ────────────────────────────────────────────────────────
+
+"windows-11":
+  - changed-files:
+      - any-glob-to-any-file: ["Windows 11/**"]
+
+"windows-10":
+  - changed-files:
+      - any-glob-to-any-file: ["Windows 10/**"]
+
+"linux":
+  - changed-files:
+      - any-glob-to-any-file: ["Linux/**"]
+
+# ── Language label ─────────────────────────────────────────────────────────
+
+"powershell":
+  - changed-files:
+      - any-glob-to-any-file: ["**/*.ps1", "**/*.psm1", "**/*.psd1"]
+
+"csharp":
+  - changed-files:
+      - any-glob-to-any-file: ["**/*.cs", "**/*.csproj", "**/*.sln"]

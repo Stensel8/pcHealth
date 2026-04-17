@@ -15,12 +15,12 @@ if '%errorlevel%' NEQ '0' (
 ) else ( goto gotAdmin )
 
 :UACPrompt
-    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
-    set params= %*
-    echo UAC.ShellExecute "cmd.exe", "/c ""%~s0"" %params:"=""%", "", "runas", 1 >> "%temp%\getadmin.vbs"
-
-    "%temp%\getadmin.vbs"
-    del "%temp%\getadmin.vbs"
+    set params=%*
+    if "%params%"=="" (
+        powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/c \"%~f0\"' -Verb RunAs"
+    ) else (
+        powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/c \"%~f0\" %params%' -Verb RunAs"
+    )
     exit /B
 
 :gotAdmin
@@ -29,22 +29,21 @@ if '%errorlevel%' NEQ '0' (
 :--------------------------------------    
 :: MainCode
 @echo off
-title pcHealth - Check your PC's Health! - version 1.9.1-beta
-=======
+set /p PCHEALTH_VERSION=<"%~dp0..\..\VERSION"
+title pcHealth - Windows 10 - V%PCHEALTH_VERSION%
 cd /
 color D
 cls
 
 :MENU
 cls
-color f3
+color 03
 echo.
 echo Thanks for downloading and using pcHealth!
 echo Please be sure that you are running this Batch file in Administrator mode.
 echo.
 echo Made by REALSDEALS - Licensed under GNU-3 (You are free to use, but not to change or to remove this line.)
-echo You are now using version 1.9.1-beta of pcHealth.
-=======
+echo You are now using pcHealth - Windows 10 - V%PCHEALTH_VERSION%
 echo.
 for /f "skip=2 tokens=1,2,*" %%a in ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\LogonUI" /v LastLoggedOnDisplayName 2^>nul') do set FullName=%%c
 if "%FullName%"=="" set FullName=%USERNAME%
@@ -56,22 +55,20 @@ echo Enter number 1 to open a menu regarding testing scripts.
 echo Enter number 2 to open a menu regarding programs for testing /w downloadable redirects.
 echo Enter number 3 to go to the repository of pcHealth.
 echo Enter number 4 to check for pre-releases.
-echo Enter number 5 to learn more about pcHealthPlus.
-echo Enter number 6 to close this batch script.
+echo Enter number 5 to close this batch script.
 echo ...........................................................
 echo.
 
-SET /P A=Type one of the numbers from the menu above to open the desired menu and then press ENTER. Enter: 
-IF %A%==1 GOTO TOOLS
-IF %A%==2 GOTO PROGRAMS
-IF %A%==3 GOTO PCHEALTHGETVER
-IF %A%==4 GOTO PRERELEASE
-IF %A%==5 GOTO PCHEALTHPLUSVS
-IF %A%==6 GOTO CLOSE
+SET /P A=Type one of the numbers from the menu above to open the desired menu and then press ENTER. Enter:
+IF "%A%"=="1" GOTO TOOLS
+IF "%A%"=="2" GOTO PROGRAMS
+IF "%A%"=="3" GOTO PCHEALTHGETVER
+IF "%A%"=="4" GOTO PRERELEASE
+IF "%A%"=="5" GOTO CLOSE
 
 :TOOLS
 cls 
-color fc
+color 0c
 echo.
 echo        You are now in the Tools menu:
 echo.
@@ -106,36 +103,36 @@ echo ...........................................................
 echo.
 
 SET /P B=Type one of the numbers from the menu above to run the desired function, then press ENTER. Enter: 
-IF %B%==1 GOTO SYSINFO
-IF %B%==2 GOTO CPUANDGPUINFO
-IF %B%==3 GOTO SCAN
-IF %B%==4 GOTO DISM
-IF %B%==5 GOTO SCSM
-IF %B%==6 GOTO BATTERY
-IF %B%==7 GOTO UPDATE
-IF %B%==8 GOTO DFR
-IF %B%==9 GOTO CLMGR
-IF %B%==10 GOTO SHORTPING
-IF %B%==11 GOTO CONTINUESPING
-IF %B%==12 GOTO TRACEGOOGLE
-IF %B%==13 GOTO RESETNETWORK
-IF %B%==14 GOTO SYSUPDATE
-IF %B%==15 GOTO HPUPDATE
-IF %B%==16 GOTO AUDIORE
-IF %B%==17 GOTO BATOPEN
-IF %B%==18 GOTO OPENCBSLOG
-IF %B%==19 GOTO NINITE
-IF %B%==20 GOTO LICENSE
-IF %B%==21 GOTO BIOSPW
-IF %B%==22 GOTO BOOTRESTORE
-IF %B%==23 GOTO RESHUT
-IF %B%==24 GOTO PROGRAMS
-IF %B%==25 GOTO MENU
-IF %B%==26 GOTO CLOSE
+IF "%B%"=="1" GOTO SYSINFO
+IF "%B%"=="2" GOTO CPUANDGPUINFO
+IF "%B%"=="3" GOTO SCAN
+IF "%B%"=="4" GOTO DISM
+IF "%B%"=="5" GOTO SCSM
+IF "%B%"=="6" GOTO BATTERY
+IF "%B%"=="7" GOTO UPDATE
+IF "%B%"=="8" GOTO DFR
+IF "%B%"=="9" GOTO CLMGR
+IF "%B%"=="10" GOTO SHORTPING
+IF "%B%"=="11" GOTO CONTINUESPING
+IF "%B%"=="12" GOTO TRACEGOOGLE
+IF "%B%"=="13" GOTO RESETNETWORK
+IF "%B%"=="14" GOTO SYSUPDATE
+IF "%B%"=="15" GOTO HPUPDATE
+IF "%B%"=="16" GOTO AUDIORE
+IF "%B%"=="17" GOTO BATOPEN
+IF "%B%"=="18" GOTO OPENCBSLOG
+IF "%B%"=="19" GOTO NINITE
+IF "%B%"=="20" GOTO LICENSE
+IF "%B%"=="21" GOTO BIOSPW
+IF "%B%"=="22" GOTO BOOTRESTORE
+IF "%B%"=="23" GOTO RESHUT
+IF "%B%"=="24" GOTO PROGRAMS
+IF "%B%"=="25" GOTO MENU
+IF "%B%"=="26" GOTO CLOSE
 
 :PROGRAMS
 cls
-color fA
+color 0A
 echo.
 echo        You are now in the Programs menu:
 echo.
@@ -191,7 +188,7 @@ color 0A
 winget install --id HP.ImageAssistant
 echo.
 echo -----------------------------------------------------
-echo Please navigate to: C:\SWSetup
+echo Please navigate to: %SystemDrive%\SWSetup
 echo and search for "HPImageAssistant.exe". Running this tool will scan your HP system for outdated drivers and firmware.
 pause
 echo.
@@ -210,7 +207,7 @@ IF "%LR%"=="2" GOTO MENU
 IF "%LR%"=="3" GOTO CLOSE
 IF "%LR%"=="4" (
     echo Opening the HP Image Assistant folder...
-    start "" "C:\SWSetup"
+    start "" "%SystemDrive%\SWSetup"
     pause
     GOTO MENU
 ) else (
@@ -248,7 +245,7 @@ color 0A
 echo Gathering CPU, GPU and RAM information. Please be patient...
 timeout /t 4 >nul
 cls
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\PS1\Get-CPU_GPU_RAM.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\..\Windows 11\CLI\tools\Get-HardwareInfo.ps1"
 echo --------------------------------------------------------
 echo.
 echo.
@@ -330,7 +327,7 @@ echo.
 echo Please note:
 echo This report is generated from OS data and may differ from the hardware-based battery report offered by some laptops.
 echo.
-powercfg /batteryreport
+powercfg /batteryreport /output "%TEMP%\pcHealth-battery-report.html"
 pause
 echo.
 echo Select an option:
@@ -399,7 +396,7 @@ echo.
 SET /P N=Enter number 1 to return to the previous sub-menu menu, enter number 2 to return to the main-menu or enter number 3 to exit the script. Enter: 
 IF %N%==1 GOTO TOOLS
 IF %N%==2 GOTO MENU
-IF %N%==2 GOTO CLOSE
+IF %N%==3 GOTO CLOSE
 
 :TRACEGOOGLE
 cls
@@ -451,7 +448,7 @@ GOTO TOOLS
 :BATOPEN
 cls
 color 0A
-start %windir%\explorer.exe "C:\battery-report.html"
+start %windir%\explorer.exe "%TEMP%\pcHealth-battery-report.html"
 pause
 echo.
 SET /P O=Enter number 1 to return to the previous sub-menu, enter number 2 to return to the main-menu or enter number 3 to exit the script. Enter: 
@@ -462,7 +459,7 @@ IF %O%==3 GOTO CLOSE
 :OPENCBSLOG
 cls
 color 0A
-start %windir%\explorer.exe "C:\Windows\Logs\CBS\CBS.log"
+start %windir%\explorer.exe "%windir%\Logs\CBS\CBS.log"
 pause
 echo.
 SET /P P=Enter number 1 to return to the previous sub-menu, enter number 2 to return to the main-menu or enter number 3 to exit the script. Enter: 
@@ -493,13 +490,11 @@ IF %Q%==3 GOTO CLOSE
 cls
 color 0A
 echo.
-echo Running VBS script to retrieve Windows license. Expect a new window to pop up.
-cscript //nologo "%~dp0..\VBS\KeyGrabber.vbs"
-color 0E
+echo Launching Windows Product Key Grabber (PowerShell)...
 echo.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0KeyGrabber.ps1"
 echo.
-cls
-SET /p R=If you want to return to the previous sub-menu, enter number 1. To return to the main-menu, enter number 2. To exit the script, enter the number 3. Enter: 
+SET /p R=If you want to return to the previous sub-menu, enter number 1. To return to the main-menu, enter number 2. To exit the script, enter the number 3. Enter:
 IF %R%==1 GOTO TOOLS
 IF %R%==2 GOTO MENU
 IF %R%==3 GOTO CLOSE
@@ -556,7 +551,7 @@ color 0C
 echo.
 echo Starting the boot record repair...
 echo.
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\PS1\Repair_BootRecord.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Repair_BootRecord.ps1"
 echo.
 pause
 
@@ -775,21 +770,11 @@ IF %AL%==3 GOTO CLOSE
 :PRIMEDOWN
 cls
 color 0A
-echo. 
-echo Are you sure that you want to download the latest version of Prime95? Enter: 
-echo. 
-SET /P AM=If yes enter the number 1 to start the download, enter the number 2 to return to the previous sub-menu.
-IF %AM%==1 GOTO PRIMEDOWNLOADLINK
-IF %AM%==2 GOTO PROGRAMS
-
-:PRIMEDOWNLOADLINK
-cls
-color 0A
 echo.
-echo Your download will start now!
-start "" https://prime95.net/download/
+echo Installing Prime95 via winget...
+winget install --id mersenne.prime95 --accept-source-agreements --accept-package-agreements
 echo.
-SET /P AN=To return to the previous sub-menu enter 1, enter number 2 to return to the main-menu or enter number 3 to exit the script. Enter: 
+SET /P AN=To return to the previous sub-menu enter 1, enter number 2 to return to the main-menu or enter number 3 to exit the script. Enter:
 IF %AN%==1 GOTO PROGRAMS
 IF %AN%==2 GOTO MENU
 IF %AN%==3 GOTO CLOSE
@@ -836,26 +821,13 @@ start "" https://github.com/REALSDEALS/pcHealth/releases
 echo.
 GOTO MENU
 
-:PCHEALTHPLUSVS
-cls
-color 0A
-echo.
-echo You are about to be redirected to the repository of pcHealthPlus.
-echo There you can find more information about pcHealthPlus; in short it is a version of pcHealth that is more advanced and has 'more' features.
-echo.
-start "" https://github.com/REALSDEALS/pcHealthPlus-VS/blob/master/README.md
-echo.
-SET /P AP=To return to the main menu enter 1 or to close the script enter 2. Enter: 
-IF %AP%==1 GOTO MENU
-IF %AP%==2 GOTO CLOSE
-
 :CLOSEACT
 cls
 color 0A
 echo.
 echo Your requested software has been installed, what would you like to do next?
 echo.
-SET /P Do you wish to return to the main menu? Enter number 1. If you wish to return to the previous sub menu; enter number 2. If you wish to close this script; enter number 3. Enter: 
+SET /P AS=Return to main menu (1), tools menu (2), or close (3):
 IF %AS%==1 GOTO MENU
 IF %AS%==2 GOTO TOOLS
 IF %AS%==3 GOTO CLOSE
