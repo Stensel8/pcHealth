@@ -5,9 +5,13 @@
 # Best run from a recovery environment (WinRE/CMD) with Administrator rights.
 # ============================================================================
 
-# Danger theme (red) — mirrors the BAT file's `color 0C` for this section.
-Set-PcTheme 'Danger'
-Clear-Host
+# Set-PcTheme is only available when dot-sourced via Start.ps1 (CLI context).
+# When this script runs standalone (e.g. from the GUI), skip the theme call to
+# avoid a 'not recognised' terminating error.
+if (Get-Command Set-PcTheme -ErrorAction SilentlyContinue) {
+    Set-PcTheme 'Danger'
+    Clear-Host
+}
 
 Write-Host "`n$('=' * 60)" -ForegroundColor Red
 Write-Host "  Boot Record Repair" -ForegroundColor Red

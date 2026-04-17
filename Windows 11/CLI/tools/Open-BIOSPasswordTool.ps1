@@ -4,9 +4,13 @@
 # Credits: @bacher09 — https://github.com/bacher09/pwgen-for-bios
 # ============================================================================
 
-# Yellow theme — mirrors the BAT file's `color 0E` for this section.
-Set-PcTheme 'Warning'
-Clear-Host
+# Set-PcTheme is only available when dot-sourced via Start.ps1 (CLI context).
+# When this script runs standalone (e.g. from the GUI), skip the theme call to
+# avoid a 'not recognised' terminating error.
+if (Get-Command Set-PcTheme -ErrorAction SilentlyContinue) {
+    Set-PcTheme 'Warning'
+    Clear-Host
+}
 
 Write-Host "`n$('=' * 60)" -ForegroundColor Yellow
 Write-Host "  BIOS Password Recovery" -ForegroundColor Yellow
