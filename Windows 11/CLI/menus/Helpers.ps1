@@ -14,9 +14,15 @@ function Write-PcLog {
     try {
         $logDir = "$env:SystemDrive\pcHealth\Logs"
         if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
-        $scriptName = if ($MyInvocation.ScriptName) {
-            [System.IO.Path]::GetFileNameWithoutExtension($MyInvocation.ScriptName)
+
+        # $MyInvocation.ScriptName inside a function refers to the function's own
+        # invocation, not the calling script. Walk the call stack to find the
+        # outermost script name instead.
+        $callerScript = (Get-PSCallStack | Where-Object { $_.ScriptName } | Select-Object -Last 1).ScriptName
+        $scriptName   = if ($callerScript) {
+            [System.IO.Path]::GetFileNameWithoutExtension($callerScript)
         } else { 'pcHealth' }
+
         $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
         "[$timestamp] $Message" | Out-File -FilePath (Join-Path $logDir "$scriptName.log") -Append -ErrorAction Stop
     } catch {
