@@ -132,7 +132,8 @@ public sealed partial class LicenseKeyPage : Page
         picker.FileTypeChoices.Add("Text file", ["txt"]);
 
         // Unpackaged WinUI 3 apps must associate pickers with a window handle.
-        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.MainWindow!));
+        if (App.MainWindow is null) return;
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.MainWindow));
 
         var file = await picker.PickSaveFileAsync();
         if (file is null) return;
