@@ -158,40 +158,6 @@ All menus and option numbers are identical across platforms. Tools that only app
 
 ---
 
-## Linux Package Manager Support
-
-The **Update Packages** tool reads `/etc/os-release` to detect the distribution and uses the appropriate update command:
-
-| Distro / Family          | Command used |
-|--------------------------|--------------|
-| CachyOS                  | `cachy-update` |
-| Garuda Linux             | `garuda-update` |
-| Manjaro                  | `pamac upgrade` |
-| Arch / EndeavourOS / Artix | `paru` / `yay` / `pacman -Syu` |
-| Ubuntu / Debian / Mint / Pop!_OS | `apt upgrade` |
-| Fedora / RHEL / AlmaLinux / Rocky | `dnf upgrade` |
-| openSUSE                 | `zypper update` |
-| Other Arch-based         | `pacman -Syu` (via `ID_LIKE`) |
-| Unknown                  | Falls back to whichever package manager is found on PATH |
-
----
-
-## Repository Structure
-
-```
-CLI/
-  Start.ps1          ← single entry point for all platforms
-  menus/             ← Helpers, Main, Tools, Programs
-  tools/             ← cross-platform tool scripts
-    linux/           ← Linux-only tools
-
-GUI/
-  Start.ps1          ← launcher script
-  pcHealth/          ← WinUI 3 app (Windows 25H2+)
-```
-
----
-
 ## Contributing
 
 Contributions are welcome. Follow the existing naming conventions: `Verb-Noun.ps1` for tools, consistent `Write-PcOption` / `Set-PcTheme` calls for UI.
