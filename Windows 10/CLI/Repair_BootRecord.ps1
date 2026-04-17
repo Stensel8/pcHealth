@@ -33,7 +33,7 @@ function Run_SFC {
     $win = Get-WindowsDrive
     if (-not $win) { Write-Warning "No Windows partition found."; return }
     $windir = Join-Path $win "Windows"
-    cmd /c "sfc /scannow /offbootdir=$win\ /offwindir=$windir"
+    cmd /c "sfc /scannow /offbootdir=`"$win\`" /offwindir=`"$windir`""
     Write-Host "[SFC] Completed.`n"
 }
 
