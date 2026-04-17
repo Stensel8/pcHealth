@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>pcHealth</RootNamespace>
+    <AssemblyName>pcHealth</AssemblyName>
+    <ApplicationIcon>pcplushealthpluspluslogo.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Unpackaged deployment — no MSIX required -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <!-- Bundle the Windows App SDK runtime so users don't need it pre-installed. -->
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- Self-contained mode requires a concrete runtime identifier.
+         win-x64 is the default; pass -r win-arm64 to override for ARM devices. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Platforms>x64;arm64</Platforms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Copy the icon to the output directory so AppWindow.SetIcon() can find it at runtime. -->
+    <Content Include="pcplushealthpluspluslogo.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK"    Version="1.8.260317003" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1721"
+                      IncludeAssets="build" />
+    <!-- WMI access for OA3 key extraction and OS info -->
+    <PackageReference Include="System.Management" Version="10.0.6" />
+  </ItemGroup>
+
+</Project>
