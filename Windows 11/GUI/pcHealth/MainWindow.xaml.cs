@@ -30,7 +30,8 @@ public sealed partial class MainWindow : Window
     private void NavView_Loaded(object sender, RoutedEventArgs e)
     {
         // Open the Tools page on first launch.
-        NavView.SelectedItem = NavView.MenuItems[0];
+        if (NavView.MenuItems.Count > 0)
+            NavView.SelectedItem = NavView.MenuItems[0];
     }
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
