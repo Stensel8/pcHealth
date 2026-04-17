@@ -40,7 +40,7 @@ internal static class CliRunner
     {
         var path = Path.Combine(GetToolsDir(), scriptFileName);
         var cmd  = $"& '{path}'; Write-Host ''; Read-Host 'Press Enter to close'";
-        Process.Start(new ProcessStartInfo
+        Start(new ProcessStartInfo
         {
             FileName        = "pwsh.exe",
             Arguments       = $"-NoProfile -ExecutionPolicy Bypass -Command \"{cmd}\"",
@@ -50,11 +50,11 @@ internal static class CliRunner
 
     /// <summary>Opens a URI (ms-settings:, https://, etc.) via the Windows shell.</summary>
     public static void OpenUri(string uri) =>
-        Process.Start(new ProcessStartInfo { FileName = uri, UseShellExecute = true });
+        Start(new ProcessStartInfo { FileName = uri, UseShellExecute = true });
 
     /// <summary>Launches a named system application (e.g. dfrgui.exe).</summary>
     public static void OpenApp(string appName) =>
-        Process.Start(new ProcessStartInfo { FileName = appName, UseShellExecute = true });
+        Start(new ProcessStartInfo { FileName = appName, UseShellExecute = true });
 
     /// <summary>
     /// Runs a winget command in a new PowerShell 7 window and pauses after
@@ -63,11 +63,22 @@ internal static class CliRunner
     public static void RunWinget(string wingetArguments)
     {
         var cmd = $"winget {wingetArguments}; Write-Host ''; Read-Host 'Press Enter to close'";
-        Process.Start(new ProcessStartInfo
+        Start(new ProcessStartInfo
         {
             FileName        = "pwsh.exe",
             Arguments       = $"-NoProfile -Command \"{cmd}\"",
             UseShellExecute = true,
         });
+    }
+
+    // Process.Start with UseShellExecute=true can return null when the OS reuses
+    // an existing process window instead of spawning a new one. Throwing here means
+    // the caller's catch block can surface a meaningful error rather than silently
+    // doing nothing.
+    private static Process Start(ProcessStartInfo info)
+    {
+        return Process.Start(info)
+            ?? throw new InvalidOperationException(
+                $"Failed to start process: {info.FileName}");
     }
 }
