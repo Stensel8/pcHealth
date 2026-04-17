@@ -104,11 +104,12 @@ public static class KeyExtractor
             // The encoded key occupies bytes 52-66 (15 bytes) of the blob.
             byte[] keyBytes = dpid[52..67];
 
-            // Windows 8+ keys embed an 'N' character. A flag in the high bits of
-            // byte 14 tells us where to reinsert it after decoding.
+            // Windows 8+ keys embed an 'N' character. Bit 3 of byte 14 is a flag
+            // indicating where to reinsert it after decoding. Clear the flag bit
+            // before decoding so it does not corrupt the base-24 result.
             const string Chars = "BCDFGHJKMPQRTVWXY2346789";
             int isWin8Plus  = (keyBytes[14] >> 3) & 1;
-            keyBytes[14]    = (byte)((keyBytes[14] & 0xF7) | ((isWin8Plus & 2) << 2));
+            keyBytes[14]   &= 0xF7; // Clear bit 3 — the N-insertion flag is not part of the encoded key.
 
             // Base-24 decode: treat the 15-byte array as a base-256 number and
             // convert it digit-by-digit into a 25-character base-24 string.
