@@ -52,7 +52,7 @@ if (-not $IsLinux) {
 # Set before dot-sourcing so menus can reference it at load time.
 $Global:pcHealthRoot = $PSScriptRoot
 
-$versionFile = Join-Path $PSScriptRoot '..' 'VERSION'
+$versionFile = Join-Path $PSScriptRoot '..' '..' 'VERSION'
 $Global:PcVersion = if (Test-Path $versionFile) {
     (Get-Content $versionFile -Raw).Trim()
 } else { 'unknown' }

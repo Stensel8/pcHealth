@@ -55,7 +55,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 Or launch directly from an elevated PowerShell 7 terminal:
 
 ```powershell
-.\CLI\Start.ps1
+.\src\CLI\Start.ps1
 ```
 
 ### Linux
@@ -70,7 +70,7 @@ bash start.sh
 Or launch directly if PowerShell 7 is already installed:
 
 ```bash
-sudo pwsh ./CLI/Start.ps1
+sudo pwsh ./src/CLI/Start.ps1
 ```
 
 ### GUI
@@ -87,10 +87,10 @@ A Linux GUI is not yet available — WinUI 3 is Windows-only. A cross-platform a
 | Windows App SDK | Included via NuGet on build |
 
 ```powershell
-dotnet build "GUI/pcHealth/pcHealth.csproj" -c Release
+dotnet build "src/GUI/pcHealth/pcHealth.csproj" -c Release
 ```
 
-Or open `GUI/pcHealth/pcHealth.csproj` in Visual Studio 2022.
+Or open `src/GUI/pcHealth/pcHealth.csproj` in Visual Studio 2022.
 
 ---
 
@@ -177,49 +177,12 @@ Option numbers are assigned sequentially at runtime per platform — Windows-onl
 
 ---
 
-## Linux Package Manager Support
-
-The **Update Packages** tool reads `/etc/os-release` to detect the distribution and uses the appropriate update command:
-
-| Distro / Family                    | Command used                   |
-|------------------------------------|--------------------------------|
-| CachyOS                            | `cachy-update`                 |
-| Garuda Linux                       | `garuda-update`                |
-| Manjaro                            | `pamac upgrade`                |
-| Arch / EndeavourOS / Artix         | `paru` / `yay` / `pacman -Syu` |
-| Ubuntu / Debian / Mint / Pop!_OS   | `apt upgrade`                  |
-| Fedora / RHEL / AlmaLinux / Rocky  | `dnf upgrade`                  |
-| openSUSE                           | `zypper update`                |
-| Other Arch-based (`ID_LIKE=arch`)  | `pacman -Syu`                  |
-| Unknown                            | Falls back to first found on PATH |
-
----
-
-## Repository Structure
-
-```
-CLI/
-  Start.ps1          <- single entry point for all platforms
-  menus/             <- Helpers, Main, Tools, Programs
-  tools/             <- cross-platform tool scripts
-    linux/           <- Linux-only tools
-
-GUI/
-  Start.ps1          <- launcher script
-  pcHealth/          <- WinUI 3 app (Windows 25H2+)
-
-start.ps1            <- Windows bootstrap launcher (checks deps, elevates)
-start.sh             <- Linux bootstrap launcher (checks deps, sudo)
-```
-
----
-
 ## Contributing
 
 Contributions are welcome. Follow the existing naming conventions: `Verb-Noun.ps1` for tools, consistent `Write-PcOption` / `Set-PcTheme` calls for UI.
 
-- New tool scripts go in `CLI/tools/` and must be registered in `CLI/menus/Tools.ps1` with appropriate `Platforms` tags.
-- Linux-only tools go in `CLI/tools/linux/`.
+- New tool scripts go in `src/CLI/tools/` and must be registered in `src/CLI/menus/Tools.ps1` with appropriate `Platforms` tags.
+- Linux-only tools go in `src/CLI/tools/linux/`.
 - Open an issue before starting larger changes to avoid duplicate work.
 
 See [SECURITY.md](SECURITY.md) for responsible disclosure of vulnerabilities.

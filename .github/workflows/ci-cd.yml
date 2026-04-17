@@ -19,7 +19,7 @@ concurrency:
 # ============================================================
 # Overview of checks:
 #
-#  powershell-lint  → PSScriptAnalyzer (CLI/ scripts)
+#  powershell-lint  → PSScriptAnalyzer (src/CLI/ scripts)
 #  dotnet-build     → dotnet build (GUI/ WinUI 3 app)
 #  pr-title         → conventional commits (PR title format)
 #  commit-lint      → conventional commits (commit message format)
@@ -52,7 +52,7 @@ jobs:
         shell: pwsh
         run: |
           $settings = ".github/PSScriptAnalyzerSettings.psd1"
-          $results  = Invoke-ScriptAnalyzer -Path "CLI/" -Recurse `
+          $results  = Invoke-ScriptAnalyzer -Path "src/CLI/" -Recurse `
                         -Settings $settings -Severity Warning,Error
 
           if ($results) {
@@ -82,10 +82,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore "GUI/pcHealth/pcHealth.csproj"
+        run: dotnet restore "src/GUI/pcHealth/pcHealth.csproj"
 
       - name: Build
-        run: dotnet build "GUI/pcHealth/pcHealth.csproj" -c Release --no-restore
+        run: dotnet build "src/GUI/pcHealth/pcHealth.csproj" -c Release --no-restore
 
   # ----------------------------------------------------------
   # PR TITLE CHECK

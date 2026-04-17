@@ -55,5 +55,5 @@ if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) {
 }
 
 # ── 3. Launch CLI ─────────────────────────────────────────────────────────────
-$cliScript = Join-Path $PSScriptRoot 'CLI\Start.ps1'
+$cliScript = Join-Path $PSScriptRoot 'src\CLI\Start.ps1'
 & pwsh -NoProfile -ExecutionPolicy Bypass -File $cliScript

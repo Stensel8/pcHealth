@@ -100,4 +100,4 @@ if ! command -v pwsh &>/dev/null; then
 fi
 
 # ── 2. Launch CLI elevated ────────────────────────────────────────────────────
-exec sudo pwsh -NoProfile -ExecutionPolicy Bypass -File "$SCRIPT_DIR/CLI/Start.ps1"
+exec sudo pwsh -NoProfile -ExecutionPolicy Bypass -File "$SCRIPT_DIR/src/CLI/Start.ps1"
