@@ -19,8 +19,8 @@ concurrency:
 # ============================================================
 # Overview of checks:
 #
-#  powershell-lint  → PSScriptAnalyzer (Windows 11/CLI scripts)
-#  dotnet-build     → dotnet build (Windows 11/GUI WinUI 3 app)
+#  powershell-lint  → PSScriptAnalyzer (CLI/ scripts)
+#  dotnet-build     → dotnet build (GUI/ WinUI 3 app)
 #  pr-title         → conventional commits (PR title format)
 #  commit-lint      → conventional commits (commit message format)
 #  markdown-lint    → markdownlint (README, SECURITY, .github docs)
@@ -33,7 +33,7 @@ jobs:
 
   # ----------------------------------------------------------
   # POWERSHELL LINT
-  # Runs PSScriptAnalyzer on all Windows 11 CLI scripts.
+  # Runs PSScriptAnalyzer on all CLI scripts.
   # Settings: .github/PSScriptAnalyzerSettings.psd1
   # ----------------------------------------------------------
   powershell-lint:
@@ -52,7 +52,7 @@ jobs:
         shell: pwsh
         run: |
           $settings = ".github/PSScriptAnalyzerSettings.psd1"
-          $results  = Invoke-ScriptAnalyzer -Path "Windows 11/CLI/" -Recurse `
+          $results  = Invoke-ScriptAnalyzer -Path "CLI/" -Recurse `
                         -Settings $settings -Severity Warning,Error
 
           if ($results) {
@@ -82,10 +82,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore "Windows 11/GUI/pcHealth/pcHealth.csproj"
+        run: dotnet restore "GUI/pcHealth/pcHealth.csproj"
 
       - name: Build
-        run: dotnet build "Windows 11/GUI/pcHealth/pcHealth.csproj" -c Release --no-restore
+        run: dotnet build "GUI/pcHealth/pcHealth.csproj" -c Release --no-restore
 
   # ----------------------------------------------------------
   # PR TITLE CHECK
