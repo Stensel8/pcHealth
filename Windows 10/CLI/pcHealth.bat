@@ -245,7 +245,7 @@ color 0A
 echo Gathering CPU, GPU and RAM information. Please be patient...
 timeout /t 4 >nul
 cls
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\..\Windows 11\CLI\Get-CPU_GPU_RAM.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\..\Windows 11\CLI\tools\Get-HardwareInfo.ps1"
 echo --------------------------------------------------------
 echo.
 echo.
