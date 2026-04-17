@@ -7,7 +7,8 @@ namespace pcHealth.Pages;
 
 public sealed partial class LicenseKeyPage : Page
 {
-    private LicenseResult? _result;
+    private LicenseResult?          _result;
+    private DispatcherQueueTimer?   _copyResetTimer;
 
     public LicenseKeyPage()
     {
@@ -113,11 +114,14 @@ public sealed partial class LicenseKeyPage : Page
         Clipboard.SetContent(pkg);
 
         // Show brief visual feedback on the button before reverting the label.
+        // Reuse a single timer instance — rapid clicks would otherwise leak a new
+        // native timer handle each time without ever stopping the previous one.
         CopyBtn.Content = "Copied!";
-        var timer = DispatcherQueue.CreateTimer();
-        timer.Interval = TimeSpan.FromSeconds(1.5);
-        timer.Tick += (_, _) => { CopyBtn.Content = "Copy Key"; timer.Stop(); };
-        timer.Start();
+        _copyResetTimer ??= DispatcherQueue.CreateTimer();
+        _copyResetTimer.Stop();
+        _copyResetTimer.Interval = TimeSpan.FromSeconds(1.5);
+        _copyResetTimer.Tick += (_, _) => { CopyBtn.Content = "Copy Key"; _copyResetTimer.Stop(); };
+        _copyResetTimer.Start();
     }
 
     private async void SaveBtn_Click(object sender, RoutedEventArgs e)
