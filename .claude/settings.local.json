@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh pr:*)",
+      "Bash(gh api:*)",
+      "Bash(grep -n \"^[Ff]unction \" Scripts/**/*.ps1 Scripts/*.ps1)",
+      "Bash(xargs wc:*)",
+      "Bash(grep -n \"ItemsSource\\\\|x:Bind\\\\|Binding\\\\|DataContext\" \"c:\\\\Users\\\\Sten\\\\Documents\\\\GitHub\\\\pcHealth\\\\Windows 11\\\\GUI\\\\pcHealth\"/*.xaml \"c:\\\\Users\\\\Sten\\\\Documents\\\\GitHub\\\\pcHealth\\\\Windows 11\\\\GUI\\\\pcHealth\\\\Pages\"/*.xaml)",
+      "Bash(grep -n \"async void\\\\|async Task\\\\|fire.*forget\" \"c:\\\\Users\\\\Sten\\\\Documents\\\\GitHub\\\\pcHealth\\\\Windows 11\\\\GUI\\\\pcHealth\\\\Pages\"/*.xaml.cs \"c:\\\\Users\\\\Sten\\\\Documents\\\\GitHub\\\\pcHealth\\\\Windows 11\\\\GUI\\\\pcHealth\"/*.xaml.cs)",
+      "Bash(grep -rn \"x:Name\" \"c:\\\\Users\\\\Sten\\\\Documents\\\\GitHub\\\\pcHealth\\\\Windows 11\\\\GUI\\\\pcHealth\\\\Pages\"/*.xaml)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(pwsh -NoProfile -Command ':*)",
+      "Bash(pwsh -Command ' *)",
+      "Bash(grep -v \"^d.*\\\\\\\\.git\")",
+      "Bash(git fetch *)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/microsoft/winget-cli/master/doc/windows/package-manager/winget/returnCodes.md\")",
+      "Bash(powershell -Command ' *)",
+      "Bash(powershell.exe -Command 'Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object { $bytes = [System.IO.File]::ReadAllBytes\\($_.FullName\\); $hasBom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF; if \\(-not $hasBom\\) { $content = Get-Content $_.FullName -Raw; $utf8bom = New-Object System.Text.UTF8Encoding $true; [System.IO.File]::WriteAllText\\($_.FullName, $content, $utf8bom\\); Write-Host \"Fixed: $\\($_.Name\\)\" } }; Write-Host '\\\\''Done.'\\\\''')",
+      "Bash('/c/Program Files/PowerShell/7/pwsh' -Command 'Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object { $bytes = [System.IO.File]::ReadAllBytes\\($_.FullName\\); $hasBom = $bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF; if \\(-not $hasBom\\) { $content = Get-Content $_.FullName -Raw; $utf8bom = New-Object System.Text.UTF8Encoding $true; [System.IO.File]::WriteAllText\\($_.FullName, $content, $utf8bom\\); Write-Host \"Fixed: $\\($_.Name\\)\" } }; Write-Host '\\\\''Done.'\\\\''')",
+      "Bash(cmd.exe /c \"pwsh -NoProfile -ExecutionPolicy Bypass -File \\\\\"C:\\\\\\\\Users\\\\\\\\Sten\\\\\\\\Documents\\\\\\\\GitHub\\\\\\\\pcHealth\\\\\\\\fix-bom.ps1\\\\\"\")",
+      "Bash(claude plugin *)",
+      "Bash(xargs -I{} bash -c 'echo \"=== {} ===\" && cat -n \"{}\"')",
+      "Bash(python3 -c *)"
+    ]
+  }
+}
