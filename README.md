@@ -1,6 +1,6 @@
 # pcHealth
 
-Check the health of your Windows or Linux installation, drivers, updates, battery health and much more!
+Check the health of your Windows or Linux installation — drivers, updates, battery health, hardware info, and more, all from a single menu-driven interface.
 
 ![License](https://img.shields.io/github/license/REALSDEALS/pcHealth?label=License)
 ![Latest Release](https://img.shields.io/github/v/release/REALSDEALS/pcHealth?label=Release)
@@ -11,19 +11,26 @@ Check the health of your Windows or Linux installation, drivers, updates, batter
 
 ## Overview
 
-pcHealth is a CLI toolkit for IT technicians and power users to quickly diagnose and repair Windows and Linux systems. It provides system scans, hardware information, network tools, license key retrieval, common program downloads, and more — all from a single menu-driven interface.
+pcHealth is a cross-platform toolkit for IT technicians and power users. It runs on **Windows 10, Windows 11, and Linux** using a single PowerShell 7 codebase. The goal is to offer the same functionality everywhere: tools are shown or hidden based on the detected OS, and platform-specific actions (like updating packages) automatically use the right method for the current system.
 
-The project targets **feature parity across all supported platforms**, with the same option numbers and functionality on every OS. All platforms share a common codebase under `Shared/CLI/`; platform-specific folders contain only thin launchers.
+**Examples of platform-aware behaviour:**
+
+| Action | Windows | Linux |
+|--------|---------|-------|
+| Update all packages | `winget upgrade --all` | `cachy-update` / `apt upgrade` / `dnf upgrade` / `pacman -Syu` / etc. |
+| System scan | SFC + DISM | — |
+| Hardware info | CIM + SMART | lscpu + lspci + SMART |
+| View system logs | — | journalctl |
 
 ---
 
 ## Supported Platforms
 
-| Platform    | Status                  |
-|-------------|-------------------------|
-| Windows 11  | ✅ Actively maintained   |
-| Windows 10  | ✅ Actively maintained   |
-| Linux       | ✅ Actively maintained   |
+| Platform   | CLI | GUI (WinUI 3) |
+|------------|-----|---------------|
+| Windows 11 | ✅  | ✅            |
+| Windows 10 | ✅  | ✅            |
+| Linux      | ✅  | Planned       |
 
 See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
@@ -33,48 +40,45 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 **Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux).
 
-### Windows 11 / Windows 10 — CLI
+### CLI — All Platforms
 
 1. Download or clone this repository.
-2. Navigate to the platform folder (`Windows 11/CLI/` or `Windows 10/CLI/`).
-3. Right-click `Start.ps1` → **Run with PowerShell**, or from an elevated terminal:
+2. From an elevated terminal, run `CLI/Start.ps1`:
 
+**Windows (elevated PowerShell 7):**
 ```powershell
-.\Start.ps1
+.\CLI\Start.ps1
 ```
 
-The launcher will prompt for elevation automatically if not already running as Administrator.
-
-### Linux — CLI
-
-1. Download or clone this repository.
-2. Install PowerShell 7: [https://aka.ms/powershell](https://aka.ms/powershell)
-3. Navigate to `Linux/CLI/` and run:
-
+**Linux:**
 ```bash
-sudo pwsh ./Start.ps1
+sudo pwsh ./CLI/Start.ps1
 ```
 
-### Windows 11 — GUI
+The script auto-detects the platform and adjusts the menu accordingly. On Windows, it will prompt for elevation automatically if not already running as Administrator.
 
-The GUI app is a WinUI 3 desktop application that mirrors the full CLI menu in a native Windows 11 interface.
+### GUI — Windows 10 / 11
+
+The GUI is a WinUI 3 desktop application that provides a native Windows interface over the same CLI tools.
 
 **Build dependencies:**
 
-| Tool | winget install command |
-|------|------------------------|
+| Tool | Install |
+|------|---------|
 | .NET 10 SDK | `winget install Microsoft.DotNet.SDK.10` |
-| Visual Studio 2022 (recommended) | `winget install Microsoft.VisualStudio.2022.Community` |
+| Windows App SDK | Included via NuGet on build |
 
 ```powershell
-dotnet build "Windows 11/GUI/pcHealth/pcHealth.csproj" -c Release
+dotnet build "GUI/pcHealth/pcHealth.csproj" -c Release
 ```
+
+Or open `GUI/pcHealth/pcHealth.csproj` in Visual Studio 2022.
 
 ---
 
 ## Menu Reference
 
-All menus and option numbers are identical across platforms. Platform-specific options are shown or hidden automatically based on the detected OS.
+All menus and option numbers are identical across platforms. Tools that only apply to one OS are shown or hidden automatically.
 
 <details>
 <summary><strong>Main Menu</strong></summary>
@@ -92,8 +96,6 @@ All menus and option numbers are identical across platforms. Platform-specific o
 <details>
 <summary><strong>Tools Menu</strong></summary>
 
-Options are numbered sequentially per platform — Windows-only tools are hidden on Linux and vice versa.
-
 | Option | Function                      | Platforms          | Notes                                         |
 |--------|-------------------------------|--------------------|-----------------------------------------------|
 | —      | System Information            | All                | OS, kernel, firmware, TPM, RAM                |
@@ -109,7 +111,7 @@ Options are numbered sequentially per platform — Windows-only tools are hidden
 | —      | Continuous Ping Test          | All                | Continuous ping, Ctrl+C to stop               |
 | —      | Traceroute to Google          | All                | tracert / traceroute                          |
 | —      | Reset Network Stack           | Windows            | DNS flush, Winsock reset, IPv4/IPv6 reset     |
-| —      | Update System Programs        | Windows            | winget upgrade --all                          |
+| —      | Update System Programs        | All                | winget (Windows) / distro package manager (Linux) |
 | —      | Update HP Drivers             | Windows            | HP Image Assistant (HP devices only)          |
 | —      | Restart Audio Drivers         | Windows            | Restarts audio services                       |
 | —      | Open Battery Report           | Windows            | Opens previously generated report             |
@@ -120,7 +122,7 @@ Options are numbered sequentially per platform — Windows-only tools are hidden
 | —      | Repair Boot Record            | Windows            | CHKDSK + SFC + BOOTREC — **use with caution** |
 | —      | Shutdown / Reboot / Log Off   | All                |                                               |
 | —      | Repair Winget                 | Windows            | via winget-install by @asheroto               |
-| —      | Update Packages               | Linux              | apt / dnf / pacman / zypper                   |
+| —      | Update Packages               | Linux              | cachy-update / apt / dnf / pacman / zypper    |
 | —      | View System Logs              | Linux              | journalctl errors/warnings                    |
 
 </details>
@@ -155,26 +157,47 @@ Options are numbered sequentially per platform — Windows-only tools are hidden
 
 ---
 
+## Linux Package Manager Support
+
+The **Update Packages** tool reads `/etc/os-release` to detect the distribution and uses the appropriate update command:
+
+| Distro / Family          | Command used |
+|--------------------------|--------------|
+| CachyOS                  | `cachy-update` |
+| Garuda Linux             | `garuda-update` |
+| Manjaro                  | `pamac upgrade` |
+| Arch / EndeavourOS / Artix | `paru` / `yay` / `pacman -Syu` |
+| Ubuntu / Debian / Mint / Pop!_OS | `apt upgrade` |
+| Fedora / RHEL / AlmaLinux / Rocky | `dnf upgrade` |
+| openSUSE                 | `zypper update` |
+| Other Arch-based         | `pacman -Syu` (via `ID_LIKE`) |
+| Unknown                  | Falls back to whichever package manager is found on PATH |
+
+---
+
 ## Repository Structure
 
 ```
-Shared/CLI/          ← shared core (all platforms load from here)
-  Start.ps1          ← platform auto-detection + menu loader
+CLI/
+  Start.ps1          ← single entry point for all platforms
   menus/             ← Helpers, Main, Tools, Programs
-  tools/             ← all tool scripts
+  tools/             ← cross-platform tool scripts
     linux/           ← Linux-only tools
 
-Windows 10/CLI/      ← thin launcher → Shared/CLI/
-Windows 11/CLI/      ← thin launcher → Shared/CLI/
-Windows 11/GUI/      ← WinUI 3 desktop app
-Linux/CLI/           ← thin launcher → Shared/CLI/
+GUI/
+  Start.ps1          ← launcher script
+  pcHealth/          ← WinUI 3 app (Windows 10 / 11)
 ```
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Follow the existing naming conventions: `Verb-Noun.ps1` for tools, consistent `Write-PcOption` / `Set-PcTheme` calls for UI. New tool scripts go in `Shared/CLI/tools/` and must be registered in `Shared/CLI/menus/Tools.ps1` with appropriate `Platforms` tags. Open an issue before starting larger changes to avoid duplicate work.
+Contributions are welcome. Follow the existing naming conventions: `Verb-Noun.ps1` for tools, consistent `Write-PcOption` / `Set-PcTheme` calls for UI.
+
+- New tool scripts go in `CLI/tools/` and must be registered in `CLI/menus/Tools.ps1` with appropriate `Platforms` tags.
+- Linux-only tools go in `CLI/tools/linux/`.
+- Open an issue before starting larger changes to avoid duplicate work.
 
 See [SECURITY.md](SECURITY.md) for responsible disclosure of vulnerabilities.
 
