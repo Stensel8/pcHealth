@@ -4,13 +4,11 @@
 
 The table below lists each supported platform, the OS build it targets, and its current support status within this project.
 
-| Platform | Target    | Min. Build | Status                 | Project support ends |
-|----------|-----------|------------|------------------------|----------------------|
-| Windows  | 25H2+     | 26200      | ✅ Actively maintained | October 12, 2027     |
-| Linux    | Kernel 7+ | —          | ✅ Actively maintained | —                    |
+| Platform | Target    | Min. Build | Status                 |
+|----------|-----------|------------|------------------------|
+| Windows  | 25H2+     | 26200      | ✅ Actively maintained |
+| Linux    | Kernel 7+ | —          | ✅ Actively maintained |
 
-
-Windows 10 and earlier are not supported. pcHealth requires Windows build 26200 (25H2) or higher.
 
 ---
 

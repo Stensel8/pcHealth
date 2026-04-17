@@ -15,17 +15,6 @@ Check the health of your Windows or Linux installation, drivers, updates, batter
 
 pcHealth is a cross-platform toolkit for IT technicians and power users. It runs on **Windows and Linux** using a single PowerShell 7 codebase. The goal is to offer the same functionality everywhere: tools are shown or hidden based on the detected OS, and platform-specific actions (like updating packages) automatically use the right method for the current system.
 
-**Examples of platform-aware behaviour:**
-
-| Action | Windows | Linux |
-|--------|---------|-------|
-| Update all packages | `winget upgrade --all` | `cachy-update` / `apt upgrade` / `dnf upgrade` / `pacman -Syu` / etc. |
-| System scan | SFC + DISM | — |
-| Hardware info | CIM + SMART | lscpu + lspci + SMART |
-| View system logs | — | journalctl |
-
-The project targets **feature parity across all supported platforms**, with the same option numbers and functionality on every OS.
-
 ---
 
 ## Supported Platforms
