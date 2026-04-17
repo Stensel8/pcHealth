@@ -19,7 +19,19 @@ try {
 Write-Host "[>>] Running winget-install (this may take a moment)..." -ForegroundColor Yellow
 # winget-install calls exit internally, which would kill our session if invoked
 # directly. Running it in a child process keeps our session alive.
-$result = Start-Process pwsh -ArgumentList '-ExecutionPolicy Bypass -Command winget-install -Force' -Wait -PassThru
+#
+# Install-Script places the .ps1 in the user's Scripts folder, which may not be
+# on PATH in an elevated child process. Resolve the path explicitly and use
+# -File so PowerShell locates it regardless of PATH configuration.
+$installed   = Get-InstalledScript winget-install -ErrorAction SilentlyContinue
+$scriptArgs  = if ($installed) {
+    $scriptFile = Join-Path $installed.InstalledLocation 'winget-install.ps1'
+    "-NoProfile -ExecutionPolicy Bypass -File `"$scriptFile`" -Force"
+} else {
+    # Fallback: rely on the Scripts directory being on PATH.
+    '-NoProfile -ExecutionPolicy Bypass -Command winget-install -Force'
+}
+$result = Start-Process pwsh -ArgumentList $scriptArgs -Wait -PassThru
 if ($result.ExitCode -eq 0) {
     Write-Host "[OK] Winget repair complete." -ForegroundColor Green
 } else {
