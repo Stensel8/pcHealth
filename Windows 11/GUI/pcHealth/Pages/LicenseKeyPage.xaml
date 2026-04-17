@@ -88,7 +88,7 @@
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         <!-- Shown only when a KMS/generic placeholder key is detected -->
                         <InfoBar x:Name="GenericWarning"
-                                 IsOpen="False" IsClosable="False"
+                                 IsOpen="False"
                                  Severity="Warning"
                                  Title="Generic placeholder key detected"
                                  Message="This key will not activate Windows. Your system may use a digital licence linked to your Microsoft account, or was activated via KMS/MAK."/>
