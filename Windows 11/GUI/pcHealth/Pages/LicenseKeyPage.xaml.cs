@@ -91,17 +91,20 @@ public sealed partial class LicenseKeyPage : Page
     {
         if (key is not null)
         {
-            statusText.Text = "Found";
-            keyText.Text    = key;
-            icon.Glyph      = "\uE930"; // CheckMark
-            icon.Foreground = new SolidColorBrush(
+            statusText.Text    = "Found";
+            keyText.Text       = key;
+            keyText.Visibility = Visibility.Visible;
+            icon.Glyph         = "\uE930"; // CheckMark
+            icon.Foreground    = new SolidColorBrush(
                 Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x0F, 0x9D, 0x58));
         }
         else
         {
-            statusText.Text = notFoundMsg;
-            icon.Glyph      = "\uE8BB"; // Cancel
-            icon.Foreground = (Brush)App.Current.Resources["TextFillColorTertiaryBrush"];
+            statusText.Text    = notFoundMsg;
+            // Collapse instead of leaving an empty selectable TextBlock visible.
+            keyText.Visibility = Visibility.Collapsed;
+            icon.Glyph         = "\uE8BB"; // Cancel
+            icon.Foreground    = (Brush)App.Current.Resources["TextFillColorTertiaryBrush"];
         }
     }
 
