@@ -32,6 +32,12 @@ if (-not $smartctl) {
         Write-Host "  Installing smartmontools..." -ForegroundColor Yellow
         winget install --id smartmontools.smartmontools -e --silent `
             --accept-package-agreements --accept-source-agreements
+
+        # winget installs to %ProgramFiles% but does not update the current session's
+        # PATH. Refresh it so Find-Smartctl's Get-Command check can locate smartctl.
+        $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+                    [System.Environment]::GetEnvironmentVariable('Path', 'User')
+
         $smartctl = Find-Smartctl
         if ($smartctl) {
             Write-Host "  smartmontools installed successfully.`n" -ForegroundColor Green
