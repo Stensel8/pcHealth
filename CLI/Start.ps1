@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 # ============================================================================
 # pcHealth — CLI
-# Auto-detects platform (Windows 10/11/Linux) and loads menus.
+# Auto-detects platform (Windows/Linux) and loads menus.
 # ============================================================================
 
 $ErrorActionPreference = 'Stop'
@@ -19,20 +19,16 @@ if ($IsLinux) {
     $Global:PcPlatform      = 'Linux'
     $Global:PcPlatformLabel = 'Linux'
 } else {
-    # Require Windows build 19045 (Windows 10 22H2) or higher
+    # Require Windows 25H2+ (build 26200)
     $build = [System.Environment]::OSVersion.Version.Build
-    if ($build -lt 19045) {
-        Write-Host "[!!] pcHealth requires Windows build 19045 (Windows 10 22H2) or higher." -ForegroundColor Red
+    if ($build -lt 26200) {
+        Write-Host "[!!] pcHealth requires Windows build 26200 (25H2) or higher." -ForegroundColor Red
         Write-Host "     Your build: $build" -ForegroundColor Red
+        Write-Host "     Update Windows and try again." -ForegroundColor Yellow
         exit 1
     }
-    if ($build -ge 22000) {
-        $Global:PcPlatform      = 'Windows11'
-        $Global:PcPlatformLabel = 'Windows 11'
-    } else {
-        $Global:PcPlatform      = 'Windows10'
-        $Global:PcPlatformLabel = 'Windows 10'
-    }
+    $Global:PcPlatform      = 'Windows'
+    $Global:PcPlatformLabel = 'Windows'
 }
 
 # Console resize — Windows only. Terminal width/height on Linux is managed by

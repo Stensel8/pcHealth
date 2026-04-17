@@ -1,5 +1,5 @@
 ﻿# ============================================================================
-# pcHealth — Windows 11 — GUI launcher
+# pcHealth — Windows — GUI launcher
 # Builds the WinUI 3 project in Release mode, then starts the application.
 # The EXE requests administrator privileges via its own app.manifest, so no
 # elevation is needed here.

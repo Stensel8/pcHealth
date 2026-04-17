@@ -11,7 +11,7 @@ Check the health of your Windows or Linux installation — drivers, updates, bat
 
 ## Overview
 
-pcHealth is a cross-platform toolkit for IT technicians and power users. It runs on **Windows 10, Windows 11, and Linux** using a single PowerShell 7 codebase. The goal is to offer the same functionality everywhere: tools are shown or hidden based on the detected OS, and platform-specific actions (like updating packages) automatically use the right method for the current system.
+pcHealth is a cross-platform toolkit for IT technicians and power users. It runs on **Windows and Linux** using a single PowerShell 7 codebase. The goal is to offer the same functionality everywhere: tools are shown or hidden based on the detected OS, and platform-specific actions (like updating packages) automatically use the right method for the current system.
 
 **Examples of platform-aware behaviour:**
 
@@ -26,11 +26,10 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 
 ## Supported Platforms
 
-| Platform   | CLI | GUI        | Min. version |
-|------------|-----|------------|--------------|
-| Windows 11 | ✅  | ✅         | Build 19045  |
-| Windows 10 | ✅  | ✅         | Build 19045 (22H2) |
-| Linux      | ✅  | Planned    | Kernel 7.0   |
+| Platform | CLI | GUI  | Min. version        |
+|----------|-----|------|---------------------|
+| Windows  | ✅  | ✅  | Build 26200 (25H2+) |
+| Linux    | ✅  | ✅  | Kernel 7.0          |
 
 See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
@@ -38,7 +37,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 ## Getting Started
 
-**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum Windows build 19045 / Linux kernel 7.0.
+**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum Windows build 26200 (25H2) / Linux kernel 7.0.
 
 ### CLI — All Platforms
 
@@ -59,9 +58,9 @@ The script auto-detects the platform and adjusts the menu accordingly. On Window
 
 ### GUI
 
-On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface and requires build 19045 or higher.
+On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface and requires Windows build 26200 (25H2) or higher.
 
-A Linux GUI is not yet available — WinUI 3 is Windows-only. A cross-platform alternative is being considered for a future release.
+A Linux GUI is not yet available — WinUI 3 is Windows-only. A cross-platform alternative is in the works.
 
 **Build dependencies:**
 
@@ -188,7 +187,7 @@ CLI/
 
 GUI/
   Start.ps1          ← launcher script
-  pcHealth/          ← WinUI 3 app (Windows 10 / 11)
+  pcHealth/          ← WinUI 3 app (Windows 25H2+)
 ```
 
 ---

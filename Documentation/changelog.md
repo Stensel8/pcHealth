@@ -1,5 +1,13 @@
 # Changelog.md - pcHealth
 
+## 17-04-2026 (2) - @Stensel8
+
+Dropped Windows 10 support. Minimum requirement is now Windows 11 25H2 (build 26200+), aligning with the Linux kernel 7.0 minimum.
+
+- `start.ps1` and `CLI/Start.ps1`: build check raised from 19045 to 26200.
+- `CLI/menus/Tools.ps1`: removed `Windows10` from all platform filter arrays.
+- `SECURITY.md`, `README.md`: updated supported platforms and requirements.
+
 ## 17-04-2026 - @Stensel8
 
 Consolidated repository into two top-level folders: `CLI/` and `GUI/`.

@@ -8,30 +8,30 @@ function Show-ToolsMenu {
     # Each entry: Label, Script (relative to tools/), Note, Platforms.
     # Platforms controls which OS sees the option.
     $toolDefs = @(
-        @{ Label = 'System Information';          Script = 'Get-SystemInfo.ps1';          Note = '';                      Platforms = @('Windows10','Windows11','Linux') }
-        @{ Label = 'Hardware Information';         Script = 'Get-HardwareInfo.ps1';         Note = '';                      Platforms = @('Windows10','Windows11','Linux') }
-        @{ Label = 'System File Scan';             Script = 'Invoke-SystemScan.ps1';         Note = '(SFC /scannow)';        Platforms = @('Windows10','Windows11') }
-        @{ Label = 'DISM Health Check';            Script = 'Invoke-DISMCheck.ps1';          Note = '';                      Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Scan + Repair';                Script = 'Invoke-ScanAndRepair.ps1';      Note = '(SFC + DISM combined)'; Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Battery Report';               Script = 'Get-BatteryReport.ps1';         Note = '(laptop only)';         Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Windows Update';               Script = 'Invoke-WindowsUpdate.ps1';      Note = '';                      Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Disk Optimization';            Script = 'Invoke-DiskOptimize.ps1';       Note = '';                      Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Disk Cleanup';                 Script = 'Invoke-DiskCleanup.ps1';        Note = '';                      Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Short Ping Test';              Script = 'Test-NetworkShort.ps1';         Note = '';                      Platforms = @('Windows10','Windows11','Linux') }
-        @{ Label = 'Continuous Ping Test';         Script = 'Test-NetworkContinuous.ps1';    Note = '';                      Platforms = @('Windows10','Windows11','Linux') }
-        @{ Label = 'Traceroute to Google';         Script = 'Test-Traceroute.ps1';           Note = '';                      Platforms = @('Windows10','Windows11','Linux') }
-        @{ Label = 'Reset Network Stack';          Script = 'Invoke-NetworkReset.ps1';       Note = '';                      Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Update System Programs';       Script = 'Invoke-SystemUpdate.ps1';       Note = '(winget)';              Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Update HP Drivers';            Script = 'Invoke-HPUpdate.ps1';           Note = '(HP only)';             Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Restart Audio Drivers';        Script = 'Invoke-AudioRestart.ps1';       Note = '';                      Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Open Battery Report';          Script = 'Open-BatteryReport.ps1';        Note = '';                      Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Open CBS Log';                 Script = 'Open-CBSLog.ps1';               Note = '';                      Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Get Ninite';                   Script = 'Get-Ninite.ps1';                Note = '(Edge, Chrome, VLC, 7-Zip)'; Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Windows License Key';          Script = 'Get-LicenseKey.ps1';            Note = '';                      Platforms = @('Windows10','Windows11') }
-        @{ Label = 'BIOS Password Recovery';       Script = 'Open-BIOSPasswordTool.ps1';     Note = '';                      Platforms = @('Windows10','Windows11','Linux') }
-        @{ Label = 'Repair Boot Record';           Script = 'Invoke-BootRepair.ps1';         Note = '(use with caution!)';   Platforms = @('Windows10','Windows11') }
-        @{ Label = 'Shutdown / Reboot / Log Off';  Script = 'Invoke-PowerOptions.ps1';       Note = '';                      Platforms = @('Windows10','Windows11','Linux') }
-        @{ Label = 'Repair Winget';                Script = 'Invoke-WingetRepair.ps1';       Note = '';                      Platforms = @('Windows10','Windows11') }
+        @{ Label = 'System Information';          Script = 'Get-SystemInfo.ps1';          Note = '';                      Platforms = @('Windows','Linux') }
+        @{ Label = 'Hardware Information';         Script = 'Get-HardwareInfo.ps1';         Note = '';                      Platforms = @('Windows','Linux') }
+        @{ Label = 'System File Scan';             Script = 'Invoke-SystemScan.ps1';         Note = '(SFC /scannow)';        Platforms = @('Windows') }
+        @{ Label = 'DISM Health Check';            Script = 'Invoke-DISMCheck.ps1';          Note = '';                      Platforms = @('Windows') }
+        @{ Label = 'Scan + Repair';                Script = 'Invoke-ScanAndRepair.ps1';      Note = '(SFC + DISM combined)'; Platforms = @('Windows') }
+        @{ Label = 'Battery Report';               Script = 'Get-BatteryReport.ps1';         Note = '(laptop only)';         Platforms = @('Windows') }
+        @{ Label = 'Windows Update';               Script = 'Invoke-WindowsUpdate.ps1';      Note = '';                      Platforms = @('Windows') }
+        @{ Label = 'Disk Optimization';            Script = 'Invoke-DiskOptimize.ps1';       Note = '';                      Platforms = @('Windows') }
+        @{ Label = 'Disk Cleanup';                 Script = 'Invoke-DiskCleanup.ps1';        Note = '';                      Platforms = @('Windows') }
+        @{ Label = 'Short Ping Test';              Script = 'Test-NetworkShort.ps1';         Note = '';                      Platforms = @('Windows','Linux') }
+        @{ Label = 'Continuous Ping Test';         Script = 'Test-NetworkContinuous.ps1';    Note = '';                      Platforms = @('Windows','Linux') }
+        @{ Label = 'Traceroute to Google';         Script = 'Test-Traceroute.ps1';           Note = '';                      Platforms = @('Windows','Linux') }
+        @{ Label = 'Reset Network Stack';          Script = 'Invoke-NetworkReset.ps1';       Note = '';                      Platforms = @('Windows') }
+        @{ Label = 'Update System Programs';       Script = 'Invoke-SystemUpdate.ps1';       Note = '(winget)';              Platforms = @('Windows') }
+        @{ Label = 'Update HP Drivers';            Script = 'Invoke-HPUpdate.ps1';           Note = '(HP only)';             Platforms = @('Windows') }
+        @{ Label = 'Restart Audio Drivers';        Script = 'Invoke-AudioRestart.ps1';       Note = '';                      Platforms = @('Windows') }
+        @{ Label = 'Open Battery Report';          Script = 'Open-BatteryReport.ps1';        Note = '';                      Platforms = @('Windows') }
+        @{ Label = 'Open CBS Log';                 Script = 'Open-CBSLog.ps1';               Note = '';                      Platforms = @('Windows') }
+        @{ Label = 'Get Ninite';                   Script = 'Get-Ninite.ps1';                Note = '(Edge, Chrome, VLC, 7-Zip)'; Platforms = @('Windows') }
+        @{ Label = 'Windows License Key';          Script = 'Get-LicenseKey.ps1';            Note = '';                      Platforms = @('Windows') }
+        @{ Label = 'BIOS Password Recovery';       Script = 'Open-BIOSPasswordTool.ps1';     Note = '';                      Platforms = @('Windows','Linux') }
+        @{ Label = 'Repair Boot Record';           Script = 'Invoke-BootRepair.ps1';         Note = '(use with caution!)';   Platforms = @('Windows') }
+        @{ Label = 'Shutdown / Reboot / Log Off';  Script = 'Invoke-PowerOptions.ps1';       Note = '';                      Platforms = @('Windows','Linux') }
+        @{ Label = 'Repair Winget';                Script = 'Invoke-WingetRepair.ps1';       Note = '';                      Platforms = @('Windows') }
         @{ Label = 'Update Packages';              Script = 'linux/Invoke-PackageUpdate.ps1'; Note = '';                     Platforms = @('Linux') }
         @{ Label = 'View System Logs';             Script = 'linux/Get-SystemLogs.ps1';      Note = '(journalctl)';          Platforms = @('Linux') }
     )
