@@ -54,14 +54,20 @@ public sealed partial class ToolsPage : Page
             switch (item.Kind)
             {
                 case ToolActionKind.Script:
+                    if (string.IsNullOrWhiteSpace(item.Param))
+                        throw new InvalidOperationException($"Tool '{item.Name}' has no script path configured.");
                     CliRunner.RunScript(item.Param);
                     break;
 
                 case ToolActionKind.OpenApp:
+                    if (string.IsNullOrWhiteSpace(item.Param))
+                        throw new InvalidOperationException($"Tool '{item.Name}' has no application name configured.");
                     CliRunner.OpenApp(item.Param);
                     break;
 
                 case ToolActionKind.OpenUri:
+                    if (string.IsNullOrWhiteSpace(item.Param))
+                        throw new InvalidOperationException($"Tool '{item.Name}' has no URI configured.");
                     CliRunner.OpenUri(item.Param);
                     break;
 
