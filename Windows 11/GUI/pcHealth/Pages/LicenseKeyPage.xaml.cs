@@ -158,7 +158,26 @@ public sealed partial class LicenseKeyPage : Page
                 : "",
         };
 
-        await Windows.Storage.FileIO.WriteLinesAsync(file, lines);
+        try
+        {
+            await Windows.Storage.FileIO.WriteLinesAsync(file, lines);
+        }
+        catch (Exception ex)
+        {
+            _ = ShowErrorAsync($"Could not save the report: {ex.Message}");
+        }
+    }
+
+    private async Task ShowErrorAsync(string message)
+    {
+        var dialog = new ContentDialog
+        {
+            Title           = "Save failed",
+            Content         = message,
+            CloseButtonText = "OK",
+            XamlRoot        = XamlRoot,
+        };
+        await dialog.ShowAsync();
     }
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
