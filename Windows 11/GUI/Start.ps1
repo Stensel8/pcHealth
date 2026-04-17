@@ -8,7 +8,11 @@
 $ErrorActionPreference = 'Stop'
 
 $projectFile = Join-Path $PSScriptRoot 'pcHealth\pcHealth.csproj'
-$exePath     = Join-Path $PSScriptRoot 'pcHealth\bin\Release\net10.0-windows10.0.19041.0\win-x64\pcHealth.exe'
+
+# Detect the runtime identifier so the launcher works on both x64 and ARM64 machines.
+$rid     = if ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture -eq
+               [System.Runtime.InteropServices.Architecture]::Arm64) { 'win-arm64' } else { 'win-x64' }
+$exePath = Join-Path $PSScriptRoot "pcHealth\bin\Release\net10.0-windows10.0.19041.0\$rid\pcHealth.exe"
 
 Write-Host 'Building pcHealth GUI...' -ForegroundColor Cyan
 dotnet build $projectFile -c Release --nologo -v minimal
