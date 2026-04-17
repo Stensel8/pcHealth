@@ -35,18 +35,28 @@ function Get-WindowsDrive {
 }
 
 Write-Host "`n[>>] Step 1/3 — Disk repair..." -ForegroundColor Yellow
-$win = Get-WindowsDrive
+$win    = Get-WindowsDrive
+# Derive $windir here so it is available in every step, including the bcdboot
+# fallback in step 3. Without this, $windir would be $null if $win is $null and
+# bcdboot would run with an empty path argument.
+$windir = if ($win) { Join-Path $win 'Windows' } else { $null }
+
 if ($win) {
     $driveLetter = $win.TrimEnd(':')
-    # Repair-Volume is the modern replacement for chkdsk /f /r.
-    # OfflineScanAndFix requires the volume to be offline — correct when run from WinRE.
-    Repair-Volume -DriveLetter $driveLetter -OfflineScanAndFix
+    # X:\ is present only in WinPE/WinRE — its absence means a live Windows session.
+    # Repair-Volume -OfflineScanAndFix requires the volume to be offline, so fall back
+    # to an online-safe scan when running from a live session.
+    if (Test-Path 'X:\') {
+        Repair-Volume -DriveLetter $driveLetter -OfflineScanAndFix
+    } else {
+        Write-Warning "Live session detected — using online scan only. Run from WinRE for a full offline repair."
+        Repair-Volume -DriveLetter $driveLetter -Scan
+    }
 } else { Write-Warning "Windows partition not found, skipping disk repair." }
 Write-Host "[OK] Disk repair done.`n" -ForegroundColor Green
 
 Write-Host "[>>] Step 2/3 — SFC (offline)..." -ForegroundColor Yellow
 if ($win) {
-    $windir = Join-Path $win 'Windows'
     # sfc.exe has no PowerShell equivalent — call directly without cmd /c.
     & sfc.exe /scannow /offbootdir="$win\" /offwindir="$windir"
 } else { Write-Warning "Skipping offline SFC." }
