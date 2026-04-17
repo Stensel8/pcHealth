@@ -65,7 +65,7 @@ function Run_Bootrec {
 
     if ($fixboot -match 'Access is denied' -or $fixboot -match 'Toegang geweigerd') {
         Write-Warning "[BOOTREC] Access denied on /fixboot. Attempting BCDBOOT fallback..."
-        Try-EfiRebuild
+        Try_EfiRebuild
     }
 
     Write-Host "[BOOTREC] Boot repair finished.`n"
