@@ -60,11 +60,11 @@ echo ...........................................................
 echo.
 
 SET /P A=Type one of the numbers from the menu above to open the desired menu and then press ENTER. Enter:
-IF %A%==1 GOTO TOOLS
-IF %A%==2 GOTO PROGRAMS
-IF %A%==3 GOTO PCHEALTHGETVER
-IF %A%==4 GOTO PRERELEASE
-IF %A%==5 GOTO CLOSE
+IF "%A%"=="1" GOTO TOOLS
+IF "%A%"=="2" GOTO PROGRAMS
+IF "%A%"=="3" GOTO PCHEALTHGETVER
+IF "%A%"=="4" GOTO PRERELEASE
+IF "%A%"=="5" GOTO CLOSE
 
 :TOOLS
 cls 
@@ -103,32 +103,32 @@ echo ...........................................................
 echo.
 
 SET /P B=Type one of the numbers from the menu above to run the desired function, then press ENTER. Enter: 
-IF %B%==1 GOTO SYSINFO
-IF %B%==2 GOTO CPUANDGPUINFO
-IF %B%==3 GOTO SCAN
-IF %B%==4 GOTO DISM
-IF %B%==5 GOTO SCSM
-IF %B%==6 GOTO BATTERY
-IF %B%==7 GOTO UPDATE
-IF %B%==8 GOTO DFR
-IF %B%==9 GOTO CLMGR
-IF %B%==10 GOTO SHORTPING
-IF %B%==11 GOTO CONTINUESPING
-IF %B%==12 GOTO TRACEGOOGLE
-IF %B%==13 GOTO RESETNETWORK
-IF %B%==14 GOTO SYSUPDATE
-IF %B%==15 GOTO HPUPDATE
-IF %B%==16 GOTO AUDIORE
-IF %B%==17 GOTO BATOPEN
-IF %B%==18 GOTO OPENCBSLOG
-IF %B%==19 GOTO NINITE
-IF %B%==20 GOTO LICENSE
-IF %B%==21 GOTO BIOSPW
-IF %B%==22 GOTO BOOTRESTORE
-IF %B%==23 GOTO RESHUT
-IF %B%==24 GOTO PROGRAMS
-IF %B%==25 GOTO MENU
-IF %B%==26 GOTO CLOSE
+IF "%B%"=="1" GOTO SYSINFO
+IF "%B%"=="2" GOTO CPUANDGPUINFO
+IF "%B%"=="3" GOTO SCAN
+IF "%B%"=="4" GOTO DISM
+IF "%B%"=="5" GOTO SCSM
+IF "%B%"=="6" GOTO BATTERY
+IF "%B%"=="7" GOTO UPDATE
+IF "%B%"=="8" GOTO DFR
+IF "%B%"=="9" GOTO CLMGR
+IF "%B%"=="10" GOTO SHORTPING
+IF "%B%"=="11" GOTO CONTINUESPING
+IF "%B%"=="12" GOTO TRACEGOOGLE
+IF "%B%"=="13" GOTO RESETNETWORK
+IF "%B%"=="14" GOTO SYSUPDATE
+IF "%B%"=="15" GOTO HPUPDATE
+IF "%B%"=="16" GOTO AUDIORE
+IF "%B%"=="17" GOTO BATOPEN
+IF "%B%"=="18" GOTO OPENCBSLOG
+IF "%B%"=="19" GOTO NINITE
+IF "%B%"=="20" GOTO LICENSE
+IF "%B%"=="21" GOTO BIOSPW
+IF "%B%"=="22" GOTO BOOTRESTORE
+IF "%B%"=="23" GOTO RESHUT
+IF "%B%"=="24" GOTO PROGRAMS
+IF "%B%"=="25" GOTO MENU
+IF "%B%"=="26" GOTO CLOSE
 
 :PROGRAMS
 cls
