@@ -6,17 +6,33 @@
 
 $ErrorActionPreference = 'Stop'
 
-# Detect platform from $IsLinux and Windows build number.
-# Build >= 22000 = Windows 11 (21H2+). Lower build = Windows 10.
+# ── Platform detection + minimum version guards ───────────────────────────────
 if ($IsLinux) {
+    # Require kernel 7.0+
+    $kernelVersion = (uname -r)
+    $kernelMajor   = [int]($kernelVersion -split '[\.\-]')[0]
+    if ($kernelMajor -lt 7) {
+        Write-Host "[!!] pcHealth requires Linux kernel 7.0 or higher." -ForegroundColor Red
+        Write-Host "     Your kernel: $kernelVersion" -ForegroundColor Red
+        exit 1
+    }
     $Global:PcPlatform      = 'Linux'
     $Global:PcPlatformLabel = 'Linux'
-} elseif ([System.Environment]::OSVersion.Version.Build -ge 22000) {
-    $Global:PcPlatform      = 'Windows11'
-    $Global:PcPlatformLabel = 'Windows 11'
 } else {
-    $Global:PcPlatform      = 'Windows10'
-    $Global:PcPlatformLabel = 'Windows 10'
+    # Require Windows build 19045 (Windows 10 22H2) or higher
+    $build = [System.Environment]::OSVersion.Version.Build
+    if ($build -lt 19045) {
+        Write-Host "[!!] pcHealth requires Windows build 19045 (Windows 10 22H2) or higher." -ForegroundColor Red
+        Write-Host "     Your build: $build" -ForegroundColor Red
+        exit 1
+    }
+    if ($build -ge 22000) {
+        $Global:PcPlatform      = 'Windows11'
+        $Global:PcPlatformLabel = 'Windows 11'
+    } else {
+        $Global:PcPlatform      = 'Windows10'
+        $Global:PcPlatformLabel = 'Windows 10'
+    }
 }
 
 # Console resize — Windows only. Terminal width/height on Linux is managed by

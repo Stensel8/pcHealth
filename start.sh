@@ -8,6 +8,16 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# ── 0. Minimum kernel version: 7.0 ───────────────────────────────────────────
+KERNEL_VERSION="$(uname -r)"
+KERNEL_MAJOR="${KERNEL_VERSION%%.*}"
+if [ "$KERNEL_MAJOR" -lt 7 ] 2>/dev/null; then
+    echo "[!!] pcHealth requires Linux kernel 7.0 or higher."
+    echo "     Your kernel: $KERNEL_VERSION"
+    echo "     Update your kernel and try again."
+    exit 1
+fi
+
 # ── 1. Ensure PowerShell 7 ────────────────────────────────────────────────────
 if ! command -v pwsh &>/dev/null; then
     echo '[pcHealth] PowerShell 7 not found. Attempting installation...'

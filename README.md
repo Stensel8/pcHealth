@@ -26,11 +26,11 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 
 ## Supported Platforms
 
-| Platform   | CLI | GUI (WinUI 3) |
-|------------|-----|---------------|
-| Windows 11 | ✅  | ✅            |
-| Windows 10 | ✅  | ✅            |
-| Linux      | ✅  | Planned       |
+| Platform   | CLI | GUI        | Min. version |
+|------------|-----|------------|--------------|
+| Windows 11 | ✅  | ✅         | Build 19045  |
+| Windows 10 | ✅  | ✅         | Build 19045 (22H2) |
+| Linux      | ✅  | Planned    | Kernel 7.0   |
 
 See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
@@ -38,7 +38,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 ## Getting Started
 
-**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux).
+**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum Windows build 19045 / Linux kernel 7.0.
 
 ### CLI — All Platforms
 
@@ -57,9 +57,11 @@ sudo pwsh ./CLI/Start.ps1
 
 The script auto-detects the platform and adjusts the menu accordingly. On Windows, it will prompt for elevation automatically if not already running as Administrator.
 
-### GUI — Windows 10 / 11
+### GUI
 
-The GUI is a WinUI 3 desktop application that provides a native Windows interface over the same CLI tools.
+On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface and requires build 19045 or higher.
+
+A Linux GUI is not yet available — WinUI 3 is Windows-only. A cross-platform alternative is being considered for a future release.
 
 **Build dependencies:**
 

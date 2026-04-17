@@ -7,6 +7,16 @@
 
 $ErrorActionPreference = 'Stop'
 
+# ── 0. Minimum OS version: Windows build 19045 (Windows 10 22H2) ─────────────
+$build = [System.Environment]::OSVersion.Version.Build
+if ($build -lt 19045) {
+    Write-Host "[!!] pcHealth requires Windows build 19045 (Windows 10 22H2) or higher." -ForegroundColor Red
+    Write-Host "     Your build: $build" -ForegroundColor Red
+    Write-Host "     Update Windows and try again." -ForegroundColor Yellow
+    Read-Host 'Press Enter to exit'
+    exit 1
+}
+
 # ── 1. Elevate ────────────────────────────────────────────────────────────────
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator
