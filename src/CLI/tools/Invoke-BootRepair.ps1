@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Boot Record Repair
+# pcHealth -- Boot Record Repair
 # Attempts to repair the boot record via CHKDSK, SFC, BOOTREC and BCDBOOT.
 # Best run from a recovery environment (WinRE/CMD) with Administrator rights.
 # ============================================================================
@@ -23,7 +23,7 @@ if ($confirm1 -ne 'yes') {
     return
 }
 
-$confirm2 = (Read-Host "  Last chance — type 'CONFIRM' in capitals to proceed").Trim()
+$confirm2 = (Read-Host "  Last chance -- type 'CONFIRM' in capitals to proceed").Trim()
 if ($confirm2 -ne 'CONFIRM') {
     Write-Host "`n  Cancelled.`n" -ForegroundColor DarkGray
     return
@@ -35,7 +35,7 @@ function Get-WindowsDrive {
     } | Select-Object -First 1
 }
 
-Write-Host "`n[>>] Step 1/3 — Disk repair..." -ForegroundColor Yellow
+Write-Host "`n[>>] Step 1/3 -- Disk repair..." -ForegroundColor Yellow
 $win    = Get-WindowsDrive
 $windir = if ($win) { Join-Path $win 'Windows' } else { $null }
 
@@ -44,26 +44,26 @@ if ($win) {
     if (Test-Path 'X:\') {
         Repair-Volume -DriveLetter $driveLetter -OfflineScanAndFix
     } else {
-        Write-Warning "Live session detected — using online scan only. Run from WinRE for a full offline repair."
+        Write-Warning "Live session detected -- using online scan only. Run from WinRE for a full offline repair."
         Repair-Volume -DriveLetter $driveLetter -Scan
     }
 } else { Write-Warning "Windows partition not found, skipping disk repair." }
 Write-Host "[OK] Disk repair done.`n" -ForegroundColor Green
 
-Write-Host "[>>] Step 2/3 — SFC (offline)..." -ForegroundColor Yellow
+Write-Host "[>>] Step 2/3 -- SFC (offline)..." -ForegroundColor Yellow
 if ($win) {
     & sfc.exe /scannow /offbootdir="$win\" /offwindir="$windir"
 } else { Write-Warning "Skipping offline SFC." }
 Write-Host "[OK] SFC done.`n" -ForegroundColor Green
 
-Write-Host "[>>] Step 3/3 — BOOTREC..." -ForegroundColor Yellow
+Write-Host "[>>] Step 3/3 -- BOOTREC..." -ForegroundColor Yellow
 & bootrec.exe /fixmbr
 $fixboot = & bootrec.exe /fixboot 2>&1
 & bootrec.exe /scanos
 & bootrec.exe /rebuildbcd
 
 if ($fixboot -match 'Access is denied') {
-    Write-Warning "/fixboot access denied — attempting bcdboot fallback (EFI)..."
+    Write-Warning "/fixboot access denied -- attempting bcdboot fallback (EFI)..."
     & mountvol.exe S: /S
     if (Test-Path 'S:\') {
         & bcdboot.exe $windir /s S: /f ALL

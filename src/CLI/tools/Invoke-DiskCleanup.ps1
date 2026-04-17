@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Disk Cleanup
+# pcHealth -- Disk Cleanup
 # Opens the built-in Disk Cleanup utility.
 # ============================================================================
 

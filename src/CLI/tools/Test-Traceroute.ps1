@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Traceroute to Google
+# pcHealth -- Traceroute to Google
 # ============================================================================
 param(
     [string]$Target = 'google.com'
@@ -30,7 +30,7 @@ if ($IsLinux) {
             Write-Host ("  {0,2}  {1}" -f $hop, $node)
             $hop++
         }
-        Write-Host "`n  Destination: $($result.RemoteAddress)  —  TCP: $($result.TcpTestSucceeded)`n" -ForegroundColor Cyan
+        Write-Host "`n  Destination: $($result.RemoteAddress)  --  TCP: $($result.TcpTestSucceeded)`n" -ForegroundColor Cyan
     } else {
         Write-Host "  Traceroute failed. Check your network connection.`n" -ForegroundColor Red
     }

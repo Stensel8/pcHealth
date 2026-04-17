@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Update HP Drivers
+# pcHealth -- Update HP Drivers
 # Installs HP Image Assistant which detects and updates HP-specific drivers.
 # ============================================================================
 

@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Update System Programs
+# pcHealth -- Update System Programs
 # Upgrades all installed winget packages.
 # ============================================================================
 
@@ -8,7 +8,7 @@ Write-Host "`nDetecting updatable packages...`n" -ForegroundColor Cyan
 
 winget upgrade
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "`n[!!] winget exited with code $LASTEXITCODE — winget may be broken or unavailable.`n" -ForegroundColor Red
+    Write-Host "`n[!!] winget exited with code $LASTEXITCODE -- winget may be broken or unavailable.`n" -ForegroundColor Red
     return
 }
 

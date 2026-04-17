@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Update Packages (Linux)
+# pcHealth -- Update Packages (Linux)
 # Reads /etc/os-release to detect the distro, then runs the appropriate
 # update command. Falls back to package-manager detection when the distro
 # is not specifically recognised.
@@ -79,7 +79,7 @@ switch ($distroId) {
     }
 }
 
-# ID_LIKE fallback — distro wasn't matched by ID, check family
+# ID_LIKE fallback -- distro wasn't matched by ID, check family
 if ($distroLike -match 'arch') {
     Invoke-Update "Using pacman (Arch-based: $distroName)" { sudo pacman -Syu --noconfirm }
 } elseif ($distroLike -match 'debian|ubuntu') {
@@ -93,7 +93,7 @@ if ($distroLike -match 'arch') {
     Invoke-Update "Using zypper (SUSE-based: $distroName)" { sudo zypper update -y }
 } else {
     # Last resort: try commands in order
-    Write-Host "  Distro '$distroName' not recognised — falling back to command detection.`n" -ForegroundColor DarkGray
+    Write-Host "  Distro '$distroName' not recognised -- falling back to command detection.`n" -ForegroundColor DarkGray
     if (Get-Command apt -ErrorAction SilentlyContinue) {
         Invoke-Update 'Using apt' { sudo apt update; sudo apt upgrade -y }
     } elseif (Get-Command dnf -ErrorAction SilentlyContinue) {

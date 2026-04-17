@@ -1,5 +1,5 @@
 # ============================================================================
-# pcHealth — Shared — UI Helpers
+# pcHealth -- Shared -- UI Helpers
 # Display and navigation utilities used by all menu scripts.
 # ============================================================================
 
@@ -93,9 +93,9 @@ function Write-PcOption {
 }
 
 # Shown after every tool finishes. Returns '1', '2', or '3'.
-#   '1' → stay in current submenu
-#   '2' → return to main menu
-#   '3' → exit the application
+#   '1' -> stay in current submenu
+#   '2' -> return to main menu
+#   '3' -> exit the application
 function Read-PcNavChoice {
     param([string]$BackLabel = 'Back to previous menu')
     Write-Host ''

@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Reset Network Stack
+# pcHealth -- Reset Network Stack
 # ============================================================================
 
 Write-Host "`nResetting and flushing the network stack...`n" -ForegroundColor Cyan

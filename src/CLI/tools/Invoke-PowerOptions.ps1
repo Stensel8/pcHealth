@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Shutdown / Reboot / Log Off
+# pcHealth -- Shutdown / Reboot / Log Off
 # ============================================================================
 
 Write-Host "`n$('=' * 60)" -ForegroundColor Cyan

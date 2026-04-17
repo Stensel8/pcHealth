@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Get Ninite
+# pcHealth -- Get Ninite
 # Downloads and launches the Ninite installer (Edge, Chrome, VLC, 7-Zip).
 # ============================================================================
 

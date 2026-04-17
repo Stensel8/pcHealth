@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Restart Audio Drivers
+# pcHealth -- Restart Audio Drivers
 # ============================================================================
 
 Write-Host "`nRestarting audio services...`n" -ForegroundColor Cyan

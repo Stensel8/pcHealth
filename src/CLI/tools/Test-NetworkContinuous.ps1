@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Continuous Ping Test
+# pcHealth -- Continuous Ping Test
 # Press Ctrl+C to stop.
 # ============================================================================
 

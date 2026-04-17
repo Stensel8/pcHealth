@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Open CBS Log
+# pcHealth -- Open CBS Log
 # ============================================================================
 
 $logPath = "$env:SystemRoot\Logs\CBS\CBS.log"

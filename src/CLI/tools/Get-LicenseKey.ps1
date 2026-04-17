@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Windows License Key
+# pcHealth -- Windows License Key
 # Attempts OA3 (UEFI/BIOS firmware) and DigitalProductId (registry decode).
 # ============================================================================
 
@@ -22,7 +22,7 @@ function Get-KeyFromOA3 {
 }
 
 function Get-KeyFromDigitalProductId {
-    # The key is encoded in bytes 52–66 of the DigitalProductId blob using a custom
+    # The key is encoded in bytes 52-66 of the DigitalProductId blob using a custom
     # Base24 charset (BCDFGHJKMPQRTVWXY2346789) that excludes vowels and ambiguous chars.
     try {
         $dpid = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DigitalProductId

@@ -1,11 +1,11 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Repair Winget
-# Credits: @asheroto — https://github.com/asheroto/winget-install
+# pcHealth -- Repair Winget
+# Credits: @asheroto -- https://github.com/asheroto/winget-install
 # ============================================================================
 
 Write-Host "`n  Repairing winget using the winget-install module" -ForegroundColor Cyan
-Write-Host "  Credits: @asheroto — https://github.com/asheroto/winget-install`n" -ForegroundColor DarkGray
+Write-Host "  Credits: @asheroto -- https://github.com/asheroto/winget-install`n" -ForegroundColor DarkGray
 
 Write-Host "[>>] Installing winget-install script from PSGallery..." -ForegroundColor Yellow
 try {
@@ -17,7 +17,7 @@ try {
 }
 
 Write-Host "[>>] Running winget-install (this may take a moment)..." -ForegroundColor Yellow
-# winget-install calls exit internally — run in a child process to keep our session alive.
+# winget-install calls exit internally -- run in a child process to keep our session alive.
 $installed  = Get-InstalledScript winget-install -ErrorAction SilentlyContinue
 $scriptArgs = if ($installed) {
     $scriptFile = Join-Path $installed.InstalledLocation 'winget-install.ps1'

@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Short Ping Test
+# pcHealth -- Short Ping Test
 # ============================================================================
 
 Write-Host "`nRunning ping test to 8.8.8.8 (4 packets)...`n" -ForegroundColor Cyan

@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Windows Update
+# pcHealth -- Windows Update
 # Opens the Windows Update settings page.
 # ============================================================================
 

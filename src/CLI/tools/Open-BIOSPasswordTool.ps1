@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — BIOS Password Recovery
-# Credits: @bacher09 — https://github.com/bacher09/pwgen-for-bios
+# pcHealth -- BIOS Password Recovery
+# Credits: @bacher09 -- https://github.com/bacher09/pwgen-for-bios
 # ============================================================================
 
 if (Get-Command Set-PcTheme -ErrorAction SilentlyContinue) {
@@ -12,7 +12,7 @@ if (Get-Command Set-PcTheme -ErrorAction SilentlyContinue) {
 Write-Host "`n$('=' * 60)" -ForegroundColor Yellow
 Write-Host "  BIOS Password Recovery" -ForegroundColor Yellow
 Write-Host "$('=' * 60)`n" -ForegroundColor Yellow
-Write-Host "  This tool links to bios-pw.org — a website that generates"
+Write-Host "  This tool links to bios-pw.org -- a website that generates"
 Write-Host "  recovery codes for locked BIOS passwords."
 Write-Host "  Credits for this tool go to: @bacher09`n" -ForegroundColor DarkGray
 

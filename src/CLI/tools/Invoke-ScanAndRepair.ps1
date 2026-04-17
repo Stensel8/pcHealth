@@ -1,14 +1,14 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Scan + Repair (SFC + DISM combined)
+# pcHealth -- Scan + Repair (SFC + DISM combined)
 # Runs all steps unattended. RestoreHealth requires internet or install media.
 # ============================================================================
 
 function Get-SfcStatus {
     param([int]$ExitCode)
     switch ($ExitCode) {
-        0       { 'Completed — no remaining issues' }
-        2       { 'Issues found — could not repair all' }
+        0       { 'Completed -- no remaining issues' }
+        2       { 'Issues found -- could not repair all' }
         default { "Error (exit code $ExitCode)" }
     }
 }
@@ -16,10 +16,10 @@ function Get-SfcStatus {
 function Get-DismStatus {
     param([int]$ExitCode, [string]$Output)
     if ($ExitCode -ne 0)                                           { return "Failed (exit code $ExitCode)" }
-    if ($Output -match 'No component store corruption detected')   { return 'Clean — no corruption detected' }
+    if ($Output -match 'No component store corruption detected')   { return 'Clean -- no corruption detected' }
     if ($Output -match 'restore operation completed successfully') { return 'Restored successfully' }
-    if ($Output -match 'component store is repairable')            { return 'Corruption found — repairable' }
-    return 'Completed — check DISM log'
+    if ($Output -match 'component store is repairable')            { return 'Corruption found -- repairable' }
+    return 'Completed -- check DISM log'
 }
 
 function Invoke-Dism {
@@ -60,27 +60,27 @@ Write-Host "$('=' * 60)" -ForegroundColor Cyan
 Write-Host "  Runs SFC, DISM CheckHealth, ScanHealth, RestoreHealth,"
 Write-Host "  and a final SFC pass. RestoreHealth requires internet.`n"
 
-Write-Host "[>>] Step 1/5 — System File Checker (SFC)..." -ForegroundColor Yellow
+Write-Host "[>>] Step 1/5 -- System File Checker (SFC)..." -ForegroundColor Yellow
 $sfc1Status = Get-SfcStatus (Start-Process -FilePath "$env:SystemRoot\System32\sfc.exe" `
     -ArgumentList '/scannow' -Wait -NoNewWindow -PassThru).ExitCode
 Write-Host "[OK] SFC done.`n" -ForegroundColor Green
 
-Write-Host "[>>] Step 2/5 — DISM CheckHealth..." -ForegroundColor Yellow
+Write-Host "[>>] Step 2/5 -- DISM CheckHealth..." -ForegroundColor Yellow
 $r = Invoke-Dism '/CheckHealth'
 $checkStatus = Get-DismStatus $r.ExitCode $r.Text
 Write-Host "[OK] CheckHealth done.`n" -ForegroundColor Green
 
-Write-Host "[>>] Step 3/5 — DISM ScanHealth..." -ForegroundColor Yellow
+Write-Host "[>>] Step 3/5 -- DISM ScanHealth..." -ForegroundColor Yellow
 $r = Invoke-Dism '/ScanHealth'
 $scanStatus = Get-DismStatus $r.ExitCode $r.Text
 Write-Host "[OK] ScanHealth done.`n" -ForegroundColor Green
 
-Write-Host "[>>] Step 4/5 — DISM RestoreHealth..." -ForegroundColor Yellow
+Write-Host "[>>] Step 4/5 -- DISM RestoreHealth..." -ForegroundColor Yellow
 $r = Invoke-Dism '/RestoreHealth'
 $restoreStatus = Get-DismStatus $r.ExitCode $r.Text
 Write-Host "[OK] RestoreHealth done.`n" -ForegroundColor Green
 
-Write-Host "[>>] Step 5/5 — Final SFC pass to verify repairs..." -ForegroundColor Yellow
+Write-Host "[>>] Step 5/5 -- Final SFC pass to verify repairs..." -ForegroundColor Yellow
 $sfc2Status = Get-SfcStatus (Start-Process -FilePath "$env:SystemRoot\System32\sfc.exe" `
     -ArgumentList '/scannow' -Wait -NoNewWindow -PassThru).ExitCode
 Write-Host "[OK] Final SFC done.`n" -ForegroundColor Green

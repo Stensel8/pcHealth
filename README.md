@@ -32,8 +32,8 @@ The project targets **feature parity across all supported platforms**, with the 
 
 | Platform | CLI | GUI | Min. version        |
 |----------|-----|-----|---------------------|
-| Windows  | ✅  | ✅  | Build 26200 (25H2+) |
-| Linux    | ✅  | ✅  | Kernel 7.0          |
+| Windows  | ✅  | ✅ | Build 26200 (25H2+) |
+| Linux    | ✅  | ✅ | Kernel 7.0          |
 
 See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 

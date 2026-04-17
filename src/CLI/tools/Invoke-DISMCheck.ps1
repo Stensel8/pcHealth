@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — DISM Health Check
+# pcHealth -- DISM Health Check
 # ============================================================================
 
 Write-Host "`n$('=' * 60)" -ForegroundColor Cyan

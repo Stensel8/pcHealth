@@ -1,13 +1,13 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — System Information
+# pcHealth -- System Information
 # ============================================================================
 
 if ($IsLinux) {
     $hostname  = [System.Net.Dns]::GetHostName()
     $kernel    = (& uname -r 2>$null).Trim()
     $arch      = (& uname -m 2>$null).Trim()
-    $uptime    = (& uptime -p 2>$null).Trim()
+    $uptime    = (& 'uptime' -p 2>$null).Trim()
     $user      = $env:USER ?? $env:USERNAME
 
     $osRelease = @{}

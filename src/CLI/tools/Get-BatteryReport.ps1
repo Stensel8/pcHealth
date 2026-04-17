@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Battery Report
+# pcHealth -- Battery Report
 # ============================================================================
 
 $reportPath = "$env:TEMP\pcHealth-battery-report.html"

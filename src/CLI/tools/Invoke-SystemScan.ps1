@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — System File Scan (SFC)
+# pcHealth -- System File Scan (SFC)
 # ============================================================================
 
 Write-Host "`n$('=' * 60)" -ForegroundColor Cyan

@@ -1,13 +1,13 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Hardware Information
+# pcHealth -- Hardware Information
 # CPU, GPU, Storage (SMART via smartmontools), RAM, Chipset.
 # ============================================================================
 
 function Write-SectionHeader {
     param([string]$Title)
-    $prefix = '─── '
-    $fill   = '─' * [Math]::Max(0, 90 - $prefix.Length - $Title.Length - 1)
+    $prefix = '--- '
+    $fill   = '-' * [Math]::Max(0, 90 - $prefix.Length - $Title.Length - 1)
     Write-Host "`n$prefix$Title $fill" -ForegroundColor Cyan
 }
 
@@ -24,7 +24,6 @@ function Find-Smartctl {
 $smartctl = Find-Smartctl
 if (-not $smartctl) {
     Write-Host "`nsmartmontools is required to read storage SMART data (temperature, hours, life left)." -ForegroundColor Yellow
-    $installHint = if ($IsLinux) { 'sudo apt-get install smartmontools  (or dnf/pacman)' } else { 'winget install smartmontools.smartmontools' }
     $answer = (Read-Host "  Install it now? [y/n]").Trim().ToLower()
     if ($answer -eq 'y') {
         if ($IsLinux) {
@@ -51,7 +50,7 @@ if (-not $smartctl) {
 }
 
 if ($IsLinux) {
-    # ── CPU ──────────────────────────────────────────────────────────────────
+    # -- CPU ------------------------------------------------------------------
     Write-SectionHeader 'CPU Information'
     if (Get-Command lscpu -ErrorAction SilentlyContinue) {
         & lscpu 2>$null | Out-Host
@@ -61,7 +60,7 @@ if ($IsLinux) {
         Write-Warning "CPU information not available."
     }
 
-    # ── GPU ──────────────────────────────────────────────────────────────────
+    # -- GPU ------------------------------------------------------------------
     Write-SectionHeader 'GPU Information'
     if (Get-Command lspci -ErrorAction SilentlyContinue) {
         $gpus = & lspci 2>$null | Where-Object { $_ -match 'VGA|3D|Display' }
@@ -70,7 +69,7 @@ if ($IsLinux) {
         Write-Warning "lspci not available. Install pciutils."
     }
 
-    # ── Storage ──────────────────────────────────────────────────────────────
+    # -- Storage --------------------------------------------------------------
     Write-SectionHeader 'Storage'
     if ($smartctl) {
         $scanData = (& $smartctl --scan --json 2>$null) | ConvertFrom-Json -ErrorAction SilentlyContinue
@@ -92,7 +91,7 @@ if ($IsLinux) {
                     Model       = $data.model_name
                     Type        = $mediaType
                     'Size (GB)' = if ($data.capacity.bytes) { [Math]::Round($data.capacity.bytes/1GB,0) } else { 'N/A' }
-                    'Temp (°C)' = if ($null -ne $data.temperature.current) { $data.temperature.current } else { 'N/A' }
+                    'Temp (degC)' = if ($null -ne $data.temperature.current) { $data.temperature.current } else { 'N/A' }
                     Hours       = if ($data.power_on_time.hours) { $data.power_on_time.hours } else { 'N/A' }
                     'Life Left' = $lifeLeft
                     Health      = if ($data.smart_status.passed -eq $true) { 'Healthy' } elseif ($data.smart_status.passed -eq $false) { 'FAILING' } else { 'Unknown' }
@@ -104,11 +103,11 @@ if ($IsLinux) {
         if (Get-Command lsblk -ErrorAction SilentlyContinue) {
             & lsblk -d -o NAME,SIZE,TYPE,MODEL 2>$null | Out-Host
         } else {
-            Write-Warning "Storage section skipped — smartmontools not available."
+            Write-Warning "Storage section skipped -- smartmontools not available."
         }
     }
 
-    # ── RAM ──────────────────────────────────────────────────────────────────
+    # -- RAM ------------------------------------------------------------------
     Write-SectionHeader 'Memory (RAM)'
     if (Get-Command free -ErrorAction SilentlyContinue) {
         & free -h 2>$null | Out-Host
@@ -119,7 +118,7 @@ if ($IsLinux) {
     }
 
 } else {
-    # ── CPU (Windows) ────────────────────────────────────────────────────────
+    # -- CPU (Windows) --------------------------------------------------------
     $cpuData = Get-CimInstance -ClassName Win32_Processor -ErrorAction SilentlyContinue
     if ($cpuData) {
         Write-SectionHeader 'CPU Information'
@@ -130,7 +129,7 @@ if ($IsLinux) {
                   Format-Table -AutoSize | Out-Host
     } else { Write-Warning "CPU information not available." }
 
-    # ── GPU (Windows) ────────────────────────────────────────────────────────
+    # -- GPU (Windows) --------------------------------------------------------
     function ConvertTo-VramGB {
         param($raw)
         if ($null -eq $raw) { return $null }
@@ -150,7 +149,7 @@ if ($IsLinux) {
                 ForEach-Object { Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue } |
                 Where-Object { $null -ne (ConvertTo-VramGB $_.'HardwareInformation.qwMemorySize') }
         )
-    } catch { Write-Warning "Registry adapter key unreadable — falling back to AdapterRAM: $_" }
+    } catch { Write-Warning "Registry adapter key unreadable -- falling back to AdapterRAM: $_" }
 
     $gpuData = Get-CimInstance -ClassName Win32_VideoController -ErrorAction SilentlyContinue
     if ($gpuData) {
@@ -180,7 +179,7 @@ if ($IsLinux) {
         } | Format-Table -AutoSize | Out-Host
     } else { Write-Warning "GPU information not available." }
 
-    # ── Storage (Windows) ────────────────────────────────────────────────────
+    # -- Storage (Windows) ----------------------------------------------------
     Write-SectionHeader 'Storage'
     if ($smartctl) {
         $scanData = (& $smartctl --scan --json 2>$null) | ConvertFrom-Json -ErrorAction SilentlyContinue
@@ -204,7 +203,7 @@ if ($IsLinux) {
                     Bus         = $busType
                     Type        = $mediaType
                     'Size (GB)' = if ($data.capacity.bytes) { [Math]::Round($data.capacity.bytes/1GB,0) } else { 'N/A' }
-                    'Temp (°C)' = if ($null -ne $data.temperature.current) { $data.temperature.current } else { 'N/A' }
+                    'Temp (degC)' = if ($null -ne $data.temperature.current) { $data.temperature.current } else { 'N/A' }
                     Hours       = if ($data.power_on_time.hours) { $data.power_on_time.hours } else { 'N/A' }
                     'Life Left' = $lifeLeft
                     Health      = if ($data.smart_status.passed -eq $true) { 'Healthy' } elseif ($data.smart_status.passed -eq $false) { 'FAILING' } else { 'Unknown' }
@@ -212,9 +211,9 @@ if ($IsLinux) {
             })
             if ($storageRows) { $storageRows | Format-Table -AutoSize | Out-Host } else { Write-Warning "smartctl returned no usable device data." }
         } else { Write-Warning "smartctl scan found no devices." }
-    } else { Write-Warning "Storage section skipped — smartmontools not available." }
+    } else { Write-Warning "Storage section skipped -- smartmontools not available." }
 
-    # ── RAM (Windows) ────────────────────────────────────────────────────────
+    # -- RAM (Windows) --------------------------------------------------------
     function Resolve-RamManufacturer {
         param([string]$Manufacturer, [string]$PartNumber)
         $m = $Manufacturer.Trim()
@@ -245,7 +244,7 @@ if ($IsLinux) {
         Write-Host "Total Installed RAM: $totalGB GB`n" -ForegroundColor Green
     } else { Write-Warning "RAM information not available." }
 
-    # ── Chipset (Windows) ────────────────────────────────────────────────────
+    # -- Chipset (Windows) ----------------------------------------------------
     Write-SectionHeader 'Chipset'
     $smbus = Get-PnpDevice -Class System -ErrorAction SilentlyContinue |
         Where-Object { $_.FriendlyName -like '*SMBus*' -and $_.Status -eq 'OK' } |

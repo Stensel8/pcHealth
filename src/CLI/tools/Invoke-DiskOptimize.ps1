@@ -1,6 +1,6 @@
 #Requires -Version 7.0
 # ============================================================================
-# pcHealth — Disk Optimization
+# pcHealth -- Disk Optimization
 # Opens the built-in Disk Optimization (Defragment and Optimize Drives) GUI.
 # ============================================================================
 

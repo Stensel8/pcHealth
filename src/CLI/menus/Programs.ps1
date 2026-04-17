@@ -1,5 +1,5 @@
 # ============================================================================
-# pcHealth — Shared — Programs Menu
+# pcHealth -- Shared -- Programs Menu
 # Windows: installs via winget. Linux: installs via the distro package manager.
 # ============================================================================
 
@@ -41,7 +41,7 @@ function Get-WingetResult {
         '0x8A15000A' = 'The package index is corrupt.'
         '0x8A15000B' = 'The configured source information is corrupt.'
         '0x8A15000F' = 'Data required by the source is missing.'
-        '0x8A150011' = 'Installer hash mismatch — the download may be corrupt.'
+        '0x8A150011' = 'Installer hash mismatch -- the download may be corrupt.'
         '0x8A150014' = 'No packages found. The source may be unavailable.'
         '0x8A150015' = 'No sources are configured.'
         '0x8A150037' = 'Source configuration error.'
