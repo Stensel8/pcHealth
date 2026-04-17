@@ -13,8 +13,16 @@ if ($results) {
         $color  = if ($_.Status -eq 'Success') { 'Green' } else { 'Red' }
         Write-Host "  $status from $($_.DisplayAddress): time=$($_.Latency)ms" -ForegroundColor $color
     }
-    $avg = [Math]::Round(($results | Where-Object Status -eq 'Success' | Measure-Object Latency -Average).Average, 1)
-    Write-Host "`n  Average latency: ${avg}ms`n" -ForegroundColor Cyan
+
+    # Measure-Object returns .Average = $null when no successful packets exist.
+    # Passing $null to [Math]::Round throws a type conversion exception.
+    $successPings = $results | Where-Object Status -eq 'Success'
+    if ($successPings) {
+        $avg = [Math]::Round(($successPings | Measure-Object Latency -Average).Average, 1)
+        Write-Host "`n  Average latency: ${avg}ms`n" -ForegroundColor Cyan
+    } else {
+        Write-Host "`n  All packets lost.`n" -ForegroundColor Red
+    }
 } else {
     Write-Host "  No response from 8.8.8.8. Check your network connection.`n" -ForegroundColor Red
 }
