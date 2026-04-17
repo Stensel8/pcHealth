@@ -1,6 +1,7 @@
 // Global usings for WinUI 3 types used throughout the project.
 // Without these, types like Window, Page, RoutedEventArgs and
 // NavigationView would require a fully-qualified name in every file.
+global using Microsoft.UI.Dispatching;
 global using Microsoft.UI.Xaml;
 global using Microsoft.UI.Xaml.Controls;
 global using Microsoft.UI.Xaml.Controls.Primitives;
