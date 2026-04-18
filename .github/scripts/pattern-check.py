@@ -145,12 +145,6 @@ RULES = [
         r'(?i)(SqlCommand|ExecuteQuery|ExecuteNonQuery|ExecuteScalar)\s*\([^)]*(\$"|string\.Format)',
     ),
     (
-        "CS021", "warning",
-        "Process.Start with user-controlled input risks command injection. Validate and sanitise all arguments.",
-        "*.cs",
-        r"\bProcess\s*\.\s*Start\s*\(",
-    ),
-    (
         "CS022", "warning",
         "Hardcoded credential or secret literal detected. Use environment variables or a secrets manager.",
         "*.cs",

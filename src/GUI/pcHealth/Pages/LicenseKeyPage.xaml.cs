@@ -143,7 +143,7 @@ public sealed partial class LicenseKeyPage : Page
         var lines = new[]
         {
             "pcHealth - Windows License Key Report",
-            $"Generated : {DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+            $"Generated : {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC",
             "",
             $"OS        : {_result.OsCaption}",
             "",
