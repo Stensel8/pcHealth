@@ -127,6 +127,32 @@ without a platform guard. The CLI runs on Linux too.
 
 ---
 
+## Commits
+
+All commit messages **must** follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<optional scope>): <short description>
+```
+
+Allowed types: `feat`, `fix`, `docs`, `chore`, `refactor`, `style`, `perf`, `test`, `revert`, `ci`, `deps`, `build`
+
+Examples:
+```
+feat(gui): add dark mode toggle to settings page
+fix(cli): handle missing registry key in Get-LicenseKey
+ci: pin action SHAs in pr-automation workflow
+docs: update README platform support table
+```
+
+Rules:
+- Subject line is lowercase, no trailing period
+- Use imperative mood ("add", "fix", "remove" — not "added", "fixes")
+- Keep subject ≤ 72 characters
+- One concern per commit — do not bundle unrelated changes
+
+---
+
 ## Pull Request Rules
 
 - **Do NOT open a pull request unless the user explicitly asks.** Commit and push only; stop there.
