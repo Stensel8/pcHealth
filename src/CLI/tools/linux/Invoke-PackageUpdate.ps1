@@ -15,6 +15,8 @@ $distroName = $osRelease['PRETTY_NAME']
 
 Write-Host "  Distro: $distroName" -ForegroundColor DarkGray
 
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
 function Invoke-Update {
     param([string]$Label, [scriptblock]$Action)
     Write-Host "`n[>>] $Label" -ForegroundColor Yellow
@@ -26,13 +28,47 @@ function Invoke-Update {
     }
 }
 
+function Invoke-LinuxUpdate {
+    # Opens a TTY-dependent update command in a new terminal window.
+    param([string]$Label, [string]$Command)
+
+    Write-Host "`n[>>] $Label" -ForegroundColor Yellow
+
+    if (-not (Get-Command $Command -ErrorAction SilentlyContinue)) {
+        Write-Host "`n[!!] Command '$Command' not found.`n" -ForegroundColor Red
+        return
+    }
+
+    $terminals = @(
+    @{ cmd = 'gnome-terminal'; args = @('--wait', '--', 'sudo', '-u', $env:SUDO_USER ?? $env:USER, 'bash', '-c', "$Command; echo; read -p 'Press Enter to close...'") },
+    @{ cmd = 'konsole';        args = @('--hold', '-e', 'sudo', '-u', ($env:SUDO_USER ?? $env:USER), $Command) },
+    @{ cmd = 'xterm';          args = @('-hold', '-e', 'sudo', '-u', ($env:SUDO_USER ?? $env:USER), $Command) },
+    @{ cmd = 'xfce4-terminal'; args = @('--hold', '-e', 'sudo', '-u', ($env:SUDO_USER ?? $env:USER), $Command) },
+    @{ cmd = 'alacritty';      args = @('-e', 'sudo', '-u', ($env:SUDO_USER ?? $env:USER), 'bash', '-c', "$Command; read -p 'Press Enter to close...'") },
+    @{ cmd = 'kitty';          args = @('sudo', '-u', ($env:SUDO_USER ?? $env:USER), 'bash', '-c', "$Command; read -p 'Press Enter to close...'") }
+    )
+
+    foreach ($term in $terminals) {
+        if (Get-Command $term.cmd -ErrorAction SilentlyContinue) {
+            Write-Host "  Opening in $($term.cmd)..." -ForegroundColor DarkGray
+            & $term.cmd @($term.args)
+            return
+        }
+    }
+
+    Write-Host "`n[!!] No supported terminal emulator found.`n" -ForegroundColor Red
+    Write-Host "  Install one of: gnome-terminal, konsole, kitty, alacritty, xterm`n" -ForegroundColor DarkGray
+}
+
+# ── Distro switch ─────────────────────────────────────────────────────────────
+
 switch ($distroId) {
     'cachyos' {
-        Invoke-Update 'Using cachy-update (CachyOS)' { bash -c 'cachy-update' }
+        Invoke-LinuxUpdate 'Using cachy-update (CachyOS)' 'cachy-update'
         return
     }
     'garuda' {
-        Invoke-Update 'Using garuda-update (Garuda Linux)' { bash -c 'garuda-update' }
+        Invoke-LinuxUpdate 'Using garuda-update (Garuda Linux)' 'garuda-update'
         return
     }
     'manjaro' {
@@ -59,7 +95,6 @@ switch ($distroId) {
         return
     }
     { $_ -in @('arch', 'endeavouros', 'artix') } {
-        # Prefer AUR helper if available
         if (Get-Command paru -ErrorAction SilentlyContinue) {
             Invoke-Update "Using paru ($distroName)" { paru -Syu --noconfirm }
         } elseif (Get-Command yay -ErrorAction SilentlyContinue) {
@@ -71,7 +106,8 @@ switch ($distroId) {
     }
 }
 
-# ID_LIKE fallback -- distro wasn't matched by ID, check family
+# ── ID_LIKE fallback ──────────────────────────────────────────────────────────
+
 if ($distroLike -match 'arch') {
     Invoke-Update "Using pacman (Arch-based: $distroName)" { sudo pacman -Syu --noconfirm }
 } elseif ($distroLike -match 'debian|ubuntu') {
@@ -84,7 +120,6 @@ if ($distroLike -match 'arch') {
 } elseif ($distroLike -match 'suse') {
     Invoke-Update "Using zypper (SUSE-based: $distroName)" { sudo zypper update -y }
 } else {
-    # Last resort: try commands in order
     Write-Host "  Distro '$distroName' not recognised -- falling back to command detection.`n" -ForegroundColor DarkGray
     if (Get-Command apt -ErrorAction SilentlyContinue) {
         Invoke-Update 'Using apt' { sudo apt update; sudo apt upgrade -y }
