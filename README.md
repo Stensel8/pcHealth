@@ -35,13 +35,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 ### Windows
 
 1. Download or clone this repository.
-2. Run `start.ps1` — it checks for PowerShell 7, installs it via winget if needed, then launches the CLI elevated.
-
-```powershell
-.\start.ps1
-```
-
-Or launch directly from an elevated PowerShell 7 terminal:
+2. Run `Start.ps1` from an elevated PowerShell 7 terminal:
 
 ```powershell
 .\src\CLI\Start.ps1
@@ -50,10 +44,10 @@ Or launch directly from an elevated PowerShell 7 terminal:
 ### Linux
 
 1. Download or clone this repository.
-2. Run `start.sh` — it checks for PowerShell 7, installs it for your distro if needed, then launches the CLI via sudo.
+2. Run `start.sh` — it checks for PowerShell 7 and installs it if needed:
 
 ```bash
-bash start.sh
+bash src/CLI/start.sh
 ```
 
 Or launch directly if PowerShell 7 is already installed:
