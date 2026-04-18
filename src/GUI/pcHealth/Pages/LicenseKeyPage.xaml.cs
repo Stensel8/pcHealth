@@ -1,14 +1,9 @@
-using Microsoft.UI.Xaml.Media;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Storage.Pickers;
-using WinRT.Interop;
-
 namespace pcHealth.Pages;
 
 public sealed partial class LicenseKeyPage : Page
 {
-    private LicenseResult?          _result;
-    private DispatcherQueueTimer?   _copyResetTimer;
+    private LicenseResult? _result;
+    private DispatcherQueueTimer? _copyResetTimer;
 
     public LicenseKeyPage()
     {
@@ -29,9 +24,9 @@ public sealed partial class LicenseKeyPage : Page
         }
         catch (Exception ex)
         {
-            PrimaryKeyText.Text       = "Key extraction failed.";
+            PrimaryKeyText.Text = "Key extraction failed.";
             PrimaryKeyText.Foreground = (Brush)App.Current.Resources["SystemFillColorCriticalBrush"];
-            KeySourceText.Text        = ex.Message;
+            KeySourceText.Text = ex.Message;
         }
     }
 
@@ -43,23 +38,23 @@ public sealed partial class LicenseKeyPage : Page
         OsInfoText.Text = _result.OsCaption;
 
         SetMethodCard(
-            statusText:  Oa3StatusText,
-            keyText:     Oa3KeyText,
-            icon:        Oa3Icon,
-            key:         _result.Oa3Key,
+            statusText: Oa3StatusText,
+            keyText: Oa3KeyText,
+            icon: Oa3Icon,
+            key: _result.Oa3Key,
             notFoundMsg: "Not found - key not embedded in firmware");
 
         SetMethodCard(
-            statusText:  RegStatusText,
-            keyText:     RegKeyText,
-            icon:        RegIcon,
-            key:         _result.RegKey,
+            statusText: RegStatusText,
+            keyText: RegKeyText,
+            icon: RegIcon,
+            key: _result.RegKey,
             notFoundMsg: "Not found - DigitalProductId registry value unavailable");
 
         if (_result.BestKey is not null)
         {
             PrimaryKeyText.Text = _result.BestKey;
-            KeySourceText.Text  = $"Source: {_result.BestSource}";
+            KeySourceText.Text = $"Source: {_result.BestSource}";
 
             // Green for a genuine key, amber-ish for a generic/KMS placeholder.
             PrimaryKeyText.Foreground = _result.IsGeneric
@@ -73,9 +68,9 @@ public sealed partial class LicenseKeyPage : Page
         }
         else
         {
-            PrimaryKeyText.Text       = "No product key found.";
+            PrimaryKeyText.Text = "No product key found.";
             PrimaryKeyText.Foreground = (Brush)App.Current.Resources["SystemFillColorCriticalBrush"];
-            KeySourceText.Text        =
+            KeySourceText.Text =
                 "Your system may use a digital licence linked to your Microsoft account, " +
                 "or was activated via volume licensing (KMS/MAK).";
         }
@@ -85,26 +80,26 @@ public sealed partial class LicenseKeyPage : Page
     private static void SetMethodCard(
         TextBlock statusText,
         TextBlock keyText,
-        FontIcon  icon,
-        string?   key,
-        string    notFoundMsg)
+        FontIcon icon,
+        string? key,
+        string notFoundMsg)
     {
         if (key is not null)
         {
-            statusText.Text    = "Found";
-            keyText.Text       = key;
+            statusText.Text = "Found";
+            keyText.Text = key;
             keyText.Visibility = Visibility.Visible;
-            icon.Glyph         = "\uE930"; // CheckMark
-            icon.Foreground    = new SolidColorBrush(
+            icon.Glyph = "\uE930"; // CheckMark
+            icon.Foreground = new SolidColorBrush(
                 Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x0F, 0x9D, 0x58));
         }
         else
         {
-            statusText.Text    = notFoundMsg;
+            statusText.Text = notFoundMsg;
             // Collapse instead of leaving an empty selectable TextBlock visible.
             keyText.Visibility = Visibility.Collapsed;
-            icon.Glyph         = "\uE8BB"; // Cancel
-            icon.Foreground    = (Brush)App.Current.Resources["TextFillColorTertiaryBrush"];
+            icon.Glyph = "\uE8BB"; // Cancel
+            icon.Foreground = (Brush)App.Current.Resources["TextFillColorTertiaryBrush"];
         }
     }
 
@@ -134,7 +129,7 @@ public sealed partial class LicenseKeyPage : Page
         var picker = new FileSavePicker
         {
             SuggestedStartLocation = PickerLocationId.Desktop,
-            SuggestedFileName      = "windows-license-key",
+            SuggestedFileName = "windows-license-key",
         };
         picker.FileTypeChoices.Add("Text file", ["txt"]);
 
@@ -180,10 +175,10 @@ public sealed partial class LicenseKeyPage : Page
     {
         var dialog = new ContentDialog
         {
-            Title           = "Save failed",
-            Content         = message,
+            Title = "Save failed",
+            Content = message,
             CloseButtonText = "OK",
-            XamlRoot        = XamlRoot,
+            XamlRoot = XamlRoot,
         };
         await dialog.ShowAsync();
     }

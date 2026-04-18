@@ -1,6 +1,3 @@
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Windows.Graphics;
 using pcHealth.Pages;
 
 namespace pcHealth;
@@ -58,8 +55,8 @@ public sealed partial class MainWindow : Window
     {
         Type? target = tag switch
         {
-            "tools"      => typeof(ToolsPage),
-            "programs"   => typeof(ProgramsPage),
+            "tools" => typeof(ToolsPage),
+            "programs" => typeof(ProgramsPage),
             "licensekey" => typeof(LicenseKeyPage),
             _ => null
         };

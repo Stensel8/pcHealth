@@ -84,10 +84,10 @@ public sealed partial class ToolsPage : Page
     {
         var dialog = new ContentDialog
         {
-            Title           = "Could not launch tool",
-            Content         = message,
+            Title = "Could not launch tool",
+            Content = message,
             CloseButtonText = "OK",
-            XamlRoot        = XamlRoot,
+            XamlRoot = XamlRoot,
         };
         await dialog.ShowAsync();
     }

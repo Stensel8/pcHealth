@@ -1,5 +1,3 @@
-using Microsoft.UI.Xaml;
-
 namespace pcHealth.Pages;
 
 public sealed partial class ProgramsPage : Page
@@ -115,13 +113,13 @@ public sealed partial class ProgramsPage : Page
         {
             var dialog = new ContentDialog
             {
-                Title           = item.Name,
-                Content         = $"{item.Name} is already installed.",
-                PrimaryButtonText   = "Open",
+                Title = item.Name,
+                Content = $"{item.Name} is already installed.",
+                PrimaryButtonText = "Open",
                 SecondaryButtonText = "Update",
-                CloseButtonText     = "Cancel",
-                DefaultButton   = ContentDialogButton.Primary,
-                XamlRoot        = XamlRoot,
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = XamlRoot,
             };
 
             var result = await dialog.ShowAsync();
@@ -165,10 +163,10 @@ public sealed partial class ProgramsPage : Page
     {
         var dialog = new ContentDialog
         {
-            Title           = title,
-            Content         = message,
+            Title = title,
+            Content = message,
             CloseButtonText = "OK",
-            XamlRoot        = XamlRoot,
+            XamlRoot = XamlRoot,
         };
         await dialog.ShowAsync();
     }

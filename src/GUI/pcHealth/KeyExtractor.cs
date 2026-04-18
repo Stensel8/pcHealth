@@ -1,4 +1,3 @@
-using System.Management;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
@@ -6,12 +5,12 @@ namespace pcHealth;
 
 /// <summary>Holds the result of a full key extraction run.</summary>
 public sealed record LicenseResult(
-    string  OsCaption,
+    string OsCaption,
     string? Oa3Key,
     string? RegKey,
     string? BestKey,
-    string  BestSource,
-    bool    IsGeneric,
+    string BestSource,
+    bool IsGeneric,
     string? GenericEdition
 );
 
@@ -40,15 +39,15 @@ public static class KeyExtractor
     public static LicenseResult Extract()
     {
         var osCaption = GetOsCaption();
-        var oa3Key    = GetKeyFromOA3();
-        var regKey    = GetKeyFromDigitalProductId();
+        var oa3Key = GetKeyFromOA3();
+        var regKey = GetKeyFromDigitalProductId();
 
         // Prefer the registry key (currently active) over the OA3 key (original OEM).
-        string? bestKey        = regKey ?? oa3Key;
-        string  bestSource     = regKey  != null ? "Registry (DigitalProductId)"
-                               : oa3Key  != null ? "UEFI/BIOS (OA3)"
+        string? bestKey = regKey ?? oa3Key;
+        string bestSource = regKey != null ? "Registry (DigitalProductId)"
+                               : oa3Key != null ? "UEFI/BIOS (OA3)"
                                : "None";
-        bool    isGeneric      = bestKey != null && GenericKeys.ContainsKey(bestKey);
+        bool isGeneric = bestKey != null && GenericKeys.ContainsKey(bestKey);
         string? genericEdition = isGeneric && bestKey != null
                                ? GenericKeys[bestKey]
                                : null;
@@ -66,7 +65,7 @@ public static class KeyExtractor
             foreach (ManagementObject obj in searcher.Get())
             {
                 var caption = obj["Caption"]?.ToString()?.Trim();
-                var build   = obj["BuildNumber"]?.ToString();
+                var build = obj["BuildNumber"]?.ToString();
                 if (caption != null)
                     return $"{caption} (Build {build})";
             }
@@ -108,8 +107,8 @@ public static class KeyExtractor
             // indicating where to reinsert it after decoding. Clear the flag bit
             // before decoding so it does not corrupt the base-24 result.
             const string Chars = "BCDFGHJKMPQRTVWXY2346789";
-            int isWin8Plus  = (keyBytes[14] >> 3) & 1;
-            keyBytes[14]   &= 0xF7; // Clear bit 3 — the N-insertion flag is not part of the encoded key.
+            int isWin8Plus = (keyBytes[14] >> 3) & 1;
+            keyBytes[14] &= 0xF7; // Clear bit 3 — the N-insertion flag is not part of the encoded key.
 
             // Base-24 decode: treat the 15-byte array as a base-256 number and
             // convert it digit-by-digit into a 25-character base-24 string.
@@ -119,9 +118,9 @@ public static class KeyExtractor
                 int cur = 0;
                 for (int j = 14; j >= 0; j--)
                 {
-                    cur        = (cur << 8) | keyBytes[j];
+                    cur = (cur << 8) | keyBytes[j];
                     keyBytes[j] = (byte)(cur / 24);
-                    cur        %= 24;
+                    cur %= 24;
                 }
                 decoded[i] = Chars[cur];
             }
@@ -131,8 +130,8 @@ public static class KeyExtractor
             // Re-insert the 'N' character at the correct position.
             if (isWin8Plus == 1)
             {
-                char first  = result[0];
-                int  nIndex = Chars.IndexOf(first);
+                char first = result[0];
+                int nIndex = Chars.IndexOf(first);
                 result = result[1..].Insert(nIndex, "N");
             }
 

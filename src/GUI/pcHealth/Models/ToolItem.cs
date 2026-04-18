@@ -1,5 +1,3 @@
-using Microsoft.UI.Xaml;
-
 namespace pcHealth;
 
 public enum ToolActionKind
@@ -12,11 +10,11 @@ public enum ToolActionKind
 
 public sealed class ToolItem
 {
-    public required string         Name   { get; init; }
-    public required string         Glyph  { get; init; }
-    public          string         Note   { get; init; } = "";
-    public required ToolActionKind Kind   { get; init; }
-    public          string         Param  { get; init; } = "";
+    public required string Name { get; init; }
+    public required string Glyph { get; init; }
+    public string Note { get; init; } = "";
+    public required ToolActionKind Kind { get; init; }
+    public string Param { get; init; } = "";
 
     // Returned directly so x:Bind can use it without a converter in XAML.
     public Visibility NoteVisibility =>

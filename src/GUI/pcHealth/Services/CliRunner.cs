@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.IO;
 
 namespace pcHealth;
 
@@ -38,11 +37,11 @@ internal static class CliRunner
     public static void RunScript(string scriptFileName)
     {
         var path = Path.Combine(GetToolsDir(), scriptFileName);
-        var cmd  = $"& '{path}'; Write-Host ''; Read-Host 'Press Enter to close'";
+        var cmd = $"& '{path}'; Write-Host ''; Read-Host 'Press Enter to close'";
         Start(new ProcessStartInfo
         {
-            FileName        = "pwsh.exe",
-            Arguments       = $"-NoProfile -ExecutionPolicy Bypass -Command \"{cmd}\"",
+            FileName = "pwsh.exe",
+            Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{cmd}\"",
             UseShellExecute = true,
         });
     }
@@ -117,8 +116,8 @@ internal static class CliRunner
         var cmd = $"winget {wingetArguments}; Write-Host ''; Read-Host 'Press Enter to close'";
         Start(new ProcessStartInfo
         {
-            FileName        = "pwsh.exe",
-            Arguments       = $"-NoProfile -Command \"{cmd}\"",
+            FileName = "pwsh.exe",
+            Arguments = $"-NoProfile -Command \"{cmd}\"",
             UseShellExecute = true,
         });
     }
@@ -132,7 +131,7 @@ internal static class CliRunner
     {
         if (string.IsNullOrEmpty(registryName)) return false;
         return SearchUninstallKey(Microsoft.Win32.Registry.LocalMachine, registryName)
-            || SearchUninstallKey(Microsoft.Win32.Registry.CurrentUser,  registryName);
+            || SearchUninstallKey(Microsoft.Win32.Registry.CurrentUser, registryName);
     }
 
     private static bool SearchUninstallKey(Microsoft.Win32.RegistryKey hive, string name)
