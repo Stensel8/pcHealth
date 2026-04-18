@@ -12,9 +12,9 @@
     <WindowsPackageType>None</WindowsPackageType>
     <!-- Bundle the Windows App SDK runtime so users don't need it pre-installed. -->
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    <!-- Self-contained mode requires a concrete runtime identifier.
-         win-x64 is the default; pass -r win-arm64 to override for ARM devices. -->
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- RID follows VS platform selection; CLI default is win-x64. -->
+    <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(Platform)' != 'ARM64'">win-x64</RuntimeIdentifier>
     <Platforms>x64;arm64</Platforms>
     <!-- Allows non-Windows runners (e.g. Linux CI) to restore dependencies. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
