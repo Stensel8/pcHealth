@@ -4,8 +4,9 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <ScrollViewer Padding="28,20,28,24">
-        <StackPanel MaxWidth="600" Spacing="16">
+    <ScrollViewer HorizontalScrollMode="Disabled"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel MaxWidth="600" Margin="28,20,28,24" Spacing="16">
 
             <TextBlock Text="Settings"
                        Style="{StaticResource TitleTextBlockStyle}"/>
@@ -55,18 +56,43 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Text="Run scripts elevated"
+                        <TextBlock Text="Auto reinstall packages"
                                    Style="{StaticResource BodyStrongTextBlockStyle}"/>
-                        <TextBlock Text="Launch PowerShell scripts with administrator rights"
+                        <TextBlock Text="Force reinstall without confirmation when a package is already installed"
                                    Style="{StaticResource CaptionTextBlockStyle}"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>
                     <ToggleSwitch Grid.Column="1"
-                                  x:Name="ElevatedToggle"
+                                  x:Name="AutoReinstallToggle"
                                   VerticalAlignment="Center"
-                                  IsOn="True"
+                                  MinWidth="0" Margin="0"
                                   OnContent="" OffContent=""
-                                  Toggled="ElevatedToggle_Toggled"/>
+                                  Toggled="AutoReinstallToggle_Toggled"/>
+                </Grid>
+            </Border>
+
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8"
+                    Padding="20,14">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="Check for updates on startup"
+                                   Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                        <TextBlock Text="Compare version against latest GitHub release and notify if newer"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    <ToggleSwitch Grid.Column="1"
+                                  x:Name="AutoUpdateCheckToggle"
+                                  VerticalAlignment="Center"
+                                  MinWidth="0" Margin="0"
+                                  OnContent="" OffContent=""
+                                  Toggled="AutoUpdateCheckToggle_Toggled"/>
                 </Grid>
             </Border>
 

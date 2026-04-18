@@ -4,8 +4,9 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <ScrollViewer Padding="28,20,28,24">
-        <StackPanel MaxWidth="600" Spacing="16">
+    <ScrollViewer HorizontalScrollMode="Disabled"
+                  HorizontalScrollBarVisibility="Disabled">
+        <StackPanel MaxWidth="600" Margin="28,20,28,24" Spacing="16">
 
             <TextBlock Text="About pcHealth"
                        Style="{StaticResource TitleTextBlockStyle}"/>

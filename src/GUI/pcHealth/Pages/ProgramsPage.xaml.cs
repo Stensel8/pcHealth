@@ -121,6 +121,23 @@ public sealed partial class ProgramsPage : Page
 
         if (item.IsInstalled)
         {
+            if (AppSettings.GetBool("AutoReinstall", fallback: false))
+            {
+                // Skip confirmation — force reinstall immediately.
+                try
+                {
+                    if (!string.IsNullOrEmpty(item.WingetId))
+                        CliRunner.RunWinget(
+                            $"install --id {item.WingetId} --force " +
+                            "--accept-source-agreements --accept-package-agreements");
+                }
+                catch (Exception ex)
+                {
+                    _ = ShowErrorAsync("Could not launch installer", ex.Message);
+                }
+                return;
+            }
+
             var dialog = new ContentDialog
             {
                 Title = item.Name,

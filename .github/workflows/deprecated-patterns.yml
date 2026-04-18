@@ -13,26 +13,63 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Scans for patterns AGENTS.md forbids (legacy WMI, wmic, Invoke-Expression,
-# empty catches, etc.) and uploads findings as SARIF to the GitHub Advanced
-# Security → Code scanning tab. Never blocks CI — findings are warnings/notes.
+# Scans for deprecated, unsafe, and discouraged patterns.
+# Results appear in GitHub Advanced Security → Code scanning.
+# Never blocks CI — no hard fail.
+#
+#  semgrep   → custom rules in .semgrep/ (C#, PowerShell, Bash)
+#  shellcheck → full Bash analysis
 
 jobs:
-  deprecated-patterns:
-    name: Deprecated pattern check (SARIF)
+
+  semgrep:
+    name: Deprecated patterns (Semgrep)
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write  # required to upload SARIF to the Security tab
+      security-events: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Run deprecated-pattern scan
-        run: python3 .github/scripts/check-deprecated-patterns.py
+      - name: Install semgrep
+        run: pip install semgrep --quiet
+
+      - name: Run semgrep
+        # --error is intentionally omitted so findings do not fail CI.
+        run: semgrep --config .semgrep/ --sarif --output semgrep.sarif src/
 
       - name: Upload results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
         if: always()
         with:
-          sarif_file: deprecated-patterns.sarif
-          category: deprecated-patterns
+          sarif_file: semgrep.sarif
+          category: semgrep-deprecated
+
+  shellcheck:
+    name: Bash lint (ShellCheck)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install shellcheck 0.11.0
+        run: |
+          curl -sSL https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz \
+            | tar xJ --strip-components=1 shellcheck-v0.11.0/shellcheck
+          sudo mv shellcheck /usr/local/bin/shellcheck
+
+      - name: Run shellcheck
+        # Exit code 1 = findings; still upload the SARIF.
+        run: |
+          find src/CLI -name "*.sh" -print0 \
+            | xargs -0 shellcheck --format=sarif --external-sources \
+            > shellcheck.sarif || true
+
+      - name: Upload results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        if: always()
+        with:
+          sarif_file: shellcheck.sarif
+          category: shellcheck

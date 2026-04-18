@@ -1,5 +1,16 @@
 # Changelog.md - pcHealth
 
+## 18-04-2026 - @Stensel8
+
+GUI — Settings and About pages, deprecated-pattern scanner, version baking.
+
+- Added **Settings page** (gear icon in nav) with app theme picker and two behavior toggles: auto reinstall packages (force-reinstalls via `winget --force` without confirmation) and check for updates on startup.
+- Added **About page** (info icon in nav) showing app version and links to the upstream repository.
+- Version is now read from the repo-root `VERSION` file at build time and baked into the assembly — single source of truth.
+- **Auto update check**: on startup the app calls the GitHub releases API (`REALSDEALS/pcHealth`) and shows a popup when a newer version is available.
+- Settings are persisted to `%LocalAppData%\pcHealth\settings.json` (replaces `ApplicationData.Current` which is unavailable in unpackaged WinUI 3 apps).
+- Added **deprecated-pattern CI workflow** (`deprecated-patterns.yml`): Semgrep scans C#/PS/Bash for ~27 discouraged patterns (legacy WMI, `Invoke-Expression`, `.Wait()` deadlock, deprecated UWP APIs, etc.) and uploads SARIF to the GitHub Advanced Security tab. ShellCheck runs separately for full Bash analysis. Neither job blocks CI.
+
 ## 17-04-2026 (2) - @Stensel8
 
 Dropped Windows 10 support. Minimum requirement is now Windows 11 25H2 (build 26200+), aligning with the Linux kernel 7.0 minimum.

@@ -2,7 +2,6 @@ namespace pcHealth.Pages;
 
 public sealed partial class SettingsPage : Page
 {
-    // Prevents event handlers from saving during the initial LoadSettings() pass.
     private bool _isLoaded;
 
     public SettingsPage()
@@ -22,7 +21,8 @@ public sealed partial class SettingsPage : Page
             _       => 0,
         };
 
-        ElevatedToggle.IsOn = AppSettings.GetBool("RunElevated", fallback: true);
+        AutoReinstallToggle.IsOn    = AppSettings.GetBool("AutoReinstall",    fallback: false);
+        AutoUpdateCheckToggle.IsOn  = AppSettings.GetBool("AutoCheckVersion", fallback: true);
     }
 
     private void ThemeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -44,9 +44,15 @@ public sealed partial class SettingsPage : Page
             root.RequestedTheme = requestedTheme;
     }
 
-    private void ElevatedToggle_Toggled(object sender, RoutedEventArgs e)
+    private void AutoReinstallToggle_Toggled(object sender, RoutedEventArgs e)
     {
         if (!_isLoaded) return;
-        AppSettings.Set("RunElevated", ElevatedToggle.IsOn ? "true" : "false");
+        AppSettings.Set("AutoReinstall", AutoReinstallToggle.IsOn ? "true" : "false");
+    }
+
+    private void AutoUpdateCheckToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (!_isLoaded) return;
+        AppSettings.Set("AutoCheckVersion", AutoUpdateCheckToggle.IsOn ? "true" : "false");
     }
 }

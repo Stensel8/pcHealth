@@ -40,6 +40,28 @@ public sealed partial class MainWindow : Window
         // Open the Tools page on first launch.
         if (NavView.MenuItems.Count > 0)
             NavView.SelectedItem = NavView.MenuItems[0];
+
+        if (AppSettings.GetBool("AutoCheckVersion", fallback: true))
+            _ = CheckForUpdateAsync();
+    }
+
+    private async Task CheckForUpdateAsync()
+    {
+        var tag = await UpdateChecker.GetLatestTagAsync();
+        if (tag is null || !UpdateChecker.IsNewer(tag)) return;
+
+        var dialog = new ContentDialog
+        {
+            Title = "Update available",
+            Content = $"Version {tag.TrimStart('v', 'V')} is available. You are on {UpdateChecker.GetCurrentVersion()}.",
+            PrimaryButtonText = "Open releases page",
+            CloseButtonText = "Later",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = ContentFrame.XamlRoot,
+        };
+
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            CliRunner.OpenUri("https://github.com/REALSDEALS/pcHealth/releases/latest");
     }
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
