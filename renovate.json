@@ -20,13 +20,13 @@
   "packageRules": [
     {
       "description": "Group all Windows App SDK packages into a single PR.",
-      "matchPackagePatterns": ["^Microsoft\\.WindowsAppSDK", "^Microsoft\\.Windows\\.SDK"],
+      "matchPackageRegex": ["^Microsoft\\.WindowsAppSDK", "^Microsoft\\.Windows\\.SDK"],
       "groupName": "Windows App SDK",
       "labels": ["dependencies", "dotnet", "winui3"]
     },
     {
       "description": "Group .NET BCL packages (System.*) into a single PR.",
-      "matchPackagePatterns": ["^System\\."],
+      "matchPackageRegex": ["^System\\."],
       "groupName": ".NET BCL",
       "labels": ["dependencies", "dotnet"]
     },
