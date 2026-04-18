@@ -18,7 +18,11 @@ function Get-KeyFromOA3 {
     try {
         $key = (Get-CimInstance -Query 'SELECT * FROM SoftwareLicensingService').OA3xOriginalProductKey
         return $key
-    } catch { return $null }
+    } catch {
+        # OA3 key is absent on most non-OEM machines; log for diagnostics only.
+        Write-Verbose "Get-KeyFromOA3: CIM query failed: $_"
+        return $null
+    }
 }
 
 function Get-KeyFromDigitalProductId {
@@ -60,7 +64,11 @@ function Get-KeyFromDigitalProductId {
             if (($i + 1) % 5 -eq 0 -and $i -lt 24) { $formatted += '-' }
         }
         return $formatted
-    } catch { return $null }
+    } catch {
+        # Registry read or blob decoding failed; log for diagnostics only.
+        Write-Verbose "Get-KeyFromDigitalProductId: failed: $_"
+        return $null
+    }
 }
 
 function Test-KeyFormat {
