@@ -129,6 +129,7 @@ without a platform guard. The CLI runs on Linux too.
 
 ## Pull Request Rules
 
+- **Do NOT open a pull request unless the user explicitly asks.** Commit and push only; stop there.
 - One PR per logical concern (error handling, deduplication, API migration, etc.)
 - Describe **what** changed and **why** in the PR body
 - Call out any `TODO(AI)` items explicitly in the PR description
