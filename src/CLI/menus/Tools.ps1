@@ -19,7 +19,7 @@ function Show-ToolsMenu {
         @{ Label = 'Continuous Ping Test';         Script = 'Test-NetworkContinuous.ps1';    Note = '';                      Platforms = @('Windows','Linux') }
         @{ Label = 'Traceroute to Google';         Script = 'Test-Traceroute.ps1';           Note = '';                      Platforms = @('Windows','Linux') }
         @{ Label = 'Reset Network Stack';          Script = 'Invoke-NetworkReset.ps1';       Note = '';                      Platforms = @('Windows') }
-        @{ Label = 'Update System Programs';       Script = 'Invoke-SystemUpdate.ps1';       Note = '(winget)';              Platforms = @('Windows') }
+        @{ Label = 'Update all packages';          Script = 'Invoke-SystemUpdate.ps1';       Note = '(winget)';              Platforms = @('Windows') }
         @{ Label = 'Update HP Drivers';            Script = 'Invoke-HPUpdate.ps1';           Note = '(HP only)';             Platforms = @('Windows') }
         @{ Label = 'Restart Audio Drivers';        Script = 'Invoke-AudioRestart.ps1';       Note = '';                      Platforms = @('Windows') }
         @{ Label = 'Open Battery Report';          Script = 'Open-BatteryReport.ps1';        Note = '';                      Platforms = @('Windows') }
@@ -30,7 +30,7 @@ function Show-ToolsMenu {
         @{ Label = 'Repair Boot Record';           Script = 'Invoke-BootRepair.ps1';         Note = '(use with caution!)';   Platforms = @('Windows') }
         @{ Label = 'Shutdown / Reboot / Log Off';  Script = 'Invoke-PowerOptions.ps1';       Note = '';                      Platforms = @('Windows','Linux') }
         @{ Label = 'Repair Winget';                Script = 'Invoke-WingetRepair.ps1';       Note = '';                      Platforms = @('Windows') }
-        @{ Label = 'Update Packages';              Script = 'linux/Invoke-PackageUpdate.ps1'; Note = '';                     Platforms = @('Linux') }
+        @{ Label = 'Update all packages';          Script = 'linux/Invoke-PackageUpdate.ps1'; Note = '';                      Platforms = @('Linux') }
         @{ Label = 'View System Logs';             Script = 'linux/Get-SystemLogs.ps1';      Note = '(journalctl)';          Platforms = @('Linux') }
     )
 

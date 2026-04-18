@@ -113,7 +113,7 @@ Option numbers are assigned sequentially at runtime per platform — Windows-onl
 | Continuous Ping Test          | All       | Continuous ping, Ctrl+C to stop                    |
 | Traceroute to Google          | All       | tracert / traceroute                               |
 | Reset Network Stack           | Windows   | DNS flush, Winsock reset, IPv4/IPv6 reset          |
-| Update System Programs        | Windows   | winget                                             |
+| Update all packages           | All       | winget (Windows) / distro package manager (Linux)  |
 | Update HP Drivers             | Windows   | HP Image Assistant (HP devices only)               |
 | Restart Audio Drivers         | Windows   | Restarts audio services                            |
 | Open Battery Report           | Windows   | Opens previously generated report                  |
@@ -124,7 +124,6 @@ Option numbers are assigned sequentially at runtime per platform — Windows-onl
 | Repair Boot Record            | Windows   | CHKDSK + SFC + BOOTREC - **use with caution**      |
 | Shutdown / Reboot / Log Off   | All       |                                                    |
 | Repair Winget                 | Windows   | via winget-install by @asheroto                    |
-| Update Packages               | Linux     | cachy-update / apt / dnf / pacman / zypper         |
 | View System Logs              | Linux     | journalctl errors/warnings                         |
 
 </details>
