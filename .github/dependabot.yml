@@ -30,10 +30,14 @@ updates:
       github-actions:
         patterns:
           - "actions/*"
+      security-actions:
+        patterns:
+          - "aquasecurity/*"
+          - "github/codeql-action"
+          - "trufflesecurity/*"
       third-party-actions:
         patterns:
           - "DavidAnson/*"
           - "lycheeverse/*"
-          - "trufflesecurity/*"
           - "amannn/*"
           - "webiny/*"
