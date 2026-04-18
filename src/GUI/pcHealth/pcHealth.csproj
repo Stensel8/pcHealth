@@ -34,8 +34,8 @@
     <PackageReference Include="Microsoft.WindowsAppSDK"    Version="1.8.260317003" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1721"
                       IncludeAssets="build" />
-    <!-- WMI access for OA3 key extraction and OS info -->
-    <PackageReference Include="System.Management" Version="10.0.6" />
+    <!-- CIM/MI library for OS info and OA3 key extraction (replaces legacy System.Management/DCOM) -->
+    <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
   </ItemGroup>
 
 </Project>

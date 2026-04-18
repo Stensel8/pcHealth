@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Microsoft.Management.Infrastructure;
 using Microsoft.Win32;
 
 namespace pcHealth;
@@ -60,17 +62,25 @@ public static class KeyExtractor
     {
         try
         {
-            using var searcher = new ManagementObjectSearcher(
-                "SELECT Caption, BuildNumber FROM Win32_OperatingSystem");
-            foreach (ManagementObject obj in searcher.Get())
+            using var session = CimSession.Create(null);
+            foreach (var instance in session.QueryInstances(
+                "root/cimv2", "WQL",
+                "SELECT Caption, BuildNumber FROM Win32_OperatingSystem"))
             {
-                var caption = obj["Caption"]?.ToString()?.Trim();
-                var build = obj["BuildNumber"]?.ToString();
+                var caption = instance.CimInstanceProperties["Caption"]?.Value?.ToString()?.Trim();
+                var build = instance.CimInstanceProperties["BuildNumber"]?.Value?.ToString();
                 if (caption != null)
                     return $"{caption} (Build {build})";
             }
         }
-        catch { /* fall through to default */ }
+        catch (CimException ex)
+        {
+            Debug.WriteLine($"[KeyExtractor] CIM query failed for OS caption: {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Debug.WriteLine($"[KeyExtractor] Access denied querying OS caption: {ex.Message}");
+        }
         return "Windows (version unknown)";
     }
 
@@ -78,16 +88,24 @@ public static class KeyExtractor
     {
         try
         {
-            using var searcher = new ManagementObjectSearcher(
-                "SELECT OA3xOriginalProductKey FROM SoftwareLicensingService");
-            foreach (ManagementObject obj in searcher.Get())
+            using var session = CimSession.Create(null);
+            foreach (var instance in session.QueryInstances(
+                "root/cimv2", "WQL",
+                "SELECT OA3xOriginalProductKey FROM SoftwareLicensingService"))
             {
-                var key = obj["OA3xOriginalProductKey"]?.ToString();
+                var key = instance.CimInstanceProperties["OA3xOriginalProductKey"]?.Value?.ToString();
                 if (!string.IsNullOrWhiteSpace(key) && IsValidFormat(key))
                     return key;
             }
         }
-        catch { }
+        catch (CimException ex)
+        {
+            Debug.WriteLine($"[KeyExtractor] CIM query failed for OA3 key: {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Debug.WriteLine($"[KeyExtractor] Access denied querying OA3 key: {ex.Message}");
+        }
         return null;
     }
 
@@ -141,7 +159,19 @@ public static class KeyExtractor
 
             return IsValidFormat(result) ? result : null;
         }
-        catch { }
+        catch (UnauthorizedAccessException ex)
+        {
+            Debug.WriteLine($"[KeyExtractor] Registry access denied for DigitalProductId: {ex.Message}");
+        }
+        catch (System.Security.SecurityException ex)
+        {
+            Debug.WriteLine($"[KeyExtractor] Registry security error for DigitalProductId: {ex.Message}");
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            // DigitalProductId blob shorter than expected — can occur on unusual Windows editions.
+            Debug.WriteLine($"[KeyExtractor] DigitalProductId blob malformed: {ex.Message}");
+        }
         return null;
     }
 
