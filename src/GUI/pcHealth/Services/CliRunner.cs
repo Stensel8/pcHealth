@@ -10,6 +10,13 @@ internal static class CliRunner
 {
     private static string? _toolsDir;
 
+    // Both 32-bit and 64-bit uninstall hives must be searched on 64-bit Windows.
+    private static readonly string[] UninstallPaths =
+    {
+        @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+    };
+
     /// <summary>
     /// Locates the CLI/tools directory by walking up from the executable
     /// location. Works from bin/Debug|Release output and any ancestor folder.
@@ -72,13 +79,7 @@ internal static class CliRunner
 
     private static string? GetInstallLocationExe(string registryName, string exeName)
     {
-        string[] paths =
-        {
-            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
-            @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
-        };
-
-        foreach (var path in paths)
+        foreach (var path in UninstallPaths)
         {
             using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(path);
             if (key is null) continue;
@@ -136,13 +137,7 @@ internal static class CliRunner
 
     private static bool SearchUninstallKey(Microsoft.Win32.RegistryKey hive, string name)
     {
-        string[] paths =
-        {
-            @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
-            @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
-        };
-
-        foreach (var path in paths)
+        foreach (var path in UninstallPaths)
         {
             using var key = hive.OpenSubKey(path);
             if (key is null) continue;

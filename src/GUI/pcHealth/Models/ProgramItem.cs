@@ -21,6 +21,9 @@ public sealed class ProgramItem : INotifyPropertyChanged
     /// </summary>
     public string RegistryName { get; init; } = "";
 
+    private void Notify(string name) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
     private bool _isInstalled;
     public bool IsInstalled
     {
@@ -29,8 +32,8 @@ public sealed class ProgramItem : INotifyPropertyChanged
         {
             if (_isInstalled == value) return;
             _isInstalled = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsInstalled)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ButtonLabel)));
+            Notify(nameof(IsInstalled));
+            Notify(nameof(ButtonLabel));
         }
     }
 
