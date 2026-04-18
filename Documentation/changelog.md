@@ -1,5 +1,25 @@
 # Changelog.md - pcHealth
 
+## 17-04-2026 (2) - @Stensel8
+
+Dropped Windows 10 support. Minimum requirement is now Windows 11 25H2 (build 26200+), aligning with the Linux kernel 7.0 minimum.
+
+- `start.ps1` and `CLI/Start.ps1`: build check raised from 19045 to 26200.
+- `CLI/menus/Tools.ps1`: removed `Windows10` from all platform filter arrays.
+- `SECURITY.md`, `README.md`: updated supported platforms and requirements.
+
+## 17-04-2026 - @Stensel8
+
+Consolidated repository into two top-level folders: `CLI/` and `GUI/`.
+
+- Removed all platform-specific launcher folders (`Windows 10/CLI/`, `Windows 11/CLI/`, `Linux/CLI/`) — `CLI/Start.ps1` is now the single entry point for all platforms.
+- Removed `Shared/CLI/` (renamed to `CLI/`) and `Scripts/` (legacy CMD/VBS).
+- Renamed `Windows 11/GUI/` to `GUI/`.
+- Merged all bugfixes from `main` into the new structure.
+- Improved Linux package update script: now reads `/etc/os-release` to detect the distro and runs the correct update command (e.g. `cachy-update` for CachyOS, `garuda-update` for Garuda, `pamac` for Manjaro, AUR helpers for Arch-based distros).
+- Updated `GUI/pcHealth/Services/CliRunner.cs` to resolve `CLI/tools/` instead of the old `Shared/CLI/tools/`.
+- Updated README to reflect the new structure and document cross-platform behaviour.
+
 ## 15-04-2026 - @Stensel8
 
 - Completed the migration to WinUI 3 using .NET 10.

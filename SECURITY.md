@@ -4,12 +4,11 @@
 
 The table below lists each supported platform, the OS build it targets, and its current support status within this project.
 
-| Platform   | Target OS | Last Tested Build | Status                        | Project support ends |
-|------------|-----------|-------------------|-------------------------------|----------------------|
-| Windows 11 | 25H2      | 26200.8037        | ✅ Actively maintained        | October 12, 2027     |
-| Windows 10 | 22H2      | 19045.x           | ⛔ No longer maintained       | October 14, 2025     |
+| Platform | Target    | Min. Build | Status                 |
+|----------|-----------|------------|------------------------|
+| Windows  | 25H2+     | 26200      | ✅ Actively maintained |
+| Linux    | Kernel 7+ | —          | ✅ Actively maintained |
 
-Windows 10 reached end of Microsoft support on October 14, 2025 and is no longer maintained in this project. The `Windows 10/` folder is kept for reference only; no fixes or new features will be backported to it.
 
 ---
 
@@ -17,7 +16,7 @@ Windows 10 reached end of Microsoft support on October 14, 2025 and is no longer
 
 | Platform | Status      | Notes                                      |
 |----------|-------------|--------------------------------------------|
-| Linux 7  | Planned     | Targeting parity with the Windows 11 CLI   |
+| Linux 7  | Planned     | Targeting parity with the Windows CLI      |
 
 ---
 
