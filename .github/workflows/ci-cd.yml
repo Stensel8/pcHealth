@@ -177,9 +177,10 @@ jobs:
           output: lychee/out.md
           fail: true
           jobSummary: true
-          # lychee-action v2.8.0 defaults to v0.23.0 which has a broken download URL.
-          # Override to latest so the runner always picks up a working binary.
-          lycheeVersion: latest
+          # Pin lychee binary to a specific version so the action downloads from
+          # a direct release URL (/download/lychee-v0.23.0/) instead of the
+          # flaky /releases/latest/download/ redirect used when set to 'latest'.
+          lycheeVersion: v0.23.0
 
   # ----------------------------------------------------------
   # SECRET SCAN
