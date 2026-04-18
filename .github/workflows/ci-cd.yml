@@ -177,6 +177,9 @@ jobs:
           output: lychee/out.md
           fail: true
           jobSummary: true
+          # lychee-action v2.8.0 defaults to v0.23.0 which has a broken download URL.
+          # Override to latest so the runner always picks up a working binary.
+          lycheeVersion: latest
 
   # ----------------------------------------------------------
   # SECRET SCAN
