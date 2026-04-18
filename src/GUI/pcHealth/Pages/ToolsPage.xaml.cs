@@ -20,7 +20,7 @@ public sealed partial class ToolsPage : Page
         new ToolItem { Name = "Continuous Ping Test",        Glyph = "\uE877", Kind = ToolActionKind.Script,   Param = "Test-NetworkContinuous.ps1"},
         new ToolItem { Name = "Traceroute to Google",        Glyph = "\uE8F4", Kind = ToolActionKind.Script,   Param = "Test-Traceroute.ps1"      },
         new ToolItem { Name = "Reset Network Stack",         Glyph = "\uE72C", Kind = ToolActionKind.Script,   Param = "Invoke-NetworkReset.ps1"  },
-        new ToolItem { Name = "Update System Programs",      Glyph = "\uE895", Note = "winget",                Kind = ToolActionKind.Script,   Param = "Invoke-SystemUpdate.ps1"  },
+        new ToolItem { Name = "Update all packages",         Glyph = "\uE895", Note = "winget",                Kind = ToolActionKind.Script,   Param = "Invoke-SystemUpdate.ps1"  },
         new ToolItem { Name = "Update HP Drivers",           Glyph = "\uE7F7", Note = "HP only",               Kind = ToolActionKind.Script,   Param = "Invoke-HPUpdate.ps1"      },
         new ToolItem { Name = "Restart Audio Drivers",       Glyph = "\uE767", Kind = ToolActionKind.Script,   Param = "Invoke-AudioRestart.ps1"  },
         new ToolItem { Name = "Open Battery Report",         Glyph = "\uE8A5", Kind = ToolActionKind.Script,   Param = "Open-BatteryReport.ps1"   },
