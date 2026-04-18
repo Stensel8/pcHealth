@@ -177,9 +177,11 @@ jobs:
           output: lychee/out.md
           fail: true
           jobSummary: true
-          # Pin lychee binary to a specific version so the action downloads from
-          # a direct release URL (/download/lychee-v0.23.0/) instead of the
-          # flaky /releases/latest/download/ redirect used when set to 'latest'.
+          # Pinned to v0.23.0 — the last known-good lychee binary release.
+          # Versions above v0.23.0 have broken download URLs as of April 2026.
+          # Do NOT change this to 'latest': that resolves to an unreliable
+          # /releases/latest/download/ redirect (curl exits with code 22).
+          # Re-evaluate when lycheeverse/lychee cuts a stable release > v0.23.0.
           lycheeVersion: v0.23.0
 
   # ----------------------------------------------------------
