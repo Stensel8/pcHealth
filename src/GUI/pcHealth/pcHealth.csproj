@@ -16,6 +16,8 @@
          win-x64 is the default; pass -r win-arm64 to override for ARM devices. -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <Platforms>x64;arm64</Platforms>
+    <!-- Allows non-Windows runners (e.g. Linux CI) to restore dependencies. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
