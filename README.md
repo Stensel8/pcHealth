@@ -21,8 +21,8 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 
 | Platform | CLI | GUI | Min. version        |
 |----------|-----|-----|---------------------|
-| Windows  | ✅  | ✅ | Build 26200 (25H2+) |
-| Linux    | ✅  | ✅ | Kernel 7.0          |
+| Windows  | ✅  | ✅  | Build 26200 (25H2+) |
+| Linux    | ✅  | ❌  | Kernel 7.0          |
 
 See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
@@ -113,7 +113,7 @@ Option numbers are assigned sequentially at runtime per platform — Windows-onl
 | Continuous Ping Test          | All       | Continuous ping, Ctrl+C to stop                    |
 | Traceroute to Google          | All       | tracert / traceroute                               |
 | Reset Network Stack           | Windows   | DNS flush, Winsock reset, IPv4/IPv6 reset          |
-| Update System Programs        | All       | winget (Windows) / distro package manager (Linux)  |
+| Update System Programs        | Windows   | winget                                             |
 | Update HP Drivers             | Windows   | HP Image Assistant (HP devices only)               |
 | Restart Audio Drivers         | Windows   | Restarts audio services                            |
 | Open Battery Report           | Windows   | Opens previously generated report                  |
