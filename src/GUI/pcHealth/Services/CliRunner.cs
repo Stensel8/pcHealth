@@ -44,7 +44,9 @@ internal static class CliRunner
     public static void RunScript(string scriptFileName)
     {
         var path = Path.Combine(GetToolsDir(), scriptFileName);
-        var cmd = $"& '{path}'; Write-Host ''; Read-Host 'Press Enter to close'";
+        // Escape single quotes so paths like C:\Users\O'Brien\... don't break PS syntax.
+        var escaped = path.Replace("'", "''");
+        var cmd = $"& '{escaped}'; Write-Host ''; Read-Host 'Press Enter to close'";
         Start(new ProcessStartInfo
         {
             FileName = "pwsh.exe",
@@ -72,38 +74,62 @@ internal static class CliRunner
 
     private static string? GetAppPathsExe(string exeName)
     {
-        using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
-            $@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{exeName}");
-        return key?.GetValue(null) as string;
+        try
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+                $@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{exeName}");
+            return key?.GetValue(null) as string;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Debug.WriteLine($"[CliRunner] App Paths registry access denied for {exeName}: {ex.Message}");
+            return null;
+        }
+        catch (System.Security.SecurityException ex)
+        {
+            Debug.WriteLine($"[CliRunner] App Paths registry security error for {exeName}: {ex.Message}");
+            return null;
+        }
     }
 
     private static string? GetInstallLocationExe(string registryName, string exeName)
     {
-        foreach (var path in UninstallPaths)
+        try
         {
-            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(path);
-            if (key is null) continue;
-
-            foreach (var sub in key.GetSubKeyNames())
+            foreach (var path in UninstallPaths)
             {
-                using var entry = key.OpenSubKey(sub);
-                if (entry?.GetValue("DisplayName") is not string displayName
-                    || !displayName.Contains(registryName, StringComparison.OrdinalIgnoreCase))
-                    continue;
+                using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(path);
+                if (key is null) continue;
 
-                if (entry.GetValue("InstallLocation") is string loc && !string.IsNullOrWhiteSpace(loc))
+                foreach (var sub in key.GetSubKeyNames())
                 {
-                    var candidate = Path.Combine(loc.TrimEnd('\\', '/'), exeName);
-                    if (File.Exists(candidate)) return candidate;
-                }
+                    using var entry = key.OpenSubKey(sub);
+                    if (entry?.GetValue("DisplayName") is not string displayName
+                        || !displayName.Contains(registryName, StringComparison.OrdinalIgnoreCase))
+                        continue;
 
-                if (entry.GetValue("DisplayIcon") is string icon)
-                {
-                    var iconPath = icon.Split(',')[0].Trim('"');
-                    if (iconPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && File.Exists(iconPath))
-                        return iconPath;
+                    if (entry.GetValue("InstallLocation") is string loc && !string.IsNullOrWhiteSpace(loc))
+                    {
+                        var candidate = Path.Combine(loc.TrimEnd('\\', '/'), exeName);
+                        if (File.Exists(candidate)) return candidate;
+                    }
+
+                    if (entry.GetValue("DisplayIcon") is string icon)
+                    {
+                        var iconPath = icon.Split(',')[0].Trim('"');
+                        if (iconPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && File.Exists(iconPath))
+                            return iconPath;
+                    }
                 }
             }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Debug.WriteLine($"[CliRunner] Uninstall registry access denied searching for {registryName}: {ex.Message}");
+        }
+        catch (System.Security.SecurityException ex)
+        {
+            Debug.WriteLine($"[CliRunner] Uninstall registry security error searching for {registryName}: {ex.Message}");
         }
         return null;
     }
@@ -137,18 +163,29 @@ internal static class CliRunner
 
     private static bool SearchUninstallKey(Microsoft.Win32.RegistryKey hive, string name)
     {
-        foreach (var path in UninstallPaths)
+        try
         {
-            using var key = hive.OpenSubKey(path);
-            if (key is null) continue;
-
-            foreach (var sub in key.GetSubKeyNames())
+            foreach (var path in UninstallPaths)
             {
-                using var entry = key.OpenSubKey(sub);
-                if (entry?.GetValue("DisplayName") is string displayName
-                    && displayName.Contains(name, StringComparison.OrdinalIgnoreCase))
-                    return true;
+                using var key = hive.OpenSubKey(path);
+                if (key is null) continue;
+
+                foreach (var sub in key.GetSubKeyNames())
+                {
+                    using var entry = key.OpenSubKey(sub);
+                    if (entry?.GetValue("DisplayName") is string displayName
+                        && displayName.Contains(name, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
             }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Debug.WriteLine($"[CliRunner] Uninstall registry access denied checking {name}: {ex.Message}");
+        }
+        catch (System.Security.SecurityException ex)
+        {
+            Debug.WriteLine($"[CliRunner] Uninstall registry security error checking {name}: {ex.Message}");
         }
         return false;
     }

@@ -98,8 +98,18 @@ public sealed partial class ProgramsPage : Page
             .Where(p => !string.IsNullOrEmpty(p.RegistryName))
             .Select(p => Task.Run(() =>
             {
-                bool installed = CliRunner.IsInstalled(p.RegistryName);
-                dispatcher.TryEnqueue(() => p.IsInstalled = installed);
+                try
+                {
+                    bool installed = CliRunner.IsInstalled(p.RegistryName);
+                    dispatcher.TryEnqueue(() => p.IsInstalled = installed);
+                }
+                catch (Exception ex)
+                {
+                    // Registry check failed for this entry; leave IsInstalled = false
+                    // so the UI shows "Install" rather than crashing the whole scan.
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[ProgramsPage] IsInstalled check failed for {p.Name}: {ex.Message}");
+                }
             }));
 
         await Task.WhenAll(tasks);

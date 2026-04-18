@@ -14,7 +14,7 @@ function Write-PcLog {
         $logDir = if ($IsLinux) {
             Join-Path $env:HOME 'pcHealth' 'Logs'
         } else {
-            "$env:SystemDrive\pcHealth\Logs"
+            Join-Path $env:SystemDrive 'pcHealth' 'Logs'
         }
         if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
 

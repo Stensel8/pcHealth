@@ -7,7 +7,18 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        SystemBackdrop = new MicaBackdrop();
+
+        // MicaBackdrop requires Windows 11. Fall back gracefully on older builds
+        // so the app still runs without crashing on unsupported hardware.
+        try
+        {
+            SystemBackdrop = new MicaBackdrop();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Mica backdrop unavailable: {ex.Message}");
+        }
+
         AppWindow.Resize(new SizeInt32(1100, 720));
 
         // Hand the title bar over to WinUI 3 so it automatically follows the
