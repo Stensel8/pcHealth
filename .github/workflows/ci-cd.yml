@@ -144,9 +144,6 @@ jobs:
           args: >-
             --include-fragments
             --max-concurrency 4
-            --delay 100
-            --retry-wait-time 5
-            --max-retries 3
             README.md SECURITY.md .github/**/*.md
           format: markdown
           output: lychee/out.md
