@@ -7,7 +7,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$onLinux = [bool]$IsLinux
+$onLinux = ($PSVersionTable.PSEdition -eq 'Core') -and [bool]$IsLinux
 
 if (-not $onLinux) {
     # -- 0. Minimum OS version: Windows build 26200 (25H2) ------------------------
