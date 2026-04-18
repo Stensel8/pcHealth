@@ -44,6 +44,11 @@ public sealed partial class MainWindow : Window
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
+        if (args.IsSettingsSelected)
+        {
+            NavigateTo("settings");
+            return;
+        }
         if (args.SelectedItemContainer is NavigationViewItem item)
             NavigateTo(item.Tag?.ToString());
     }
@@ -66,9 +71,11 @@ public sealed partial class MainWindow : Window
     {
         Type? target = tag switch
         {
-            "tools" => typeof(ToolsPage),
-            "programs" => typeof(ProgramsPage),
+            "tools"      => typeof(ToolsPage),
+            "programs"   => typeof(ProgramsPage),
             "licensekey" => typeof(LicenseKeyPage),
+            "settings"   => typeof(SettingsPage),
+            "info"       => typeof(InfoPage),
             _ => null
         };
 

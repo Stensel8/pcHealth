@@ -1,0 +1,38 @@
+name: Deprecated pattern check
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Scans for patterns AGENTS.md forbids (legacy WMI, wmic, Invoke-Expression,
+# empty catches, etc.) and uploads findings as SARIF to the GitHub Advanced
+# Security → Code scanning tab. Never blocks CI — findings are warnings/notes.
+
+jobs:
+  deprecated-patterns:
+    name: Deprecated pattern check (SARIF)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # required to upload SARIF to the Security tab
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run deprecated-pattern scan
+        run: python3 .github/scripts/check-deprecated-patterns.py
+
+      - name: Upload results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        if: always()
+        with:
+          sarif_file: deprecated-patterns.sarif
+          category: deprecated-patterns

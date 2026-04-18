@@ -33,6 +33,14 @@
             </NavigationViewItem>
         </NavigationView.MenuItems>
 
+        <NavigationView.FooterMenuItems>
+            <NavigationViewItem Tag="info" Content="About">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE946;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.FooterMenuItems>
+
         <Frame x:Name="ContentFrame"/>
 
     </NavigationView>
