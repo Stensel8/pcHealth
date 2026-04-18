@@ -1,0 +1,119 @@
+name: Security scanning
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+# Default minimal permissions — each job overrides only what it actually needs.
+permissions: read-all
+
+# Cancel in-progress runs for the same branch/PR when a new push arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ============================================================
+# Overview of checks:
+#
+#  powershell-lint  → PSScriptAnalyzer (src/CLI/ scripts)
+#  trivy-scan       → Trivy (filesystem vulnerability scan)
+#  devskim          → DevSkim (insecure code patterns)
+#
+# Kept in a separate workflow so CI failures (lint, build,
+# commit messages) do not taint SARIF uploads in the
+# GitHub Advanced Security → Code scanning tab.
+# ============================================================
+
+jobs:
+
+  # ----------------------------------------------------------
+  # POWERSHELL LINT
+  # Runs PSScriptAnalyzer on all CLI scripts.
+  # Settings: .github/PSScriptAnalyzerSettings.psd1
+  # ----------------------------------------------------------
+  powershell-lint:
+    name: PowerShell lint (PSScriptAnalyzer)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # required to upload SARIF to the Security tab
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run PSScriptAnalyzer (SARIF output)
+        uses: microsoft/psscriptanalyzer-action@6b2948b1944407914a58661c49941824d149734f # v1.1
+        with:
+          path: src/CLI
+          recurse: true
+          settings: .github/PSScriptAnalyzerSettings.psd1
+          output: psscriptanalyzer-results.sarif
+
+      - name: Upload PSScriptAnalyzer results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        with:
+          sarif_file: psscriptanalyzer-results.sarif
+          category: psscriptanalyzer
+
+  # ----------------------------------------------------------
+  # TRIVY SECURITY SCAN
+  # Scans the repository filesystem for HIGH and CRITICAL
+  # vulnerabilities in dependencies and configuration.
+  # Results are uploaded as SARIF so they appear in the
+  # GitHub Advanced Security → Code scanning tab.
+  # ----------------------------------------------------------
+  trivy-scan:
+    name: Security scan (Trivy)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # required to upload SARIF to the Security tab
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'HIGH,CRITICAL'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '1'
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        if: always()  # upload even when exit-code 1 causes the step above to fail
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy'
+
+  # ----------------------------------------------------------
+  # DEVSKIM SECURITY LINT
+  # Microsoft's security linter — catches insecure patterns in
+  # C# and PowerShell: deprecated crypto, injection risks,
+  # unsafe APIs. Complements CodeQL's deeper semantic analysis.
+  # Results are uploaded as SARIF to the Security tab.
+  # ----------------------------------------------------------
+  devskim:
+    name: Security lint (DevSkim)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # required to upload SARIF to the Security tab
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run DevSkim
+        uses: microsoft/DevSkim-Action@4b5047945a44163b94642a1cecc0d93a3f428cc6 # v1.0.16
+        with:
+          directory-to-scan: src
+
+      - name: Upload DevSkim results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        if: always()
+        with:
+          sarif_file: devskim-results.sarif
+          category: devskim
