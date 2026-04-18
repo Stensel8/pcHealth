@@ -138,20 +138,20 @@ jobs:
 
       - name: Check links
         uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: >-
             --include-fragments
+            --max-concurrency 4
+            --delay 100
+            --retry-wait-time 5
+            --max-retries 3
             README.md SECURITY.md .github/**/*.md
           format: markdown
           output: lychee/out.md
           fail: true
           jobSummary: true
-          # Pinned to v0.23.0 — the last known-good lychee binary release.
-          # Versions above v0.23.0 have broken download URLs as of April 2026.
-          # Do NOT change this to 'latest': that resolves to an unreliable
-          # /releases/latest/download/ redirect (curl exits with code 22).
-          # Re-evaluate when lycheeverse/lychee cuts a stable release > v0.23.0.
-          lycheeVersion: v0.23.0
 
   # ----------------------------------------------------------
   # SECRET SCAN
