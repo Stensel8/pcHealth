@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- Scan + Repair (SFC + DISM combined)
 # Runs all steps unattended. RestoreHealth requires internet or install media.

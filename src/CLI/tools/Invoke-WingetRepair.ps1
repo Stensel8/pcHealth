@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- Repair Winget
 # Credits: @asheroto -- https://github.com/asheroto/winget-install

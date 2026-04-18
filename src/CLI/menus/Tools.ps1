@@ -1,4 +1,4 @@
-# ============================================================================
+﻿# ============================================================================
 # pcHealth -- Shared -- Tools Menu
 # Data-driven: options are filtered per platform at runtime so option numbers
 # are always sequential with no gaps.

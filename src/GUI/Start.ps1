@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 # ============================================================================
 # pcHealth -- GUI Launcher (Windows)
 # Checks dependencies, elevates to admin, builds and launches the WinUI 3 app.

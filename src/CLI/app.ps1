@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- CLI
 # Auto-detects platform (Windows/Linux) and loads menus.

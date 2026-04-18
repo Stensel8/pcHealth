@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- Update Packages (Linux)
 # Reads /etc/os-release to detect the distro, then runs the appropriate

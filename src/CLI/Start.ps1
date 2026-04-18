@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 # ============================================================================
 # pcHealth -- CLI Launcher (Windows)
 # Checks dependencies, elevates to admin, then starts the CLI.

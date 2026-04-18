@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- Hardware Information
 # CPU, GPU, Storage (SMART via smartmontools), RAM, Chipset.

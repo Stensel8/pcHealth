@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- Windows License Key
 # Attempts OA3 (UEFI/BIOS firmware) and DigitalProductId (registry decode).

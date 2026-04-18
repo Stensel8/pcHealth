@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- View System Logs (Linux)
 # Shows recent error/warning entries from the systemd journal.

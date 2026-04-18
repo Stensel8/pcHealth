@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- BIOS Password Recovery
 # Credits: @bacher09 -- https://github.com/bacher09/pwgen-for-bios
