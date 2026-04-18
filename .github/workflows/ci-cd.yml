@@ -227,12 +227,15 @@ jobs:
   # TRIVY SECURITY SCAN
   # Scans the repository filesystem for HIGH and CRITICAL
   # vulnerabilities in dependencies and configuration.
+  # Results are uploaded as SARIF so they appear in the
+  # GitHub Advanced Security → Code scanning tab.
   # ----------------------------------------------------------
   trivy-scan:
     name: Security scan (Trivy)
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      security-events: write  # required to upload SARIF to the Security tab
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -242,4 +245,13 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           severity: 'HIGH,CRITICAL'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
           exit-code: '1'
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
+        if: always()  # upload even when exit-code 1 causes the step above to fail
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy'
