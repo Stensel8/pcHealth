@@ -12,9 +12,9 @@ function Write-PcLog {
     )
     try {
         $logDir = if ($IsLinux) {
-            Join-Path $env:HOME 'pcHealth' 'Logs'
+            Join-Path -Path $env:HOME -ChildPath 'pcHealth' -AdditionalChildPath 'Logs'
         } else {
-            Join-Path $env:SystemDrive 'pcHealth' 'Logs'
+            Join-Path -Path $env:SystemDrive -ChildPath 'pcHealth' -AdditionalChildPath 'Logs'
         }
         if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
 

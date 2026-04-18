@@ -59,15 +59,15 @@ if (-not $IsLinux) {
 # Set before dot-sourcing so menus can reference it at load time.
 $Global:pcHealthRoot = $PSScriptRoot
 
-$versionFile = Join-Path $PSScriptRoot '..' '..' 'VERSION'
+$versionFile = Join-Path -Path $PSScriptRoot -ChildPath '..' -AdditionalChildPath '..', 'VERSION'
 $Global:PcVersion = if (Test-Path $versionFile) {
     (Get-Content $versionFile -Raw).Trim()
 } else { 'unknown' }
 
 # Order matters: Helpers must load before Main/Tools/Programs.
-. (Join-Path $PSScriptRoot 'menus' 'Helpers.ps1')
-. (Join-Path $PSScriptRoot 'menus' 'Main.ps1')
-. (Join-Path $PSScriptRoot 'menus' 'Tools.ps1')
-. (Join-Path $PSScriptRoot 'menus' 'Programs.ps1')
+. (Join-Path -Path $PSScriptRoot -ChildPath 'menus' -AdditionalChildPath 'Helpers.ps1')
+. (Join-Path -Path $PSScriptRoot -ChildPath 'menus' -AdditionalChildPath 'Main.ps1')
+. (Join-Path -Path $PSScriptRoot -ChildPath 'menus' -AdditionalChildPath 'Tools.ps1')
+. (Join-Path -Path $PSScriptRoot -ChildPath 'menus' -AdditionalChildPath 'Programs.ps1')
 
 Show-MainMenu

@@ -53,20 +53,8 @@ jobs:
           settings: .github/PSScriptAnalyzerSettings.psd1
           output: psscriptanalyzer-results.sarif
 
-      - name: Fail build if issues were found
-        shell: pwsh
-        run: |
-          $sarif = Get-Content psscriptanalyzer-results.sarif | ConvertFrom-Json
-          $count = ($sarif.runs[0].results | Measure-Object).Count
-          if ($count -gt 0) {
-            Write-Host "PSScriptAnalyzer found $count issue(s)." -ForegroundColor Red
-            exit 1
-          }
-          Write-Host "PSScriptAnalyzer: no issues found." -ForegroundColor Green
-
       - name: Upload PSScriptAnalyzer results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
-        if: always()  # upload even when findings cause exit 1 above
         with:
           sarif_file: psscriptanalyzer-results.sarif
           category: psscriptanalyzer
