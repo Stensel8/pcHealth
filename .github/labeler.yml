@@ -1,7 +1,10 @@
-# Labeler configuration for actions/labeler@v5
+# Labeler configuration for actions/labeler@v6
 # Docs: https://github.com/actions/labeler
+#
+# Labels fire when EITHER a branch-name pattern OR a file-change pattern matches.
+# File-based rules ensure labels are applied even when branches are named freely.
 
-# ── Type labels (by branch name) ───────────────────────────────────────────
+# ── Type labels ───────────────────────────────────────────────────────────────
 
 "type/feature":
   - head-branch: ["^feat/", "^feature/"]
@@ -15,6 +18,7 @@
       - any-glob-to-any-file:
           - "**/*.md"
           - ".github/**/*.md"
+          - "Documentation/**"
 
 "type/chore":
   - head-branch: ["^chore/", "^build/", "^deps/"]
@@ -34,7 +38,7 @@
 "type/test":
   - head-branch: ["^test/"]
 
-# ── CI label ───────────────────────────────────────────────────────────────
+# ── CI / dependency labels ────────────────────────────────────────────────────
 
 "ci":
   - head-branch: ["^ci/"]
@@ -43,34 +47,47 @@
           - ".github/workflows/**"
           - ".github/dependabot.yml"
           - ".github/PSScriptAnalyzerSettings.psd1"
+          - ".github/labeler.yml"
           - ".editorconfig"
           - ".markdownlint.jsonc"
-
-# ── Dependencies (Dependabot branches) ────────────────────────────────────
+          - ".lycheeignore"
+          - "renovate.json"
 
 "dependencies":
-  - head-branch: ["^dependabot/"]
+  - head-branch: ["^dependabot/", "^renovate/"]
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.csproj"
+          - "**/*.sln"
+          - ".github/dependabot.yml"
+          - "renovate.json"
 
-# ── Platform labels ────────────────────────────────────────────────────────
+# ── Platform labels ───────────────────────────────────────────────────────────
 
 "windows-11":
   - changed-files:
-      - any-glob-to-any-file: ["Windows 11/**"]
-
-"windows-10":
-  - changed-files:
-      - any-glob-to-any-file: ["Windows 10/**"]
+      - any-glob-to-any-file:
+          - "src/GUI/**"
 
 "linux":
   - changed-files:
-      - any-glob-to-any-file: ["Linux/**"]
+      - any-glob-to-any-file:
+          - "src/CLI/tools/linux/**"
+          - "src/CLI/start.sh"
 
-# ── Language label ─────────────────────────────────────────────────────────
+# ── Language labels ───────────────────────────────────────────────────────────
 
 "powershell":
   - changed-files:
-      - any-glob-to-any-file: ["**/*.ps1", "**/*.psm1", "**/*.psd1"]
+      - any-glob-to-any-file:
+          - "**/*.ps1"
+          - "**/*.psm1"
+          - "**/*.psd1"
 
 "csharp":
   - changed-files:
-      - any-glob-to-any-file: ["**/*.cs", "**/*.csproj", "**/*.sln"]
+      - any-glob-to-any-file:
+          - "**/*.cs"
+          - "**/*.xaml"
+          - "**/*.csproj"
+          - "**/*.sln"
