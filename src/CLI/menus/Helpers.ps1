@@ -35,11 +35,40 @@ function Write-PcLog {
     }
 }
 
+# Parses /etc/os-release and returns a hashtable.
+# ID and ID_LIKE are lowercased; NAME and PRETTY_NAME keep original casing.
+function Get-LinuxDistroInfo {
+    $info = @{}
+    if (Test-Path '/etc/os-release') {
+        Get-Content '/etc/os-release' | ForEach-Object {
+            if ($_ -match '^(\w+)=(.*)$') {
+                $info[$Matches[1]] = $Matches[2].Trim('"').Trim("'")
+            }
+        }
+    }
+    $info['ID']          = $info['ID']?.ToLower()          ?? ''
+    $info['ID_LIKE']     = $info['ID_LIKE']?.ToLower()     ?? ''
+    $info['NAME']        = $info['NAME']                   ?? 'Linux'
+    $info['PRETTY_NAME'] = $info['PRETTY_NAME']            ?? $info['NAME']
+    return $info
+}
+
+function Clear-PcHost {
+    # [Console]::Clear() fills the entire buffer with spaces and resets the
+    # cursor — more reliable than Clear-Host's ANSI escape sequences on Linux,
+    # and avoids partial-render artifacts when colour state leaks from tools.
+    [Console]::ResetColor()
+    [Console]::Clear()
+}
+
 $Global:PcTheme = 'Main'
 
 function Set-PcTheme {
     param([string]$Theme)
     $Global:PcTheme = $Theme
+    # RawUI colour changes only work in ConsoleHost; skip silently in VS Code,
+    # Windows Terminal with transparency, or any other non-standard host.
+    if ($Host.Name -ne 'ConsoleHost') { return }
     switch ($Theme) {
         'Main'     { $Host.UI.RawUI.BackgroundColor = 'Black'; $Host.UI.RawUI.ForegroundColor = 'Cyan'   }
         'Tools'    { $Host.UI.RawUI.BackgroundColor = 'Black'; $Host.UI.RawUI.ForegroundColor = 'Red'    }
@@ -67,7 +96,9 @@ function Write-PcHeader {
             (Get-LocalUser -Name $env:USERNAME -ErrorAction SilentlyContinue).FullName
         } else { $null }
     } catch { $null }
-    if (-not $fullName) { $fullName = if ($IsLinux) { $env:USER } else { $env:USERNAME } }
+    if (-not $fullName) {
+        $fullName = if ($IsLinux) { $env:SUDO_USER ?? $env:USER } else { $env:USERNAME }
+    }
     $now = Get-Date -Format 'dddd, dd MMMM yyyy  HH:mm'
     Write-Host "  Hello, $fullName!  *  $now`n" -ForegroundColor DarkGray
 }

@@ -61,10 +61,10 @@ function Get-WingetResult {
 
 # Detects the available package manager on Linux.
 function Get-LinuxPackageManager {
-    if (Get-Command apt     -ErrorAction SilentlyContinue) { return @{ Cmd = 'apt';     Args = 'install -y' } }
-    if (Get-Command dnf     -ErrorAction SilentlyContinue) { return @{ Cmd = 'dnf';     Args = 'install -y' } }
-    if (Get-Command pacman  -ErrorAction SilentlyContinue) { return @{ Cmd = 'pacman';  Args = '-S --noconfirm' } }
-    if (Get-Command zypper  -ErrorAction SilentlyContinue) { return @{ Cmd = 'zypper';  Args = 'install -y' } }
+    if (Get-Command apt     -ErrorAction SilentlyContinue) { return @{ Cmd = 'apt';     Args = @('install', '-y') } }
+    if (Get-Command dnf     -ErrorAction SilentlyContinue) { return @{ Cmd = 'dnf';     Args = @('install', '-y') } }
+    if (Get-Command pacman  -ErrorAction SilentlyContinue) { return @{ Cmd = 'pacman';  Args = @('-S', '--noconfirm') } }
+    if (Get-Command zypper  -ErrorAction SilentlyContinue) { return @{ Cmd = 'zypper';  Args = @('install', '-y') } }
     return $null
 }
 
@@ -124,7 +124,7 @@ function Show-WindowsProgramsMenu {
 
     while ($true) {
         Set-PcTheme 'Programs'
-        Clear-Host
+        Clear-PcHost
         Write-PcHeader 'Programs'
 
         foreach ($key in $packages.Keys) {
@@ -151,7 +151,7 @@ function Show-WindowsProgramsMenu {
 
             if ($s.Installed) {
                 Set-PcTheme 'Action'
-                Clear-Host
+                Clear-PcHost
                 Write-PcHeader 'Programs'
                 Write-Host "  $($pkg.Name) is already installed.`n"
                 Write-PcDivider
@@ -163,7 +163,7 @@ function Show-WindowsProgramsMenu {
                 $action = (Read-Host "`n  Choice").Trim()
                 switch ($action) {
                     '1' {
-                        Clear-Host
+                        Clear-PcHost
                         Write-Host "[>>] Checking for updates for $($pkg.Name)...`n" -ForegroundColor Yellow
                         $proc   = Start-Process winget `
                             -ArgumentList "upgrade --id $($pkg.Id) --accept-source-agreements --accept-package-agreements" `
@@ -194,7 +194,7 @@ function Show-WindowsProgramsMenu {
                 }
             } else {
                 Set-PcTheme 'Action'
-                Clear-Host
+                Clear-PcHost
                 Write-Host "[>>] Installing $($pkg.Name)...`n" -ForegroundColor Yellow
 
                 $proc = Start-Process winget `
@@ -243,7 +243,7 @@ function Show-LinuxProgramsMenu {
 
     while ($true) {
         Set-PcTheme 'Programs'
-        Clear-Host
+        Clear-PcHost
         Write-PcHeader 'Programs'
 
         if ($pm) {
@@ -274,7 +274,7 @@ function Show-LinuxProgramsMenu {
         if ($packages.Contains($choice)) {
             $pkg = $packages[$choice]
             Set-PcTheme 'Action'
-            Clear-Host
+            Clear-PcHost
 
             if (-not $pm) {
                 Write-Host "[!!] No supported package manager found. Install $($pkg.Name) manually.`n" -ForegroundColor Red

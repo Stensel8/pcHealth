@@ -39,7 +39,7 @@ function Show-ToolsMenu {
 
     while ($true) {
         Set-PcTheme 'Tools'
-        Clear-Host
+        Clear-PcHost
         Write-PcHeader 'Tools'
 
         for ($i = 1; $i -le $active.Count; $i++) {
@@ -68,7 +68,7 @@ function Show-ToolsMenu {
         if ($num -ge 1 -and $num -le $active.Count) {
             $entry = $active[$num - 1]
             Set-PcTheme 'Action'
-            Clear-Host
+            Clear-PcHost
             & (Join-Path $t $entry.Script)
             $nav = Read-PcNavChoice 'Back to Tools Menu'
             switch ($nav) {

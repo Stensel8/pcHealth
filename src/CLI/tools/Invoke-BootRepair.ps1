@@ -7,7 +7,7 @@
 
 if (Get-Command Set-PcTheme -ErrorAction SilentlyContinue) {
     Set-PcTheme 'Danger'
-    Clear-Host
+    Clear-PcHost
 }
 
 Write-Host "`n$('=' * 60)" -ForegroundColor Red
@@ -30,8 +30,10 @@ if ($confirm2 -ne 'CONFIRM') {
 }
 
 function Get-WindowsDrive {
+    # 'return' inside ForEach-Object is a continue, not a function exit.
+    # Select-Object -First 1 ensures only the first match is used.
     Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Name -ne 'X' } | ForEach-Object {
-        if (Test-Path (Join-Path $_.Root 'Windows\System32')) { return "$($_.Name):" }
+        if (Test-Path (Join-Path $_.Root 'Windows\System32')) { "$($_.Name):" }
     } | Select-Object -First 1
 }
 
@@ -52,7 +54,9 @@ Write-Host "[OK] Disk repair done.`n" -ForegroundColor Green
 
 Write-Host "[>>] Step 2/3 -- SFC (offline)..." -ForegroundColor Yellow
 if ($win) {
-    & sfc.exe /scannow /offbootdir="$win\" /offwindir="$windir"
+    Start-Process -FilePath "$env:SystemRoot\System32\sfc.exe" `
+        -ArgumentList "/scannow /offbootdir=`"$win\`" /offwindir=`"$windir`"" `
+        -Wait -NoNewWindow
 } else { Write-Warning "Skipping offline SFC." }
 Write-Host "[OK] SFC done.`n" -ForegroundColor Green
 

@@ -10,15 +10,7 @@ if ($IsLinux) {
     $uptime    = (& 'uptime' -p 2>$null).Trim()
     $user      = $env:USER ?? $env:USERNAME
 
-    $osRelease = @{}
-    if (Test-Path '/etc/os-release') {
-        Get-Content '/etc/os-release' | ForEach-Object {
-            if ($_ -match '^(\w+)=(.*)$') {
-                $osRelease[$Matches[1]] = $Matches[2].Trim('"')
-            }
-        }
-    }
-    $osName = $osRelease['PRETTY_NAME'] ?? $osRelease['NAME'] ?? 'Linux'
+    $osName = (Get-LinuxDistroInfo)['PRETTY_NAME']
 
     $memInfo = @{}
     if (Test-Path '/proc/meminfo') {

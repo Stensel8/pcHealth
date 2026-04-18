@@ -14,7 +14,7 @@ function Show-MainMenu {
             exit 0
         } else {
             Set-PcTheme 'Main'
-            Clear-Host
+            Clear-PcHost
             Write-PcHeader 'Main Menu'
 
             Write-Host "  Thanks for downloading and using pcHealth!"

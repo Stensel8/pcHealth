@@ -8,7 +8,9 @@ $ErrorActionPreference = 'Stop'
 
 # -- Platform detection + minimum version guards -------------------------------
 if ($IsLinux) {
-    # Require kernel 7.0+
+    # Require kernel 7.0+.
+    # Also checked in start.sh before this script runs; repeated here as a
+    # safety net when Start.ps1 is used as the entry point directly.
     $kernelVersion = (uname -r)
     $kernelMajor   = [int]($kernelVersion -split '[\.\-]')[0]
     if ($kernelMajor -lt 7) {
@@ -18,8 +20,10 @@ if ($IsLinux) {
     }
     $Global:PcPlatform      = 'Linux'
     $Global:PcPlatformLabel = 'Linux'
-} else {
-    # Require Windows 25H2+ (build 26200)
+} elseif ($IsWindows) {
+    # Require Windows 25H2+ (build 26200).
+    # Also checked in Start.ps1 before elevation; repeated here as a safety
+    # net when app.ps1 is invoked directly (e.g. from Start.ps1 on Linux path).
     $build = [System.Environment]::OSVersion.Version.Build
     if ($build -lt 26200) {
         Write-Host "[!!] pcHealth requires Windows build 26200 (25H2) or higher." -ForegroundColor Red
@@ -29,6 +33,9 @@ if ($IsLinux) {
     }
     $Global:PcPlatform      = 'Windows'
     $Global:PcPlatformLabel = 'Windows'
+} else {
+    Write-Host "[!!] Unsupported platform. pcHealth supports Windows and Linux only." -ForegroundColor Red
+    exit 1
 }
 
 # Console resize -- Windows only. Terminal width/height on Linux is managed by

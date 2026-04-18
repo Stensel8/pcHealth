@@ -6,7 +6,7 @@
 
 if (Get-Command Set-PcTheme -ErrorAction SilentlyContinue) {
     Set-PcTheme 'Warning'
-    Clear-Host
+    Clear-PcHost
 }
 
 Write-Host "`n$('=' * 60)" -ForegroundColor Yellow

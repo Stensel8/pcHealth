@@ -7,24 +7,28 @@
 
 $ErrorActionPreference = 'Stop'
 
-# -- 0. Minimum OS version: Windows build 26200 (25H2) ------------------------
-$build = [System.Environment]::OSVersion.Version.Build
-if ($build -lt 26200) {
-    Write-Host "[!!] pcHealth requires Windows build 26200 (25H2) or higher." -ForegroundColor Red
-    Write-Host "     Your build: $build" -ForegroundColor Red
-    Write-Host "     Update Windows and try again." -ForegroundColor Yellow
-    Read-Host 'Press Enter to exit'
-    exit 1
-}
+$onLinux = [bool]$IsLinux
 
-# -- 1. Elevate ----------------------------------------------------------------
-$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
-    [Security.Principal.WindowsBuiltInRole]::Administrator
-)
-if (-not $isAdmin) {
-    $shell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell' }
-    Start-Process $shell -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$PSCommandPath`"" -Verb RunAs
-    exit
+if (-not $onLinux) {
+    # -- 0. Minimum OS version: Windows build 26200 (25H2) ------------------------
+    $build = [System.Environment]::OSVersion.Version.Build
+    if ($build -lt 26200) {
+        Write-Host "[!!] pcHealth requires Windows build 26200 (25H2) or higher." -ForegroundColor Red
+        Write-Host "     Your build: $build" -ForegroundColor Red
+        Write-Host "     Update Windows and try again." -ForegroundColor Yellow
+        Read-Host 'Press Enter to exit'
+        exit 1
+    }
+
+    # -- 1. Elevate ----------------------------------------------------------------
+    $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+        [Security.Principal.WindowsBuiltInRole]::Administrator
+    )
+    if (-not $isAdmin) {
+        $shell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell' }
+        Start-Process $shell -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$PSCommandPath`"" -Verb RunAs
+        exit
+    }
 }
 
 # -- 2. Dependency check -------------------------------------------------------

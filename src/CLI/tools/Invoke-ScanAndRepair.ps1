@@ -15,10 +15,10 @@ function Get-SfcStatus {
 
 function Get-DismStatus {
     param([int]$ExitCode, [string]$Output)
-    if ($ExitCode -ne 0)                                           { return "Failed (exit code $ExitCode)" }
-    if ($Output -match 'No component store corruption detected')   { return 'Clean -- no corruption detected' }
-    if ($Output -match 'restore operation completed successfully') { return 'Restored successfully' }
-    if ($Output -match 'component store is repairable')            { return 'Corruption found -- repairable' }
+    if ($ExitCode -ne 0)                                                { return "Failed (exit code $ExitCode)" }
+    if ($Output -match 'No component store corruption was detected')    { return 'Clean -- no corruption detected' }
+    if ($Output -match 'restore operation completed successfully')       { return 'Restored successfully' }
+    if ($Output -match 'component store is repairable')                 { return 'Corruption found -- repairable' }
     return 'Completed -- check DISM log'
 }
 
@@ -78,7 +78,7 @@ Write-Host "[OK] ScanHealth done.`n" -ForegroundColor Green
 Write-Host "[>>] Step 4/5 -- DISM RestoreHealth..." -ForegroundColor Yellow
 $r = Invoke-Dism '/RestoreHealth'
 $restoreStatus = Get-DismStatus $r.ExitCode $r.Text
-Write-Host "[OK] RestoreHealth done.`n" -ForegroundColor Green
+Write-Host "[$(if ($r.ExitCode -eq 0) { 'OK' } else { '!!' })] RestoreHealth done: $restoreStatus`n" -ForegroundColor (Get-ResultColor $restoreStatus)
 
 Write-Host "[>>] Step 5/5 -- Final SFC pass to verify repairs..." -ForegroundColor Yellow
 $sfc2Status = Get-SfcStatus (Start-Process -FilePath "$env:SystemRoot\System32\sfc.exe" `

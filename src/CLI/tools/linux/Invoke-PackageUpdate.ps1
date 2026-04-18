@@ -8,18 +8,10 @@
 
 Write-Host "`nDetecting Linux distribution...`n" -ForegroundColor Cyan
 
-# Read distro ID from /etc/os-release
-$osRelease = @{}
-if (Test-Path '/etc/os-release') {
-    Get-Content '/etc/os-release' | ForEach-Object {
-        if ($_ -match '^(\w+)=["'']?([^"'']+)["'']?$') {
-            $osRelease[$Matches[1]] = $Matches[2]
-        }
-    }
-}
-$distroId   = $osRelease['ID']?.ToLower()
-$distroLike = $osRelease['ID_LIKE']?.ToLower()
-$distroName = $osRelease['NAME'] ?? 'Unknown'
+$osRelease  = Get-LinuxDistroInfo
+$distroId   = $osRelease['ID']
+$distroLike = $osRelease['ID_LIKE']
+$distroName = $osRelease['PRETTY_NAME']
 
 Write-Host "  Distro: $distroName" -ForegroundColor DarkGray
 
@@ -36,11 +28,11 @@ function Invoke-Update {
 
 switch ($distroId) {
     'cachyos' {
-        Invoke-Update 'Using cachy-update (CachyOS)' { cachy-update }
+        Invoke-Update 'Using cachy-update (CachyOS)' { bash -c 'cachy-update' }
         return
     }
     'garuda' {
-        Invoke-Update 'Using garuda-update (Garuda Linux)' { garuda-update }
+        Invoke-Update 'Using garuda-update (Garuda Linux)' { bash -c 'garuda-update' }
         return
     }
     'manjaro' {

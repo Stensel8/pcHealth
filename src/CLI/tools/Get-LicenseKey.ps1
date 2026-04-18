@@ -91,6 +91,8 @@ $bestSource = if ($regOK) { 'Registry (DigitalProductId)' } elseif ($oa3OK) { 'U
 Write-Host ''
 if ($bestKey) {
     $isGeneric = $genericKeys.ContainsKey($bestKey)
+    Read-Host "  Press Enter to reveal the license key"
+    Write-Host ''
     Write-Host "  Primary Key  : $bestKey" -ForegroundColor $(if ($isGeneric) { 'Yellow' } else { 'Green' })
     Write-Host "  Source       : $bestSource"
     if ($isGeneric) {
