@@ -73,13 +73,14 @@ A Linux GUI is not yet available — WinUI 3 is Windows-only. A cross-platform a
 | Tool | Install |
 |------|---------|
 | .NET 10 SDK | `winget install Microsoft.DotNet.SDK.10` |
+| Visual Studio 2026 | `winget install Microsoft.VisualStudio.Community` |
 | Windows App SDK | Included via NuGet on build |
 
 ```powershell
 dotnet build "src/GUI/pcHealth/pcHealth.csproj" -c Release
 ```
 
-Or open `src/GUI/pcHealth/pcHealth.csproj` in Visual Studio 2022.
+Or open `src/GUI/pcHealth/pcHealth.csproj` in Visual Studio 2026.
 
 ---
 
@@ -109,8 +110,6 @@ Option numbers are assigned sequentially at runtime per platform — Windows-onl
 |-------------------------------|-----------|----------------------------------------------------|
 | System Information            | All       | OS, kernel, firmware, TPM, RAM                     |
 | Hardware Information          | All       | CPU, GPU, Storage (SMART), RAM, Chipset            |
-| System File Scan              | Windows   | SFC /scannow                                       |
-| DISM Health Check             | Windows   | CheckHealth + ScanHealth + optional Restore        |
 | Scan + Repair                 | Windows   | SFC + DISM combined                                |
 | Battery Report                | Windows   | Laptop only                                        |
 | Windows Update                | Windows   | Opens Windows Update settings                      |
@@ -143,7 +142,7 @@ Option numbers are assigned sequentially at runtime per platform — Windows-onl
 |-----|--------------------------|----------------|
 | 1   | HWiNFO64                 | winget         |
 | 2   | HWMonitor                | winget         |
-| 3   | Malwarebytes ADW Cleaner | winget         |
+| 3   | Malwarebytes AdwCleaner  | winget         |
 | 4   | CrystalDiskInfo          | winget         |
 | 5   | CrystalDiskMark          | winget         |
 | 6   | Prime95                  | winget         |

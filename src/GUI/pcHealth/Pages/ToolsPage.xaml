@@ -20,8 +20,8 @@
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </StackPanel>
 
-        <!-- Tool grid -->
-        <GridView
+        <!-- Tools list -->
+        <ListView
             Grid.Row="1"
             x:Name="ToolsGrid"
             IsItemClickEnabled="True"
@@ -30,39 +30,34 @@
             ItemsSource="{x:Bind Tools}"
             Padding="24,8,24,24">
 
-            <GridView.ItemContainerStyle>
-                <Style TargetType="GridViewItem">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
                     <Setter Property="Padding" Value="0"/>
-                    <Setter Property="Margin" Value="4"/>
+                    <Setter Property="Margin" Value="0,4,0,0"/>
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
                 </Style>
-            </GridView.ItemContainerStyle>
+            </ListView.ItemContainerStyle>
 
-            <GridView.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <ItemsWrapGrid Orientation="Horizontal"/>
-                </ItemsPanelTemplate>
-            </GridView.ItemsPanel>
-
-            <GridView.ItemTemplate>
+            <ListView.ItemTemplate>
                 <DataTemplate x:DataType="local:ToolItem">
                     <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1" CornerRadius="8"
-                            Padding="14,12" Width="210" Height="78">
-                        <Grid ColumnSpacing="12">
+                            Padding="20,14">
+                        <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Glyph="{x:Bind Glyph}" FontSize="22"
+
+                            <!-- Icon -->
+                            <FontIcon Glyph="{x:Bind Glyph}" FontSize="24"
                                       VerticalAlignment="Center"/>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+
+                            <!-- Name + note -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                                 <TextBlock Text="{x:Bind Name}"
-                                           Style="{StaticResource BodyStrongTextBlockStyle}"
-                                           TextWrapping="Wrap"
-                                           MaxLines="2"/>
+                                           Style="{StaticResource BodyStrongTextBlockStyle}"/>
                                 <TextBlock Text="{x:Bind Note}"
                                            Style="{StaticResource CaptionTextBlockStyle}"
                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -71,8 +66,8 @@
                         </Grid>
                     </Border>
                 </DataTemplate>
-            </GridView.ItemTemplate>
-        </GridView>
+            </ListView.ItemTemplate>
+        </ListView>
 
     </Grid>
 </Page>

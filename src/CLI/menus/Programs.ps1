@@ -76,15 +76,50 @@ function Show-ProgramsMenu {
     }
 }
 
+function Get-InstalledApps {
+    $regPaths = @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
+        'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'
+    )
+    foreach ($p in $regPaths) {
+        Get-ItemProperty $p -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName }
+    }
+}
+
+function Resolve-AppExePath {
+    param($RegEntry, [string]$ExeName)
+    if ($RegEntry.InstallLocation) {
+        $candidate = Join-Path $RegEntry.InstallLocation.TrimEnd('\/') $ExeName
+        if (Test-Path $candidate) { return $candidate }
+    }
+    if ($RegEntry.DisplayIcon) {
+        $iconPath = ($RegEntry.DisplayIcon -split ',')[0].Trim('"')
+        if ($iconPath -like '*.exe' -and (Test-Path $iconPath)) { return $iconPath }
+    }
+    return $null
+}
+
 function Show-WindowsProgramsMenu {
     $packages = [ordered]@{
-        '1' = @{ Name = 'HWiNFO64';                 Id = 'REALix.HWiNFO'                      }
-        '2' = @{ Name = 'HWMonitor';                 Id = 'CPUID.HWMonitor'                    }
-        '3' = @{ Name = 'Malwarebytes ADW Cleaner';  Id = 'Malwarebytes.AdwCleaner'            }
-        '4' = @{ Name = 'CrystalDiskInfo';           Id = 'CrystalDewWorld.CrystalDiskInfo'    }
-        '5' = @{ Name = 'CrystalDiskMark';           Id = 'CrystalDewWorld.CrystalDiskMark'    }
-        '6' = @{ Name = 'Prime95';                   Id = 'mersenne.prime95'                   }
-        '7' = @{ Name = 'Windows PowerToys';         Id = 'Microsoft.PowerToys'                }
+        '1' = @{ Name = 'HWiNFO64';                Id = 'REALix.HWiNFO';                   ExeName = 'HWiNFO64.exe';   RegistryName = 'HWiNFO'         }
+        '2' = @{ Name = 'HWMonitor';               Id = 'CPUID.HWMonitor';                 ExeName = 'HWMonitor.exe';  RegistryName = 'HWMonitor'       }
+        '3' = @{ Name = 'Malwarebytes AdwCleaner';  Id = 'Malwarebytes.AdwCleaner';         ExeName = 'AdwCleaner.exe'; RegistryName = 'AdwCleaner'      }
+        '4' = @{ Name = 'CrystalDiskInfo';          Id = 'CrystalDewWorld.CrystalDiskInfo'; ExeName = 'DiskInfo64.exe'; RegistryName = 'CrystalDiskInfo' }
+        '5' = @{ Name = 'CrystalDiskMark';          Id = 'CrystalDewWorld.CrystalDiskMark'; ExeName = 'DiskMark64.exe'; RegistryName = 'CrystalDiskMark' }
+        '6' = @{ Name = 'Prime95';                  Id = 'mersenne.prime95';               ExeName = 'prime95.exe';    RegistryName = 'Prime95'         }
+        '7' = @{ Name = 'Windows PowerToys';        Id = 'Microsoft.PowerToys';            ExeName = 'PowerToys.exe';  RegistryName = 'PowerToys'       }
+    }
+
+    $allApps = @(Get-InstalledApps)
+    $status  = @{}
+    foreach ($key in $packages.Keys) {
+        $entry = $allApps | Where-Object { $_.DisplayName -like "*$($packages[$key].RegistryName)*" } | Select-Object -First 1
+        if ($entry) {
+            $status[$key] = @{ Installed = $true; ExePath = Resolve-AppExePath $entry $packages[$key].ExeName }
+        } else {
+            $status[$key] = @{ Installed = $false; ExePath = $null }
+        }
     }
 
     while ($true) {
@@ -92,13 +127,10 @@ function Show-WindowsProgramsMenu {
         Clear-Host
         Write-PcHeader 'Programs'
 
-        Write-PcOption '1'  'HWiNFO64'
-        Write-PcOption '2'  'HWMonitor'
-        Write-PcOption '3'  'Malwarebytes ADW Cleaner'
-        Write-PcOption '4'  'CrystalDiskInfo'
-        Write-PcOption '5'  'CrystalDiskMark'
-        Write-PcOption '6'  'Prime95'
-        Write-PcOption '7'  'Windows PowerToys'
+        foreach ($key in $packages.Keys) {
+            $note = if ($status[$key].Installed) { '[installed]' } else { '' }
+            Write-PcOption $key $packages[$key].Name $note
+        }
         Write-PcDivider
         Write-PcOption '8'  'Tools Menu'
         Write-PcOption '9'  'Back to Main Menu'
@@ -113,31 +145,83 @@ function Show-WindowsProgramsMenu {
             '10' { return 'exit'  }
         }
 
-        if ($packages.ContainsKey($choice)) {
+        if ($packages.Contains($choice)) {
             $pkg = $packages[$choice]
-            Set-PcTheme 'Action'
-            Clear-Host
-            Write-Host "[>>] Installing $($pkg.Name)...`n" -ForegroundColor Yellow
+            $s   = $status[$choice]
 
-            $proc = Start-Process winget `
-                -ArgumentList "install --id $($pkg.Id) --accept-source-agreements --accept-package-agreements" `
-                -Wait -PassThru -NoNewWindow
+            if ($s.Installed) {
+                Set-PcTheme 'Action'
+                Clear-Host
+                Write-PcHeader 'Programs'
+                Write-Host "  $($pkg.Name) is already installed.`n"
+                Write-PcDivider
+                Write-PcOption '1' 'Update'
+                Write-PcOption '2' 'Open'
+                Write-PcOption '3' 'Back'
+                Write-PcDivider
 
-            $result = Get-WingetResult $proc.ExitCode
-            if ($result.Ok) {
-                Write-Host "`n[OK] $($pkg.Name) installed." -ForegroundColor Green
-            } else {
-                $color = if ($result.SuggestRepair) { 'Red' } else { 'Yellow' }
-                Write-Host "`n[!!] $($result.Message)" -ForegroundColor $color
-                if ($result.SuggestRepair) {
-                    Write-Host "     Tip: try 'Repair Winget' in the Tools menu." -ForegroundColor DarkGray
+                $action = (Read-Host "`n  Choice").Trim()
+                switch ($action) {
+                    '1' {
+                        Clear-Host
+                        Write-Host "[>>] Checking for updates for $($pkg.Name)...`n" -ForegroundColor Yellow
+                        $proc   = Start-Process winget `
+                            -ArgumentList "upgrade --id $($pkg.Id) --accept-source-agreements --accept-package-agreements" `
+                            -Wait -PassThru -NoNewWindow
+                        $result = Get-WingetResult $proc.ExitCode
+                        if ($result.Ok) {
+                            Write-Host "`n[OK] $($pkg.Name) updated." -ForegroundColor Green
+                        } else {
+                            $color = if ($result.SuggestRepair) { 'Red' } else { 'Yellow' }
+                            Write-Host "`n[..] $($result.Message)" -ForegroundColor $color
+                        }
+                        $nav = Read-PcNavChoice 'Back to Programs Menu'
+                        switch ($nav) {
+                            '2' { return 'main' }
+                            '3' { return 'exit' }
+                        }
+                    }
+                    '2' {
+                        $exePath = $s.ExePath
+                        if (-not $exePath) {
+                            $appReg  = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\$($pkg.ExeName)" -ErrorAction SilentlyContinue
+                            $exePath = if ($appReg) { $appReg.'(default)' } else { $pkg.ExeName }
+                        }
+                        try   { Start-Process $exePath }
+                        catch { Write-Host "`n  [!!] Cannot open $($pkg.Name): $_" -ForegroundColor Red; Start-Sleep 2 }
+                    }
+                    # '3' or anything else: fall through back to menu
                 }
-            }
+            } else {
+                Set-PcTheme 'Action'
+                Clear-Host
+                Write-Host "[>>] Installing $($pkg.Name)...`n" -ForegroundColor Yellow
 
-            $nav = Read-PcNavChoice 'Back to Programs Menu'
-            switch ($nav) {
-                '2' { return 'main' }
-                '3' { return 'exit' }
+                $proc = Start-Process winget `
+                    -ArgumentList "install --id $($pkg.Id) --accept-source-agreements --accept-package-agreements" `
+                    -Wait -PassThru -NoNewWindow
+
+                $result = Get-WingetResult $proc.ExitCode
+                if ($result.Ok) {
+                    Write-Host "`n[OK] $($pkg.Name) installed." -ForegroundColor Green
+                    $allApps = @(Get-InstalledApps)
+                    $entry   = $allApps | Where-Object { $_.DisplayName -like "*$($pkg.RegistryName)*" } | Select-Object -First 1
+                    if ($entry) {
+                        $status[$choice] = @{ Installed = $true; ExePath = Resolve-AppExePath $entry $pkg.ExeName }
+                    }
+                } else {
+                    $color = if ($result.SuggestRepair) { 'Red' } else { 'Yellow' }
+                    Write-Host "`n[!!] $($result.Message)" -ForegroundColor $color
+                    if ($result.SuggestRepair) {
+                        Write-Host "     Tip: try 'Repair Winget' in the Tools menu." -ForegroundColor DarkGray
+                    }
+                }
+
+                $nav = Read-PcNavChoice 'Back to Programs Menu'
+                switch ($nav) {
+                    '2' { return 'main' }
+                    '3' { return 'exit' }
+                }
             }
         } else {
             Write-Host "`n  Invalid choice." -ForegroundColor Red
@@ -187,7 +271,7 @@ function Show-LinuxProgramsMenu {
             '8' { return 'exit'  }
         }
 
-        if ($packages.ContainsKey($choice)) {
+        if ($packages.Contains($choice)) {
             $pkg = $packages[$choice]
             Set-PcTheme 'Action'
             Clear-Host

@@ -2,20 +2,16 @@ namespace pcHealth.Pages;
 
 public sealed partial class ToolsPage : Page
 {
-    // All 24 tool entries shown in the GUI. Navigation items (Programs, Main Menu,
+    // All 22 tool entries shown in the GUI. Navigation items (Programs, Main Menu,
     // Exit) are handled by the NavigationView and are therefore not included here.
-    // Note: the GUI exposes SFC and DISM as separate entries in addition to the
-    // combined Scan + Repair, so the count does not match the CLI 1:1.
     //
     // The backing array is static (allocated once). The instance property
     // is required because x:Bind only works with instance members.
     private static readonly ToolItem[] _tools = new[]
     {
         new ToolItem { Name = "System Information",          Glyph = "\uE7F4", Kind = ToolActionKind.Script,   Param = "Get-SystemInfo.ps1"       },
-        new ToolItem { Name = "CPU / GPU / RAM Info",        Glyph = "\uE950", Kind = ToolActionKind.Script,   Param = "Get-HardwareInfo.ps1"     },
-        new ToolItem { Name = "System File Scan",            Glyph = "\uE9F5", Note = "SFC",                   Kind = ToolActionKind.Script,   Param = "Invoke-SystemScan.ps1"    },
-        new ToolItem { Name = "DISM Health Check",           Glyph = "\uE9F5", Kind = ToolActionKind.Script,   Param = "Invoke-DISMCheck.ps1"     },
-        new ToolItem { Name = "Scan + Repair",               Glyph = "\uE9F5", Note = "SFC + DISM",            Kind = ToolActionKind.Script,   Param = "Invoke-ScanAndRepair.ps1" },
+        new ToolItem { Name = "Hardware Information",         Glyph = "\uE950", Kind = ToolActionKind.Script,   Param = "Get-HardwareInfo.ps1"     },
+        new ToolItem { Name = "Scan + Repair",               Glyph = "\uE9F5", Note = "SFC + DISM combined",   Kind = ToolActionKind.Script,   Param = "Invoke-ScanAndRepair.ps1" },
         new ToolItem { Name = "Battery Report",              Glyph = "\uE83F", Note = "laptop only",           Kind = ToolActionKind.Script,   Param = "Get-BatteryReport.ps1"    },
         new ToolItem { Name = "Windows Update",              Glyph = "\uE895", Kind = ToolActionKind.OpenUri,  Param = "ms-settings:windowsupdate"},
         new ToolItem { Name = "Disk Optimization",           Glyph = "\uEDA2", Kind = ToolActionKind.OpenApp,  Param = "dfrgui.exe"               },
@@ -34,7 +30,7 @@ public sealed partial class ToolsPage : Page
         new ToolItem { Name = "BIOS Password Recovery",      Glyph = "\uE72E", Kind = ToolActionKind.Script,   Param = "Open-BIOSPasswordTool.ps1"},
         new ToolItem { Name = "Repair Boot Record",          Glyph = "\uE8E4", Note = "use with caution!",     Kind = ToolActionKind.Script,   Param = "Invoke-BootRepair.ps1"    },
         new ToolItem { Name = "Shutdown / Reboot / Log Off", Glyph = "\uE7E8", Kind = ToolActionKind.Script,   Param = "Invoke-PowerOptions.ps1"  },
-        new ToolItem { Name = "Repair Winget",               Glyph = "\uE90F", Note = "via @asheroto",         Kind = ToolActionKind.Script,   Param = "Invoke-WingetRepair.ps1"  },
+        new ToolItem { Name = "Repair Winget",               Glyph = "\uE90F", Kind = ToolActionKind.Script,   Param = "Invoke-WingetRepair.ps1"  },
     };
 
     // Instance property so x:Bind in ToolsPage.xaml can reach it.

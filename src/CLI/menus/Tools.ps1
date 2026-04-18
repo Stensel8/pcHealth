@@ -10,8 +10,6 @@ function Show-ToolsMenu {
     $toolDefs = @(
         @{ Label = 'System Information';          Script = 'Get-SystemInfo.ps1';          Note = '';                      Platforms = @('Windows','Linux') }
         @{ Label = 'Hardware Information';         Script = 'Get-HardwareInfo.ps1';         Note = '';                      Platforms = @('Windows','Linux') }
-        @{ Label = 'System File Scan';             Script = 'Invoke-SystemScan.ps1';         Note = '(SFC /scannow)';        Platforms = @('Windows') }
-        @{ Label = 'DISM Health Check';            Script = 'Invoke-DISMCheck.ps1';          Note = '';                      Platforms = @('Windows') }
         @{ Label = 'Scan + Repair';                Script = 'Invoke-ScanAndRepair.ps1';      Note = '(SFC + DISM combined)'; Platforms = @('Windows') }
         @{ Label = 'Battery Report';               Script = 'Get-BatteryReport.ps1';         Note = '(laptop only)';         Platforms = @('Windows') }
         @{ Label = 'Windows Update';               Script = 'Invoke-WindowsUpdate.ps1';      Note = '';                      Platforms = @('Windows') }

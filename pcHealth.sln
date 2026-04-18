@@ -1,0 +1,32 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.5.11709.299
+MinimumVisualStudioVersion = 18.0.11205.157
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GUI", "GUI", "{959DA961-515C-2AF9-5B2C-594145F24953}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pcHealth", "src\GUI\pcHealth\pcHealth.csproj", "{55BEA32A-495F-1B1E-0981-D78127EB024C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{55BEA32A-495F-1B1E-0981-D78127EB024C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55BEA32A-495F-1B1E-0981-D78127EB024C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55BEA32A-495F-1B1E-0981-D78127EB024C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55BEA32A-495F-1B1E-0981-D78127EB024C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{959DA961-515C-2AF9-5B2C-594145F24953} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{55BEA32A-495F-1B1E-0981-D78127EB024C} = {959DA961-515C-2AF9-5B2C-594145F24953}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D6B9882F-B905-4A25-B4C2-146B5B7A220F}
+	EndGlobalSection
+EndGlobal

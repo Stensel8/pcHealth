@@ -65,7 +65,7 @@
 
                             <!-- Action button -->
                             <Button Grid.Column="2"
-                                    Content="{x:Bind ButtonLabel}"
+                                    Content="{x:Bind ButtonLabel, Mode=OneWay}"
                                     Style="{StaticResource AccentButtonStyle}"
                                     Tag="{x:Bind}"
                                     Click="InstallBtn_Click"

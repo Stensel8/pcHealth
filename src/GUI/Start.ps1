@@ -112,11 +112,15 @@ if (-not $dotnetOk) {
     Write-Host '[OK] .NET 10 SDK installed.' -ForegroundColor Green
 }
 
-# -- 4. Detect architecture and locate output EXE -----------------------------
+# -- 4. Detect architecture and derive output EXE path from csproj ------------
 $projectFile = Join-Path $PSScriptRoot 'pcHealth\pcHealth.csproj'
 $rid         = if ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture -eq
                    [System.Runtime.InteropServices.Architecture]::Arm64) { 'win-arm64' } else { 'win-x64' }
-$exePath     = Join-Path $PSScriptRoot "pcHealth\bin\Release\net10.0-windows10.0.19041.0\$rid\pcHealth.exe"
+
+# Read TargetFramework from the csproj so this path never drifts from the project.
+$tfm     = ([xml](Get-Content $projectFile)).Project.PropertyGroup.TargetFramework |
+               Where-Object { $_ } | Select-Object -First 1
+$exePath = Join-Path $PSScriptRoot "pcHealth\bin\Release\$tfm\$rid\pcHealth.exe"
 
 # -- 5. Build ------------------------------------------------------------------
 Write-Host ''
