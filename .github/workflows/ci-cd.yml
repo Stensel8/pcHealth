@@ -45,29 +45,23 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Install PSScriptAnalyzer and ConvertToSARIF
+      - name: Run PSScriptAnalyzer (SARIF output)
+        uses: microsoft/psscriptanalyzer-action@6b2948b1944407914a58661c49941824d149734f # v1.1
+        with:
+          path: src/CLI
+          recurse: true
+          settings: .github/PSScriptAnalyzerSettings.psd1
+          output: psscriptanalyzer-results.sarif
+
+      - name: Fail build if issues were found
         shell: pwsh
         run: |
-          Install-Module -Name PSScriptAnalyzer -RequiredVersion '1.25.0' -Force -Scope CurrentUser -Repository PSGallery
-          Install-Module -Name ConvertToSARIF    -Force -Scope CurrentUser -Repository PSGallery
-
-      - name: Run PSScriptAnalyzer
-        shell: pwsh
-        run: |
-          $settings = ".github/PSScriptAnalyzerSettings.psd1"
-          $results  = Invoke-ScriptAnalyzer -Path "src/CLI/" -Recurse `
-                        -Settings $settings -Severity Warning,Error
-
-          # Always write SARIF so the upload step has a file to submit,
-          # even when there are no findings.
-          $results | ConvertTo-SARIF -FilePath psscriptanalyzer-results.sarif
-
-          if ($results) {
-            $results | Format-Table -AutoSize
-            Write-Host "PSScriptAnalyzer found $($results.Count) issue(s)." -ForegroundColor Red
+          $sarif = Get-Content psscriptanalyzer-results.sarif | ConvertFrom-Json
+          $count = ($sarif.runs[0].results | Measure-Object).Count
+          if ($count -gt 0) {
+            Write-Host "PSScriptAnalyzer found $count issue(s)." -ForegroundColor Red
             exit 1
           }
-
           Write-Host "PSScriptAnalyzer: no issues found." -ForegroundColor Green
 
       - name: Upload PSScriptAnalyzer results to GitHub Security tab
