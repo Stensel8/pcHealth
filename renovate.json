@@ -20,15 +20,20 @@
   "packageRules": [
     {
       "description": "Group all Windows App SDK packages into a single PR.",
-      "matchPackagePatterns": ["^Microsoft\\.WindowsAppSDK", "^Microsoft\\.Windows\\.SDK"],
       "groupName": "Windows App SDK",
-      "labels": ["dependencies", "dotnet", "winui3"]
+      "labels": ["dependencies", "dotnet", "winui3"],
+      "matchPackageNames": [
+        "/^Microsoft\\.WindowsAppSDK/",
+        "/^Microsoft\\.Windows\\.SDK/"
+      ]
     },
     {
       "description": "Group .NET BCL packages (System.*) into a single PR.",
-      "matchPackagePatterns": ["^System\\."],
       "groupName": ".NET BCL",
-      "labels": ["dependencies", "dotnet"]
+      "labels": ["dependencies", "dotnet"],
+      "matchPackageNames": [
+        "/^System\\./"
+      ]
     },
     {
       "description": "Auto-merge patch updates that pass CI, to reduce review noise.",
