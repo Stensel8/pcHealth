@@ -76,7 +76,7 @@ function Show-ProgramsMenu {
     }
 }
 
-function Get-InstalledApps {
+function Get-InstalledApp {
     $regPaths = @(
         'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
         'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
@@ -111,7 +111,7 @@ function Show-WindowsProgramsMenu {
         '7' = @{ Name = 'Windows PowerToys';        Id = 'Microsoft.PowerToys';            ExeName = 'PowerToys.exe';  RegistryName = 'PowerToys'       }
     }
 
-    $allApps = @(Get-InstalledApps)
+    $allApps = @(Get-InstalledApp)
     $status  = @{}
     foreach ($key in $packages.Keys) {
         $entry = $allApps | Where-Object { $_.DisplayName -like "*$($packages[$key].RegistryName)*" } | Select-Object -First 1
@@ -204,7 +204,7 @@ function Show-WindowsProgramsMenu {
                 $result = Get-WingetResult $proc.ExitCode
                 if ($result.Ok) {
                     Write-Host "`n[OK] $($pkg.Name) installed." -ForegroundColor Green
-                    $allApps = @(Get-InstalledApps)
+                    $allApps = @(Get-InstalledApp)
                     $entry   = $allApps | Where-Object { $_.DisplayName -like "*$($pkg.RegistryName)*" } | Select-Object -First 1
                     if ($entry) {
                         $status[$choice] = @{ Installed = $true; ExePath = Resolve-AppExePath $entry $pkg.ExeName }
