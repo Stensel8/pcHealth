@@ -116,8 +116,8 @@ if (-not $dotnetOk) {
 $projectFile = Join-Path $PSScriptRoot 'pcHealth\pcHealth.csproj'
 
 # Detect the native architecture; default to win-x64 for everything else.
-$rid      = if ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture -eq
-                [System.Runtime.InteropServices.Architecture]::Arm64) { 'win-arm64' } else { 'win-x64' }
+$rid = if ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture -eq
+           [System.Runtime.InteropServices.Architecture]::Arm64) { 'win-arm64' } else { 'win-x64' }
 
 # Read TargetFramework from the csproj so this path never drifts from the project.
 $tfm     = ([xml](Get-Content $projectFile)).Project.PropertyGroup.TargetFramework |

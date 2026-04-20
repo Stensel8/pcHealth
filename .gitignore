@@ -1,29 +1,86 @@
 # Claude Code
 .claude/settings.local.json
 
-# .NET build outputs
-**/bin/
-**/obj/
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# Visual Studio
+# IDE and editor files
+# .vscode/ - Uncommented this one, so it can be used for editor config. This will stop the psscriptanalyzer from crying about the BOM encodings.
+.idea/
 .vs/
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
 *.sln.DotSettings.user
+*.rsuser
 
-# NuGet
+# Build output (C# / .NET)
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+[Oo]ut/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+*.exe
+*.dll
+*.pdb
+*.cache
+*.binlog
+
+# WinUI 3 / Windows App packaging output
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+_pkginfo.txt
+*.appx
+*.appxbundle
+*.appxupload
+Generated\ Files/
+
+# NuGet packages
+packages/
 *.nupkg
 *.snupkg
 project.lock.json
-project.assets.json
-packages/
+project.fragment.lock.json
+*.nuget.props
+*.nuget.targets
+
+# Visual Studio crash dumps
+*.pidb
+*.svclog
+*.scc
 
 # Rider
-.idea/
 *.DotSettings.user
 
-# OS
-.DS_Store
-Thumbs.db
+# PowerShell
+*.psm1.bak
+psa.xml
+
+# Test output
+TestResults/
+coverage.xml
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+~$*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+/.claude
+.claude*
