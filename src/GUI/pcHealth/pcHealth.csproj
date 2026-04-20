@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Single source of truth: version is read from the repo-root VERSION file at build time. -->
+    <Version>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)..\..\..\VERSION').Trim())</Version>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.26100.0</TargetPlatformMinVersion>
+    <RootNamespace>pcHealth</RootNamespace>
+    <AssemblyName>pcHealth</AssemblyName>
+    <ApplicationIcon>pcplushealthpluspluslogo.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Unpackaged deployment — no MSIX required -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <!-- Bundle the Windows App SDK runtime so users don't need it pre-installed. -->
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <!-- RID follows VS platform selection; CLI default is win-x64. -->
+    <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(Platform)' != 'ARM64'">win-x64</RuntimeIdentifier>
+    <Platforms>x64;arm64</Platforms>
+    <!-- Allows non-Windows runners (e.g. Linux CI) to restore dependencies. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Copy the icon to the output directory so AppWindow.SetIcon() can find it at runtime. -->
+    <Content Include="pcplushealthpluspluslogo.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK"    Version="1.8.260317003" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1721"
+                      IncludeAssets="build" />
+    <!-- CIM/MI library for OS info and OA3 key extraction (replaces legacy System.Management/DCOM) -->
+    <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
+  </ItemGroup>
+
+</Project>
