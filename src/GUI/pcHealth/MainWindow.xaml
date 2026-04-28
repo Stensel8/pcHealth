@@ -21,6 +21,11 @@
         </NavigationView.PaneHeader>
 
         <NavigationView.MenuItems>
+            <NavigationViewItem Tag="health" Content="Health">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE95A;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Tag="tools" Content="Tools">
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE90F;"/>

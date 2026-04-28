@@ -19,10 +19,16 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 
 ## Supported Platforms
 
-| Platform | CLI | GUI | Min. version        |
-|----------|-----|-----|---------------------|
-| Windows  | ✅  | ✅  | Build 26200 (25H2+) |
-| Linux    | ✅  | ❌  | Kernel 7.0          |
+| Platform | CLI | GUI | Recommended          | Hard minimum        |
+|----------|-----|-----|----------------------|---------------------|
+| Windows  | ✅  | ✅ | Build 26200 (25H2+)  | Build 19045 (22H2)  |
+| Linux    | ✅  | ❌ | Kernel 7.0+          | Kernel 6.0          |
+
+Running below the recommended version shows a warning but does not block startup. Running below the hard minimum exits immediately.
+
+- Windows release info: https://learn.microsoft.com/en-us/windows/release-health/release-information
+- Windows 11 release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
+- Linux kernel releases: https://www.kernel.org/
 
 See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
@@ -30,7 +36,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 ## Getting Started
 
-**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum Windows build 26200 (25H2) / Linux kernel 7.0.
+**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Recommended: Windows build 26200+ / Linux kernel 7.0+. Hard minimum: Windows build 19045 / kernel 6.0.
 
 ### Windows
 
@@ -58,7 +64,7 @@ sudo pwsh ./src/CLI/Start.ps1
 
 ### GUI
 
-On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface and requires Windows build 26200 (25H2) or higher.
+On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface. Recommended: Windows build 26200 (25H2) or higher. Hard minimum: build 19045 (Windows 10 22H2).
 
 A Linux GUI is not yet available — WinUI 3 is Windows-only. A cross-platform alternative is in the works.
 

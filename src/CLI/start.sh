@@ -8,14 +8,22 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# ── 0. Minimum kernel version: 7.0 ───────────────────────────────────────────
+# ── 0. OS version check ───────────────────────────────────────────────────────
+# Hard minimum: kernel 6.0 — last supported kernel generation.
+# Recommended:  kernel 7.0 — current stable release.
 KERNEL_VERSION="$(uname -r)"
-KERNEL_MAJOR="${KERNEL_VERSION%%.*}"
-if [ "$KERNEL_MAJOR" -lt 7 ] 2>/dev/null; then
-    echo "[!!] pcHealth requires Linux kernel 7.0 or higher."
-    echo "     Your kernel: $KERNEL_VERSION"
-    echo "     Update your kernel and try again."
+KERNEL_MAJOR="$(echo "$KERNEL_VERSION" | cut -d. -f1)"
+
+if [ "$KERNEL_MAJOR" -lt 6 ] 2>/dev/null; then
+    echo "[!!] pcHealth cannot run on kernel $KERNEL_VERSION."
+    echo "     Minimum required: kernel 6.0."
+    echo "     Please update your kernel."
     exit 1
+elif [ "$KERNEL_MAJOR" -lt 7 ] 2>/dev/null; then
+    echo "[!] Your kernel ($KERNEL_VERSION) is below the recommended version (7.0)."
+    echo "    Some features may not work correctly. Consider updating your kernel."
+    echo "    https://www.kernel.org/"
+    echo ""
 fi
 
 # ── 1. Dependency check ───────────────────────────────────────────────────────
@@ -23,15 +31,27 @@ echo ''
 echo '[pcHealth] Checking dependencies...'
 
 PAD=24
-label='PowerShell 7'
-dots=$(printf '%0.s.' $(seq 1 $((PAD - ${#label}))))
-if command -v pwsh &>/dev/null; then
-    printf '  %s %s OK\n' "$label" "$dots"
-    PWSH_OK=1
-else
-    printf '  %s %s NOT FOUND\n' "$label" "$dots"
-    PWSH_OK=0
-fi
+dep_status() {
+    local label="$1" ok="$2" optional="${3:-0}"
+    local dots
+    dots=$(printf '%0.s.' $(seq 1 $((PAD - ${#label}))))
+    if [ "$ok" -eq 1 ]; then
+        printf '  %s %s OK\n'            "$label" "$dots"
+    elif [ "$optional" -eq 1 ]; then
+        printf '  %s %s not installed\n' "$label" "$dots"
+    else
+        printf '  %s %s NOT FOUND\n'    "$label" "$dots"
+    fi
+}
+
+PWSH_OK=0
+command -v pwsh &>/dev/null && PWSH_OK=1
+
+SMARTCTL_OK=0
+command -v smartctl &>/dev/null && SMARTCTL_OK=1
+
+dep_status 'PowerShell 7'  "$PWSH_OK"
+dep_status 'smartmontools' "$SMARTCTL_OK" 1
 
 # ── 2. Install missing dependencies ──────────────────────────────────────────
 if [ "$PWSH_OK" -eq 0 ]; then
@@ -123,6 +143,39 @@ if [ "$PWSH_OK" -eq 0 ]; then
     fi
 
     echo '[OK] PowerShell 7 installed.'
+fi
+
+# ── 3b. Optional: smartmontools ───────────────────────────────────────────────
+if [ "$SMARTCTL_OK" -eq 0 ]; then
+    echo ''
+    echo '[pcHealth] smartmontools is recommended for SMART disk health data (life %, temperature, hours).'
+    read -r -p '           Install now? [y/N]: ' answer
+    case "$answer" in
+        [Yy]*)
+            # shellcheck source=/dev/null
+            [ -f /etc/os-release ] && . /etc/os-release
+            DISTRO_ID="${ID:-unknown}"
+            DISTRO_LIKE="${ID_LIKE:-}"
+
+            if   command -v apt-get &>/dev/null; then sudo apt-get install -y smartmontools
+            elif command -v dnf     &>/dev/null; then sudo dnf install -y smartmontools
+            elif command -v pacman  &>/dev/null; then sudo pacman -S --noconfirm smartmontools
+            elif command -v zypper  &>/dev/null; then sudo zypper install -y smartmontools
+            else
+                echo '[!!] No supported package manager found. Install smartmontools manually.'
+            fi
+
+            if command -v smartctl &>/dev/null; then
+                echo '[OK] smartmontools installed.'
+                SMARTCTL_OK=1
+            else
+                echo '[!!] Install may need a new shell session to take effect.'
+            fi
+            ;;
+        *)
+            echo '     Skipping — SMART data will be limited.'
+            ;;
+    esac
 fi
 
 # ── 3. Launch CLI elevated ────────────────────────────────────────────────────

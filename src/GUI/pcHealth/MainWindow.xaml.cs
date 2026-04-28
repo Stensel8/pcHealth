@@ -2,6 +2,7 @@ using pcHealth.Pages;
 
 namespace pcHealth;
 
+
 public sealed partial class MainWindow : Window
 {
     public MainWindow()
@@ -27,7 +28,7 @@ public sealed partial class MainWindow : Window
 
         // Set the window icon (AppWindow.SetIcon = title bar corner icon;
         // ApplicationIcon in csproj covers taskbar / File Explorer).
-        var iconPath = Path.Combine(AppContext.BaseDirectory, "pcplushealthpluspluslogo.ico");
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "pcHealth.ico");
         if (File.Exists(iconPath))
             AppWindow.SetIcon(iconPath);
 
@@ -37,7 +38,7 @@ public sealed partial class MainWindow : Window
 
     private void NavView_Loaded(object sender, RoutedEventArgs e)
     {
-        // Open the Tools page on first launch.
+        // Open the Health page on first launch.
         if (NavView.MenuItems.Count > 0)
             NavView.SelectedItem = NavView.MenuItems[0];
 
@@ -93,6 +94,7 @@ public sealed partial class MainWindow : Window
     {
         Type? target = tag switch
         {
+            "health"     => typeof(HealthPage),
             "tools"      => typeof(ToolsPage),
             "programs"   => typeof(ProgramsPage),
             "licensekey" => typeof(LicenseKeyPage),

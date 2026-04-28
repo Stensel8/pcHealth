@@ -26,6 +26,7 @@ public sealed partial class ToolsPage : Page
         new ToolItem { Name = "Repair Boot Record",          Glyph = "\uE8E4", Note = "use with caution!",       PageType = typeof(BootRepairPage)         },
         new ToolItem { Name = "Shutdown / Reboot / Log Off", Glyph = "\uE7E8",                                   PageType = typeof(PowerOptionsPage)      },
         new ToolItem { Name = "Repair Winget",               Glyph = "\uE90F",                                   PageType = typeof(WingetRepairPage)      },
+        new ToolItem { Name = "Security Status",             Glyph = "", Note = "Defender, BitLocker, TPM", PageType = typeof(SecurityCheckPage) },
     ];
 
     public IReadOnlyList<ToolItem> Tools => _tools;
