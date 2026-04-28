@@ -150,6 +150,48 @@ RULES = [
         "*.cs",
         r'(?i)(password|secret|apikey|api_key|token)\s*=\s*"[^"]{4,}"',
     ),
+    (
+        "CS023", "warning",
+        "new HttpClient() inside a method causes socket exhaustion under load. Use a static readonly HttpClient or IHttpClientFactory.",
+        "*.cs",
+        r"\bnew\s+HttpClient\s*\(",
+    ),
+    (
+        "CS024", "error",
+        ".Result on Task blocks the calling thread and deadlocks the WinUI 3 UI thread. Use await instead.",
+        "*.cs",
+        r"(?<!\w)\.Result\b(?!\s*(?:=|\?))",
+    ),
+    (
+        "CS025", "warning",
+        "Hardcoded http:// URL — use https:// to prevent man-in-the-middle attacks.",
+        "*.cs",
+        r'"http://[^"]{4,}"',
+    ),
+    (
+        "CS026", "warning",
+        "String interpolation in ProcessStartInfo.Arguments — validate or sanitise to prevent command injection.",
+        "*.cs",
+        r'Arguments\s*=\s*\$"',
+    ),
+    (
+        "CS027", "note",
+        "Environment.Exit() terminates the entire process immediately. Prefer returning false or throwing an exception in library/GUI code.",
+        "*.cs",
+        r"\bEnvironment\s*\.\s*Exit\s*\(",
+    ),
+    (
+        "CS028", "warning",
+        "SSL certificate validation disabled — man-in-the-middle attacks become possible.",
+        "*.cs",
+        r"ServerCertificateCustomValidationCallback\s*=",
+    ),
+    (
+        "CS029", "note",
+        "Regex constructed without a timeout — a crafted input string can cause catastrophic backtracking (ReDoS).",
+        "*.cs",
+        r"\bnew\s+Regex\s*\([^,)]+\)",
+    ),
     # ── PowerShell ──────────────────────────────────────────────────────────
     (
         "PS001", "error",
@@ -205,6 +247,42 @@ RULES = [
         "*.ps1",
         r'(?i)(password|secret|apikey|api_key|token)\s*=\s*["\'][^"\']{4,}["\']',
     ),
+    (
+        "PS010", "warning",
+        "Remove-Item -Recurse -Force is irreversible. Validate path is non-root and non-empty before executing.",
+        "*.ps1",
+        r"(?i)Remove-Item.{0,80}-(?:Recurse|Force).{0,80}-(?:Recurse|Force)",
+    ),
+    (
+        "PS011", "error",
+        "ServerCertificateValidationCallback = { $true } disables TLS validation — man-in-the-middle risk.",
+        "*.ps1",
+        r"(?i)ServerCertificateValidationCallback\s*=\s*\{[^}]{0,40}\$true",
+    ),
+    (
+        "PS012", "warning",
+        "net user / net localgroup modifies local accounts. Ensure this is intentional and audited.",
+        "*.ps1",
+        r"(?i)\bnet\s+(user|localgroup)\b",
+    ),
+    (
+        "PS013", "warning",
+        "Add-Type -TypeDefinition compiles and loads code at runtime. Validate the source is trusted.",
+        "*.ps1",
+        r"(?i)Add-Type\s+-TypeDefinition",
+    ),
+    (
+        "PS014", "warning",
+        "Hardcoded http:// URL in PowerShell — use https:// to prevent man-in-the-middle attacks.",
+        "*.ps1",
+        r"""['"](http://[^'"]{4,})['"]""",
+    ),
+    (
+        "PS015", "warning",
+        "Start-Process with a variable path — validate the executable path to prevent process injection.",
+        "*.ps1",
+        r"(?i)Start-Process\s+\$",
+    ),
     # ── Bash ────────────────────────────────────────────────────────────────
     (
         "SH001", "error",
@@ -229,6 +307,24 @@ RULES = [
         "Hardcoded credential or secret in shell script. Use environment variables or a secrets manager.",
         "*.sh",
         r'(?i)(password|secret|api_key|token)\s*=\s*["\'][^"\']{4,}["\']',
+    ),
+    (
+        "SH005", "warning",
+        "rm -rf with a variable path — validate path is non-root and non-empty to prevent data loss.",
+        "*.sh",
+        r"\brm\s+(-[a-zA-Z]*[rf][a-zA-Z]*\s+){1,2}\$",
+    ),
+    (
+        "SH006", "warning",
+        "Hardcoded http:// URL in shell script — use https:// to prevent man-in-the-middle attacks.",
+        "*.sh",
+        r"""['"](http://[^'"]{4,})['"]""",
+    ),
+    (
+        "SH007", "warning",
+        "sudo without -n flag may block CI with an interactive password prompt.",
+        "*.sh",
+        r"\bsudo\b(?!\s+-n)",
     ),
 ]
 

@@ -43,7 +43,14 @@ internal static class CliRunner
     /// The window pauses after the script finishes so the user can read the output.</summary>
     public static void RunScript(string scriptFileName)
     {
-        var path = Path.Combine(GetToolsDir(), scriptFileName);
+        // Resolve and verify the path stays inside the trusted tools directory
+        // to prevent directory-traversal via a crafted scriptFileName.
+        var toolsDir = Path.GetFullPath(GetToolsDir());
+        var path = Path.GetFullPath(Path.Combine(toolsDir, scriptFileName));
+        if (!path.StartsWith(toolsDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            && !path.Equals(toolsDir, StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Script path escapes the tools directory.", nameof(scriptFileName));
+
         // Escape single quotes so paths like C:\Users\O'Brien\... don't break PS syntax.
         var escaped = path.Replace("'", "''");
         var cmd = $"& '{escaped}'; Write-Host ''; Read-Host 'Press Enter to close'";
@@ -140,6 +147,11 @@ internal static class CliRunner
     /// </summary>
     public static void RunWinget(string wingetArguments)
     {
+        // Reject PowerShell/shell metacharacters to prevent command injection.
+        // winget IDs and flags consist only of alphanumerics, dots, dashes, and spaces.
+        if (wingetArguments.IndexOfAny([';', '|', '&', '`', '$', '"', '\n', '\r', '<', '>']) >= 0)
+            throw new ArgumentException("Invalid characters in winget arguments.", nameof(wingetArguments));
+
         var cmd = $"winget {wingetArguments}; Write-Host ''; Read-Host 'Press Enter to close'";
         Start(new ProcessStartInfo
         {

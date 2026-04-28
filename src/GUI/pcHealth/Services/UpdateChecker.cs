@@ -11,17 +11,22 @@ internal static class UpdateChecker
     private const string ReleasesApi =
         "https://api.github.com/repos/REALSDEALS/pcHealth/releases/latest";
 
+    // Reuse one HttpClient for the lifetime of the app — creating a new instance
+    // per call exhausts sockets and is flagged by static analysis.
+    private static readonly HttpClient _http = new();
+
+    static UpdateChecker()
+    {
+        _http.DefaultRequestHeaders.UserAgent.Add(
+            new ProductInfoHeaderValue("pcHealth", GetCurrentVersion()));
+    }
+
     // Returns the latest tag from GitHub, or null on any failure.
     public static async Task<string?> GetLatestTagAsync()
     {
         try
         {
-            using var client = new HttpClient();
-            // GitHub API requires a User-Agent header.
-            client.DefaultRequestHeaders.UserAgent.Add(
-                new ProductInfoHeaderValue("pcHealth", GetCurrentVersion()));
-
-            using var response = await client.GetAsync(ReleasesApi);
+            using var response = await _http.GetAsync(ReleasesApi);
             if (!response.IsSuccessStatusCode) return null;
 
             using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());

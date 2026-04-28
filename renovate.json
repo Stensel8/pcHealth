@@ -1,13 +1,15 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
 
-  "description": "Renovate manages NuGet packages only. GitHub Actions updates are handled by Dependabot (see .github/dependabot.yml).",
+  "description": "Renovate manages NuGet packages with grouping and automerge. GitHub Actions are handled by Dependabot (.github/dependabot.yml). Both tools cover NuGet — Renovate for regular bumps, Dependabot for security advisories.",
 
   "extends": ["config:recommended"],
 
   "forkProcessing": "enabled",
 
   "enabledManagers": ["nuget"],
+
+  "registryUrls": ["https://api.nuget.org/v3/index.json"],
 
   "schedule": ["on monday"],
 
@@ -16,6 +18,8 @@
   "assignees": ["Stensel8"],
 
   "commitMessagePrefix": "deps:",
+
+  "rangeStrategy": "pin",
 
   "packageRules": [
     {
@@ -33,6 +37,14 @@
       "labels": ["dependencies", "dotnet"],
       "matchPackageNames": [
         "/^System\\./"
+      ]
+    },
+    {
+      "description": "Group Microsoft infrastructure packages into a single PR.",
+      "groupName": "Microsoft infra",
+      "labels": ["dependencies", "dotnet"],
+      "matchPackageNames": [
+        "/^Microsoft\\.Management\\./"
       ]
     },
     {

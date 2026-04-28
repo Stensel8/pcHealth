@@ -1,12 +1,17 @@
 version: 2
 
-# Dependency update strategy (no overlap between tools):
+# Dependency update strategy:
 #
 #   Dependabot  ->  GitHub Actions (.github/workflows/)
-#   Renovate    ->  NuGet packages  (Windows 11/GUI/KeyGrabber/)
+#                   NuGet packages  (src/GUI/pcHealth/)
 #
-# Each tool handles what it does best. Renovate is configured
-# in renovate.json at the repo root.
+#   Renovate    ->  NuGet packages with advanced grouping and automerge
+#                   (see renovate.json at the repo root)
+#
+# Both Dependabot and Renovate cover NuGet intentionally:
+#   - Dependabot integrates with GitHub Security Advisories for vulnerability alerts.
+#   - Renovate provides grouping, automerge, and richer update control.
+# If both open a PR for the same update, merge Renovate's (better metadata) and close Dependabot's.
 
 updates:
   # GitHub Actions
@@ -42,3 +47,30 @@ updates:
           - "lycheeverse/*"
           - "amannn/*"
           - "webiny/*"
+
+  # NuGet packages (Windows App SDK + .NET BCL)
+  # Dependabot picks up GitHub Security Advisory vulnerabilities for NuGet.
+  # Renovate handles regular version bumps with grouping (see renovate.json).
+  - package-ecosystem: "nuget"
+    directory: "/src/GUI/pcHealth"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "dotnet"
+    assignees:
+      - "Stensel8"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    groups:
+      windows-app-sdk:
+        patterns:
+          - "Microsoft.WindowsAppSDK"
+          - "Microsoft.Windows.SDK.*"
+      dotnet-bcl:
+        patterns:
+          - "System.*"
+          - "Microsoft.Management.*"
