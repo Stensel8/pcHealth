@@ -17,8 +17,6 @@
 
   "commitMessagePrefix": "deps:",
 
-  "rangeStrategy": "pin",
-
   "packageRules": [
     {
       "description": "Group all Windows App SDK packages into a single PR.",
