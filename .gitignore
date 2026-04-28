@@ -1,3 +1,6 @@
+# Claude Code
+.claude/settings.local.json
+
 # OS-generated files
 .DS_Store
 Thumbs.db
@@ -11,6 +14,7 @@ desktop.ini
 *.user
 *.userosscache
 *.sln.docstates
+*.sln.DotSettings.user
 *.rsuser
 
 # Build output (C# / .NET)
@@ -54,6 +58,9 @@ project.fragment.lock.json
 *.pidb
 *.svclog
 *.scc
+
+# Rider
+*.DotSettings.user
 
 # PowerShell
 *.psm1.bak

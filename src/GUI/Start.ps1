@@ -41,12 +41,14 @@ Write-Host '[pcHealth] Checking dependencies...' -ForegroundColor Cyan
 
 $pad = 24
 
-function Write-DepStatus($label, $ok) {
+function Write-DepStatus($label, $ok, [bool]$Optional = $false) {
     $dots = '.' * ($pad - $label.Length)
     if ($ok) {
-        Write-Host "  $label $dots OK"        -ForegroundColor Green
+        Write-Host "  $label $dots OK"            -ForegroundColor Green
+    } elseif ($Optional) {
+        Write-Host "  $label $dots not installed" -ForegroundColor Yellow
     } else {
-        Write-Host "  $label $dots NOT FOUND" -ForegroundColor Red
+        Write-Host "  $label $dots NOT FOUND"     -ForegroundColor Red
     }
 }
 
@@ -56,9 +58,12 @@ if (Get-Command dotnet -ErrorAction SilentlyContinue) {
     $sdks = dotnet --list-sdks 2>$null
     $dotnetOk = ($sdks -match '^10\.')
 }
+$smartctlOk = (Test-Path (Join-Path $env:ProgramFiles 'smartmontools\bin\smartctl.exe')) -or
+              [bool](Get-Command smartctl -ErrorAction SilentlyContinue)
 
-Write-DepStatus 'PowerShell 7'  $pwshOk
-Write-DepStatus '.NET 10 SDK'   $dotnetOk
+Write-DepStatus 'PowerShell 7'   $pwshOk
+Write-DepStatus '.NET 10 SDK'    $dotnetOk
+Write-DepStatus 'smartmontools'  $smartctlOk  $true
 
 # -- 3. Install missing dependencies ------------------------------------------
 function Install-ViaWinget($displayName, $wingetId, $manualUrl) {
@@ -112,10 +117,40 @@ if (-not $dotnetOk) {
     Write-Host '[OK] .NET 10 SDK installed.' -ForegroundColor Green
 }
 
+# -- 3b. Optional: smartmontools (SMART disk health data) ----------------------
+if (-not $smartctlOk) {
+    Write-Host ''
+    Write-Host '[pcHealth] smartmontools is recommended for full SMART disk health data.' -ForegroundColor Yellow
+    Write-Host '           Without it, life %, temperature and power-on hours are unavailable.' -ForegroundColor DarkGray
+
+    $answer = Read-Host '           Install now via winget? [Y/N]'
+    if ($answer -match '^[Yy]') {
+        if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+            Write-Host '[!!] winget not available. Install from: https://www.smartmontools.org/' -ForegroundColor Yellow
+        } else {
+            winget install --id smartmontools.smartmontools -e --silent `
+                --accept-package-agreements --accept-source-agreements
+            $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
+                        [System.Environment]::GetEnvironmentVariable('Path', 'User')
+            $smartctlOk = (Test-Path (Join-Path $env:ProgramFiles 'smartmontools\bin\smartctl.exe')) -or
+                          [bool](Get-Command smartctl -ErrorAction SilentlyContinue)
+            if ($smartctlOk) {
+                Write-Host '[OK] smartmontools installed.' -ForegroundColor Green
+            } else {
+                Write-Host '[!!] Install may need a restart to take effect.' -ForegroundColor Yellow
+            }
+        }
+    } else {
+        Write-Host '     Skipping — SMART data will fall back to Windows Storage API.' -ForegroundColor DarkGray
+    }
+}
+
 # -- 4. Detect architecture and derive output EXE path from csproj ------------
 $projectFile = Join-Path $PSScriptRoot 'pcHealth\pcHealth.csproj'
-$rid         = if ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture -eq
-                   [System.Runtime.InteropServices.Architecture]::Arm64) { 'win-arm64' } else { 'win-x64' }
+
+# Detect the native architecture; default to win-x64 for everything else.
+$rid = if ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture -eq
+           [System.Runtime.InteropServices.Architecture]::Arm64) { 'win-arm64' } else { 'win-x64' }
 
 # Read TargetFramework from the csproj so this path never drifts from the project.
 $tfm     = ([xml](Get-Content $projectFile)).Project.PropertyGroup.TargetFramework |
@@ -124,10 +159,10 @@ $exePath = Join-Path $PSScriptRoot "pcHealth\bin\Release\$tfm\$rid\pcHealth.exe"
 
 # -- 5. Build ------------------------------------------------------------------
 Write-Host ''
-Write-Host '[pcHealth] All dependencies satisfied. Building pcHealth...' -ForegroundColor Green
+Write-Host "[pcHealth] All dependencies satisfied. Building pcHealth ($rid)..." -ForegroundColor Green
 Write-Host ''
 
-dotnet build $projectFile -c Release --nologo -v minimal
+dotnet build $projectFile -c Release -r $rid --nologo -v minimal
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ''

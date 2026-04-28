@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="pcHealth.Pages.SecurityCheckPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Padding="28,20,28,8" Spacing="4">
+            <TextBlock Text="Security Status"
+                       Style="{StaticResource TitleTextBlockStyle}"/>
+            <TextBlock Text="Windows Defender, BitLocker, Secure Boot, and TPM status."
+                       Style="{StaticResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="ContentPanel" Padding="28,8,28,8" Spacing="12">
+
+                <StackPanel x:Name="LoadingPanel" Orientation="Horizontal" Spacing="12">
+                    <ProgressRing IsActive="True" Width="24" Height="24" VerticalAlignment="Center"/>
+                    <TextBlock Text="Checking security status…" VerticalAlignment="Center"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+
+                <InfoBar x:Name="ErrorBar" IsOpen="False" Severity="Error"
+                         Title="Could not retrieve security information"/>
+
+                <!-- Defender card -->
+                <Border x:Name="DefenderCard" Visibility="Collapsed"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="20,16">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xEA18;" FontSize="16" VerticalAlignment="Center"
+                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="Windows Defender"
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                        </StackPanel>
+                        <StackPanel x:Name="DefenderRows" Spacing="5"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- BitLocker card -->
+                <Border x:Name="BitLockerCard" Visibility="Collapsed"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="20,16">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE72E;" FontSize="16" VerticalAlignment="Center"
+                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="BitLocker"
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                        </StackPanel>
+                        <StackPanel x:Name="BitLockerRows" Spacing="5"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Secure Boot card -->
+                <Border x:Name="SecureBootCard" Visibility="Collapsed"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="20,16">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE8D7;" FontSize="16" VerticalAlignment="Center"
+                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="Secure Boot"
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                        </StackPanel>
+                        <StackPanel x:Name="SecureBootRows" Spacing="5"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- TPM card -->
+                <Border x:Name="TpmCard" Visibility="Collapsed"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8" Padding="20,16">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE9F5;" FontSize="16" VerticalAlignment="Center"
+                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="TPM"
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                        </StackPanel>
+                        <StackPanel x:Name="TpmRows" Spacing="5"/>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Button row -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Padding="28,12,28,20" Spacing="8">
+            <Button x:Name="CopyBtn" Content="Copy" IsEnabled="False" Click="CopyBtn_Click"/>
+            <Button Content="Back" Click="BackBtn_Click"/>
+        </StackPanel>
+    </Grid>
+</Page>

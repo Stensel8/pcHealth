@@ -2,21 +2,26 @@
 
 ## Supported Versions
 
-The table below lists each supported platform, the OS build it targets, and its current support status within this project.
+The table below lists each supported platform, its recommended and hard minimum OS version, and its current support status within this project.
 
-| Platform | Target    | Min. Build | Status                 |
-|----------|-----------|------------|------------------------|
-| Windows  | 25H2+     | 26200      | ✅ Actively maintained |
-| Linux    | Kernel 7+ | —          | ✅ Actively maintained |
+| Platform | Recommended   | Hard minimum        | Status                 |
+|----------|---------------|---------------------|------------------------|
+| Windows  | Build 26200+  | Build 19045 (22H2)  | ✅ Actively maintained |
+| Linux    | Kernel 7.0+   | Kernel 6.0          | ✅ Actively maintained |
 
+Running below the recommended version shows a warning at startup but does not block the application. Running below the hard minimum exits immediately.
+
+- Windows release info: https://learn.microsoft.com/en-us/windows/release-health/release-information
+- Windows 11 release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
+- Linux kernel releases: https://www.kernel.org/
 
 ---
 
 ## Future Platform Support
 
-| Platform | Status      | Notes                                      |
-|----------|-------------|--------------------------------------------|
-| Linux 7  | Planned     | Targeting parity with the Windows CLI      |
+| Platform    | Status      | Notes                                      |
+|-------------|-------------|--------------------------------------------|
+| Linux (GUI) | Planned     | Targeting parity with the Windows CLI      |
 
 ---
 

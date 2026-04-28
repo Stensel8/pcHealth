@@ -15,7 +15,7 @@
         <StackPanel Grid.Row="0" Padding="28,20,28,4" Spacing="2">
             <TextBlock Text="Tools"
                        Style="{StaticResource TitleTextBlockStyle}"/>
-            <TextBlock Text="Click a tool to run it in an elevated terminal window. Windows License Key opens in-app."
+            <TextBlock Text="Click a tool to open it in-app."
                        Style="{StaticResource BodyTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </StackPanel>

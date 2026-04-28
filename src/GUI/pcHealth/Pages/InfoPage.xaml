@@ -16,6 +16,10 @@
                     BorderThickness="1" CornerRadius="8"
                     Padding="24,20">
                 <StackPanel Spacing="8">
+                    <Image x:Name="AppLogo"
+                           Width="72" Height="72"
+                           HorizontalAlignment="Left"
+                           Margin="0,0,0,4"/>
                     <TextBlock Text="pcHealth"
                                Style="{StaticResource SubtitleTextBlockStyle}"/>
                     <TextBlock x:Name="VersionText"
@@ -37,7 +41,7 @@
                     BorderThickness="1" CornerRadius="8"
                     Padding="20,14">
                 <StackPanel Spacing="12">
-                    <HyperlinkButton Content="GitHub — source code"
+                    <HyperlinkButton Content="View source code"
                                      NavigateUri="https://github.com/REALSDEALS/pcHealth"/>
                     <HyperlinkButton Content="Report an issue"
                                      NavigateUri="https://github.com/REALSDEALS/pcHealth/issues"/>
