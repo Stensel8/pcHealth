@@ -168,7 +168,7 @@ jobs:
       # Pull request: scan exactly the PR diff (base → head SHA).
       - name: Scan for secrets (pull request)
         if: github.event_name == 'pull_request'
-        uses: trufflesecurity/trufflehog@47e7b7cd74f578e1e3145d48f669f22fd1330ca6 # v3.94.3
+        uses: trufflesecurity/trufflehog@17456f8c7d042d8c82c9a8ca9e937231f9f42e26 # v3.95.2
         with:
           path: ./
           base: ${{ github.event.pull_request.base.sha }}
@@ -182,7 +182,7 @@ jobs:
         if: >
           github.event_name == 'push' &&
           github.event.before != '0000000000000000000000000000000000000000'
-        uses: trufflesecurity/trufflehog@47e7b7cd74f578e1e3145d48f669f22fd1330ca6 # v3.94.3
+        uses: trufflesecurity/trufflehog@17456f8c7d042d8c82c9a8ca9e937231f9f42e26 # v3.95.2
         with:
           path: ./
           base: ${{ github.event.before }}
