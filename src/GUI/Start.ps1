@@ -148,7 +148,7 @@ if (-not $smartctlOk) {
             }
         }
     } else {
-        Write-Host '     Skipping — SMART data will fall back to Windows Storage API.' -ForegroundColor DarkGray
+        Write-Host '     Skipping — SMART data will be limited.' -ForegroundColor DarkGray
     }
 }
 

@@ -148,7 +148,8 @@ fi
 # ── 3b. Optional: smartmontools ───────────────────────────────────────────────
 if [ "$SMARTCTL_OK" -eq 0 ]; then
     echo ''
-    echo '[pcHealth] smartmontools is recommended for SMART disk health data (life %, temperature, hours).'
+    echo '[pcHealth] smartmontools is recommended for full SMART disk health data (life %, temperature, power-on hours).'
+    echo '           Without it, life %, temperature and power-on hours are unavailable.'
     read -r -p '           Install now? [y/N]: ' answer
     case "$answer" in
         [Yy]*)
@@ -169,7 +170,7 @@ if [ "$SMARTCTL_OK" -eq 0 ]; then
                 echo '[OK] smartmontools installed.'
                 SMARTCTL_OK=1
             else
-                echo '[!!] Install may need a new shell session to take effect.'
+                echo '[!!] Install may need a restart to take effect.'
             fi
             ;;
         *)

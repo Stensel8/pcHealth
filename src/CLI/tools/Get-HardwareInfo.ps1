@@ -23,29 +23,36 @@ function Find-Smartctl {
 
 $smartctl = Find-Smartctl
 if (-not $smartctl) {
-    Write-Host "`nsmartmontools is required to read storage SMART data (temperature, hours, life left)." -ForegroundColor Yellow
-    $answer = (Read-Host "  Install it now? [y/n]").Trim().ToLower()
-    if ($answer -eq 'y') {
+    Write-Host "`n[pcHealth] smartmontools is recommended for full SMART disk health data (life %, temperature, power-on hours)." -ForegroundColor Yellow
+    Write-Host '           Without it, life %, temperature and power-on hours are unavailable.' -ForegroundColor DarkGray
+
+    $prompt = if ($IsLinux) { '  Install now? [Y/N]' } else { '  Install now via winget? [Y/N]' }
+    $answer = (Read-Host $prompt).Trim()
+    if ($answer -match '^[Yy]') {
         if ($IsLinux) {
             $pm = if (Get-Command apt-get -EA SilentlyContinue) { @('apt-get','install','-y','smartmontools') }
                   elseif (Get-Command dnf  -EA SilentlyContinue) { @('dnf','install','-y','smartmontools')     }
                   elseif (Get-Command pacman -EA SilentlyContinue) { @('pacman','-S','--noconfirm','smartmontools') }
                   else { $null }
-            if ($pm) { & sudo $pm[0] $pm[1..($pm.Count-1)] } else { Write-Warning "No supported package manager found." }
+            if ($pm) { & sudo $pm[0] $pm[1..($pm.Count-1)] } else { Write-Host '[!!] No supported package manager found. Install smartmontools manually.' -ForegroundColor Yellow }
         } else {
-            winget install --source winget --id smartmontools.smartmontools -e --silent `
-                --accept-package-agreements --accept-source-agreements
-            $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' +
-                        [System.Environment]::GetEnvironmentVariable('Path','User')
+            if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+                Write-Host '[!!] winget not available. Install from: https://www.smartmontools.org/' -ForegroundColor Yellow
+            } else {
+                winget install --source winget --id smartmontools.smartmontools -e --silent `
+                    --accept-package-agreements --accept-source-agreements
+                $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' +
+                            [System.Environment]::GetEnvironmentVariable('Path','User')
+            }
         }
         $smartctl = Find-Smartctl
         if ($smartctl) {
-            Write-Host "  smartmontools installed successfully.`n" -ForegroundColor Green
+            Write-Host "  [OK] smartmontools installed.`n" -ForegroundColor Green
         } else {
-            Write-Warning "Install completed but smartctl was not found. Storage section will be skipped."
+            Write-Host "  [!!] Install may need a restart to take effect.`n" -ForegroundColor Yellow
         }
     } else {
-        Write-Host "  Skipping storage readout.`n" -ForegroundColor DarkGray
+        Write-Host "  Skipping — SMART data will be limited.`n" -ForegroundColor DarkGray
     }
 }
 

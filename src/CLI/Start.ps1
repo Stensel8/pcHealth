@@ -105,9 +105,11 @@ if (-not $pwshOk) {
 # -- 3b. Optional: smartmontools -----------------------------------------------
 if (-not $smartctlOk) {
     Write-Host ''
-    Write-Host '[pcHealth] smartmontools is recommended for SMART disk health data (life %, temperature, hours).' -ForegroundColor Yellow
+    Write-Host '[pcHealth] smartmontools is recommended for full SMART disk health data.' -ForegroundColor Yellow
+    Write-Host '           Without it, life %, temperature and power-on hours are unavailable.' -ForegroundColor DarkGray
 
-    $answer = Read-Host '           Install now? [Y/N]'
+    $prompt = if ($onLinux) { '           Install now? [Y/N]' } else { '           Install now via winget? [Y/N]' }
+    $answer = Read-Host $prompt
     if ($answer -match '^[Yy]') {
         if ($onLinux) {
             if     (Get-Command apt-get -ErrorAction SilentlyContinue) { sudo apt-get install -y smartmontools }
