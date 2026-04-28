@@ -15,14 +15,21 @@ if ($IsLinux -or $IsMacOS) {
     exit 1
 }
 
-# Minimum OS version: Windows build 26200 (25H2)
+# Recommended and hard minimum Windows build versions (see README.md)
+$recommendedBuild = 26200   # 25H2+
+$hardMinimumBuild = 19045   # 22H2 (hard minimum)
 $build = [System.Environment]::OSVersion.Version.Build
-if ($build -lt 26200) {
-    Write-Host "[!!] pcHealth requires Windows build 26200 (25H2) or higher." -ForegroundColor Red
+
+if ($build -lt $hardMinimumBuild) {
+    Write-Host "[!!] pcHealth requires at least Windows build $hardMinimumBuild (22H2)." -ForegroundColor Red
     Write-Host "     Your build: $build" -ForegroundColor Red
     Write-Host "     Update Windows and try again." -ForegroundColor Yellow
     Read-Host 'Press Enter to exit'
     exit 1
+} elseif ($build -lt $recommendedBuild) {
+    Write-Host "[!] Recommended Windows build is $recommendedBuild (25H2+)." -ForegroundColor Yellow
+    Write-Host "    Your build: $build" -ForegroundColor Yellow
+    Write-Host "    pcHealth will continue but some features may be limited." -ForegroundColor DarkGray
 }
 
 # -- 1. Elevate ----------------------------------------------------------------
