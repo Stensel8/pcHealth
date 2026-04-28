@@ -9,8 +9,6 @@
 
   "enabledManagers": ["nuget"],
 
-  "registryUrls": ["https://api.nuget.org/v3/index.json"],
-
   "schedule": ["on monday"],
 
   "labels": ["dependencies", "dotnet"],
