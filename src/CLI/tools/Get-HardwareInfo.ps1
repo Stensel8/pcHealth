@@ -33,7 +33,7 @@ if (-not $smartctl) {
                   else { $null }
             if ($pm) { & sudo $pm[0] $pm[1..($pm.Count-1)] } else { Write-Warning "No supported package manager found." }
         } else {
-            winget install --id smartmontools.smartmontools -e --silent `
+            winget install --source winget --id smartmontools.smartmontools -e --silent `
                 --accept-package-agreements --accept-source-agreements
             $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' +
                         [System.Environment]::GetEnvironmentVariable('Path','User')

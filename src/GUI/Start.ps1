@@ -94,7 +94,7 @@ function Install-ViaWinget($displayName, $wingetId, $manualUrl) {
 
     Write-Host ''
     Write-Host "[pcHealth] Installing $displayName..." -ForegroundColor Cyan
-    winget install --id $wingetId -e --silent `
+    winget install --source winget --id $wingetId -e --silent `
         --accept-package-agreements --accept-source-agreements
 
     # Refresh PATH so newly installed tools are findable in this session.
@@ -135,7 +135,7 @@ if (-not $smartctlOk) {
         if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
             Write-Host '[!!] winget not available. Install from: https://www.smartmontools.org/' -ForegroundColor Yellow
         } else {
-            winget install --id smartmontools.smartmontools -e --silent `
+            winget install --source winget --id smartmontools.smartmontools -e --silent `
                 --accept-package-agreements --accept-source-agreements
             $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
                         [System.Environment]::GetEnvironmentVariable('Path', 'User')

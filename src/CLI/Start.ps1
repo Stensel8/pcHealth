@@ -86,7 +86,7 @@ if (-not $pwshOk) {
 
     Write-Host ''
     Write-Host '[pcHealth] Installing PowerShell 7...' -ForegroundColor Cyan
-    winget install --id Microsoft.PowerShell -e --silent `
+    winget install --source winget --id Microsoft.PowerShell -e --silent `
         --accept-package-agreements --accept-source-agreements
 
     # Refresh PATH so pwsh is findable in the current session.
@@ -115,7 +115,7 @@ if (-not $smartctlOk) {
             elseif (Get-Command pacman  -ErrorAction SilentlyContinue) { sudo pacman -S --noconfirm smartmontools }
             else { Write-Host '[!!] No supported package manager found. Install smartmontools manually.' -ForegroundColor Yellow }
         } elseif (Get-Command winget -ErrorAction SilentlyContinue) {
-            winget install --id smartmontools.smartmontools -e --silent `
+            winget install --source winget --id smartmontools.smartmontools -e --silent `
                 --accept-package-agreements --accept-source-agreements
             $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
                         [System.Environment]::GetEnvironmentVariable('Path', 'User')
