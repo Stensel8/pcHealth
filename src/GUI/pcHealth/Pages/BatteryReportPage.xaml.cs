@@ -71,17 +71,17 @@ public sealed partial class BatteryReportPage : Page
 
     private static string DecodeBatteryStatus(ushort code) => code switch
     {
-        1  => "Discharging",
-        2  => "On AC power",
-        3  => "Fully charged",
-        4  => "Low",
-        5  => "Critical",
-        6  => "Charging",
-        7  => "Charging (High)",
-        8  => "Charging (Low)",
-        9  => "Charging (Critical)",
+        1 => "Discharging",
+        2 => "On AC power",
+        3 => "Fully charged",
+        4 => "Low",
+        5 => "Critical",
+        6 => "Charging",
+        7 => "Charging (High)",
+        8 => "Charging (Low)",
+        9 => "Charging (Critical)",
         11 => "Partially charged",
-        _  => $"Unknown ({code})",
+        _ => $"Unknown ({code})",
     };
 
     private static string DecodeChemistry(ushort code) => code switch

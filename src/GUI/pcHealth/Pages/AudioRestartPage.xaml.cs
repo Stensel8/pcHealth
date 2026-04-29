@@ -12,9 +12,9 @@ public sealed partial class AudioRestartPage : Page
     {
         try
         {
-            var aebRunning   = await IsServiceRunningAsync("AudioEndpointBuilder");
+            var aebRunning = await IsServiceRunningAsync("AudioEndpointBuilder");
             var audioRunning = await IsServiceRunningAsync("Audiosrv");
-            SetStatus(AebIcon,   AebStatus,   aebRunning);
+            SetStatus(AebIcon, AebStatus, aebRunning);
             SetStatus(AudioIcon, AudioStatus, audioRunning);
         }
         catch (Exception ex)
@@ -47,11 +47,11 @@ public sealed partial class AudioRestartPage : Page
 
         try
         {
-            await ProcessRunner.RunAsync("net.exe", "stop Audiosrv /yes",              _ => { });
-            await ProcessRunner.RunAsync("net.exe", "stop AudioEndpointBuilder /yes",  _ => { });
+            await ProcessRunner.RunAsync("net.exe", "stop Audiosrv /yes", _ => { });
+            await ProcessRunner.RunAsync("net.exe", "stop AudioEndpointBuilder /yes", _ => { });
             await Task.Delay(1000);
-            await ProcessRunner.RunAsync("net.exe", "start AudioEndpointBuilder",      _ => { });
-            await ProcessRunner.RunAsync("net.exe", "start Audiosrv",                  _ => { });
+            await ProcessRunner.RunAsync("net.exe", "start AudioEndpointBuilder", _ => { });
+            await ProcessRunner.RunAsync("net.exe", "start Audiosrv", _ => { });
 
             await RefreshStatusAsync();
             ResultBar.Severity = InfoBarSeverity.Success;

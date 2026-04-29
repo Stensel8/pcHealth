@@ -17,12 +17,12 @@ public sealed partial class SettingsPage : Page
         ThemeCombo.SelectedIndex = theme switch
         {
             "Light" => 1,
-            "Dark"  => 2,
-            _       => 0,
+            "Dark" => 2,
+            _ => 0,
         };
 
-        AutoReinstallToggle.IsOn    = AppSettings.GetBool("AutoReinstall",    fallback: false);
-        AutoUpdateCheckToggle.IsOn  = AppSettings.GetBool("AutoCheckVersion", fallback: true);
+        AutoReinstallToggle.IsOn = AppSettings.GetBool("AutoReinstall", fallback: false);
+        AutoUpdateCheckToggle.IsOn = AppSettings.GetBool("AutoCheckVersion", fallback: true);
     }
 
     private void ThemeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -36,8 +36,8 @@ public sealed partial class SettingsPage : Page
         var requestedTheme = tag switch
         {
             "Light" => ElementTheme.Light,
-            "Dark"  => ElementTheme.Dark,
-            _       => ElementTheme.Default,
+            "Dark" => ElementTheme.Dark,
+            _ => ElementTheme.Default,
         };
 
         if (XamlRoot?.Content is FrameworkElement root)
