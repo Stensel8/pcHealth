@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "pcHealth": {
+      "commandName": "MsixPackage",
+      "alwaysReinstallApp": false
+    }
+  }
+}
