@@ -409,7 +409,7 @@ RULES = [
         "PS024", "warning",
         "Format-Table / Format-List in pipeline output — formatting cmdlets destroy the objects. Only use at pipeline end or for display.",
         "*.ps1",
-        r"(?i)\b(Format-Table|Format-List|Format-Wide|ft\b|fl\b)\b.{0,80}\|",
+        r"(?i)\b(Format-Table|Format-List|Format-Wide|ft\b|fl\b)\b.{0,80}\|(?!\s*Out-)",
     ),
     # ── Bash ────────────────────────────────────────────────────────────────
     (
@@ -467,6 +467,10 @@ def glob_files(root: Path, pattern: str):
     )]
 
 
+_NOLINT_FILE = re.compile(r"#\s*nolint-file:\s*([\w,\s]+)", re.IGNORECASE)
+_NOLINT_LINE = re.compile(r"#\s*nolint:\s*([\w,\s]+)", re.IGNORECASE)
+
+
 def scan(root: Path):
     findings = []
     compiled = [(rid, level, msg, glob, re.compile(rx, re.MULTILINE))
@@ -478,9 +482,21 @@ def scan(root: Path):
                 text = filepath.read_text(encoding="utf-8", errors="replace")
             except OSError:
                 continue
+            # File-level suppression: # nolint-file: RULEID
+            file_suppress = set()
+            for fm in _NOLINT_FILE.finditer(text):
+                file_suppress.update(r.strip() for r in fm.group(1).split(","))
+            if rid in file_suppress:
+                continue
+            lines = text.splitlines()
             for m in pattern.finditer(text):
                 lineno = text[:m.start()].count("\n") + 1
                 col = m.start() - text.rfind("\n", 0, m.start())
+                # Line-level suppression: # nolint: RULEID
+                line_text = lines[lineno - 1] if lineno <= len(lines) else ""
+                lm = _NOLINT_LINE.search(line_text)
+                if lm and rid in {r.strip() for r in lm.group(1).split(",")}:
+                    continue
                 findings.append({
                     "ruleId": rid,
                     "level": level,

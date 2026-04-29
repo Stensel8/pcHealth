@@ -2,6 +2,7 @@
 # ============================================================================
 # pcHealth — CLI Launcher (Linux)
 # Checks dependencies, then starts the CLI elevated via sudo.
+# nolint-file: SH007  (interactive launcher — sudo prompts are intentional)
 # ============================================================================
 
 set -euo pipefail

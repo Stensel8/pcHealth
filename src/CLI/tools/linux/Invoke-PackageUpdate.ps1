@@ -20,7 +20,7 @@ Write-Host "  Distro: $distroName" -ForegroundColor DarkGray
 function Invoke-Update {
     param([string]$Label, [scriptblock]$Action)
     Write-Host "`n[>>] $Label" -ForegroundColor Yellow
-    & $Action
+    Invoke-Command -ScriptBlock $Action
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`n[OK] Update complete.`n" -ForegroundColor Green
     } else {
@@ -51,7 +51,7 @@ function Invoke-LinuxUpdate {
     foreach ($term in $terminals) {
         if (Get-Command $term.cmd -ErrorAction SilentlyContinue) {
             Write-Host "  Opening in $($term.cmd)..." -ForegroundColor DarkGray
-            & $term.cmd @($term.args)
+            & $term.cmd @($term.args) # nolint: PS020
             return
         }
     }

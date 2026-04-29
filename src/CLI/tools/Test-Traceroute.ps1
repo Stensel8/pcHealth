@@ -16,7 +16,7 @@ if ($IsLinux) {
            else { $null }
 
     if ($cmd) {
-        & $cmd $Target
+        & $cmd $Target # nolint: PS020
     } else {
         Write-Host "  Neither traceroute nor tracepath found." -ForegroundColor Yellow
         Write-Host "  Install via: sudo apt-get install traceroute  (or dnf/pacman)`n" -ForegroundColor DarkGray
