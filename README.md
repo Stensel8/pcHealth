@@ -26,8 +26,7 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 
 Running below the recommended version shows a warning but does not block startup. Running below the hard minimum exits immediately.
 
-- Windows release info: https://learn.microsoft.com/en-us/windows/release-health/release-information
-- Windows 11 release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
+- Windows release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
 - Linux kernel releases: https://www.kernel.org/
 
 See [SECURITY.md](SECURITY.md) for version and end-of-life details.
@@ -50,7 +49,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 ### Linux
 
 1. Download or clone this repository.
-2. Run `start.sh` — it checks for PowerShell 7 and installs it if needed:
+2. Run `start.sh` - it checks for PowerShell 7 and installs it if needed:
 
 ```bash
 bash src/CLI/start.sh
@@ -66,7 +65,7 @@ sudo pwsh ./src/CLI/Start.ps1
 
 On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface. Recommended: Windows build 26200 (25H2) or higher. Hard minimum: build 19045 (Windows 10 22H2).
 
-A Linux GUI is not yet available — WinUI 3 is Windows-only. A cross-platform alternative is in the works.
+A Linux GUI is not yet available - WinUI 3 is Windows-only. A cross-platform alternative is in the works.
 
 **Build dependencies:**
 
@@ -104,7 +103,7 @@ All menus and option numbers are identical across platforms. Windows-only tools 
 <details>
 <summary><strong>Tools Menu</strong></summary>
 
-Option numbers are assigned sequentially at runtime per platform — Windows-only tools are not shown on Linux and vice versa.
+Option numbers are assigned sequentially at runtime per platform - Windows-only tools are not shown on Linux and vice versa.
 
 | Function                      | Platforms | Notes                                              |
 |-------------------------------|-----------|----------------------------------------------------|
@@ -135,7 +134,7 @@ Option numbers are assigned sequentially at runtime per platform — Windows-onl
 </details>
 
 <details>
-<summary><strong>Programs Menu — Windows</strong></summary>
+<summary><strong>Programs Menu - Windows</strong></summary>
 
 | Key | Program                  | Install method |
 |-----|--------------------------|----------------|
@@ -150,7 +149,7 @@ Option numbers are assigned sequentially at runtime per platform — Windows-onl
 </details>
 
 <details>
-<summary><strong>Programs Menu — Linux</strong></summary>
+<summary><strong>Programs Menu - Linux</strong></summary>
 
 | Key | Program       | Install method     |
 |-----|---------------|--------------------|
@@ -192,6 +191,6 @@ Or open an [issue](https://github.com/REALSDEALS/pcHealth/issues) on GitHub.
 
 pcHealth consolidates and replaces the following earlier projects:
 
-- [pcHealthPlus](https://github.com/REALSDEALS/pcHealthPlus) — original batch-based health toolkit
-- [pcHealthPlus-VS](https://github.com/REALSDEALS/pcHealthPlus-VS) — Visual Studio variant of pcHealthPlus
-- [Win_Scan](https://github.com/REALSDEALS/Win_Scan) — standalone Windows scanning utility
+- [pcHealthPlus](https://github.com/REALSDEALS/pcHealthPlus) - original batch-based health toolkit
+- [pcHealthPlus-VS](https://github.com/REALSDEALS/pcHealthPlus-VS) - Visual Studio variant of pcHealthPlus
+- [Win_Scan](https://github.com/REALSDEALS/Win_Scan) - standalone Windows scanning utility
