@@ -1,6 +1,6 @@
-# Powershell-Helper function to get CPU, GPU, and RAM information.
-# Reason: Microsoft has deprecated WIMCI and replaced it with Get-CimInstance. Get-CimInstance is not available in batch mode.
-# Microsoft is slowly deprecating older Windows components and replacing it with newer ones. You can read more here: https://techcommunity.microsoft.com/blog/windows-itpro-blog/wmi-command-line-wmic-utility-deprecation-next-steps/4039242
+# PowerShell helper: get CPU, GPU, and RAM information using CIM (modern API).
+# Uses Get-CimInstance. The legacy Windows Management Instrumentation Command-Line tool
+# is removed in Windows 11 25H2 — see the Windows IT Pro Blog for migration guidance.
 
 
 [CmdletBinding()]

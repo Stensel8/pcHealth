@@ -1,0 +1,38 @@
+name: Deprecated pattern check
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Scans C#, PowerShell, and Bash files for deprecated and unsafe patterns.
+# Results appear in GitHub Advanced Security → Code scanning.
+# Never blocks CI — exits 0 regardless of findings.
+
+jobs:
+  pattern-check:
+    name: Deprecated pattern check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run pattern checker
+        run: python3 .github/scripts/pattern-check.py src/
+
+      - name: Upload results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        if: always()
+        with:
+          sarif_file: pattern-check.sarif
+          category: pattern-check

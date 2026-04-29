@@ -1,0 +1,534 @@
+#!/usr/bin/env python3
+"""
+Scan source files for deprecated/unsafe patterns and emit SARIF 2.1.0.
+No external dependencies — stdlib only.
+"""
+import json
+import re
+import sys
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Pattern definitions
+# Each entry: (rule_id, level, message, file_glob, regex_pattern)
+# level: "error" | "warning" | "note"
+# ---------------------------------------------------------------------------
+RULES = [
+    # ── C# — Legacy WMI ────────────────────────────────────────────────────
+    (
+        "CS001", "warning",
+        "ManagementObjectSearcher uses DCOM (legacy WMI). Replace with CimSession.QueryInstances() from Microsoft.Management.Infrastructure.",
+        "*.cs",
+        r"new\s+ManagementObjectSearcher\s*\(",
+    ),
+    (
+        "CS001B", "warning",
+        "System.Management import uses DCOM. Replace with Microsoft.Management.Infrastructure (CIM/WSMan).",
+        "*.cs",
+        r"using\s+System\.Management[^.]",
+    ),
+    # ── C# — Exception handling ─────────────────────────────────────────────
+    (
+        "CS003", "error",
+        "Empty catch block swallows exceptions silently. Log or surface: catch (SpecificException ex) { Debug.WriteLine(ex); }",
+        "*.cs",
+        r"^\s*catch\s*\{",
+    ),
+    (
+        "CS005", "warning",
+        "throw new Exception(...) — use a specific type (InvalidOperationException, ArgumentException, IOException, etc.).",
+        "*.cs",
+        r"\bthrow\s+new\s+Exception\s*\(",
+    ),
+    # ── C# — Path handling ──────────────────────────────────────────────────
+    (
+        "CS006", "warning",
+        "Raw backslash path concatenation. Use Path.Combine(dir, file) instead.",
+        "*.cs",
+        r'\+\s*"\\\\',
+    ),
+    (
+        "CS007", "warning",
+        r'Hardcoded drive-root path (e.g. C:\). Use AppContext.BaseDirectory, Environment.GetFolderPath, or Path.Combine.',
+        "*.cs",
+        r'@"[A-Za-z]:\\',
+    ),
+    # ── C# — Async / threading ──────────────────────────────────────────────
+    (
+        "CS008", "error",
+        ".Wait() blocks the calling thread and deadlocks the WinUI 3 UI thread. Use await instead.",
+        "*.cs",
+        r"\.\s*Wait\s*\(\s*\)",
+    ),
+    (
+        "CS008B", "error",
+        ".GetAwaiter().GetResult() is sync-over-async and deadlocks the UI thread. Use await instead.",
+        "*.cs",
+        r"\.GetAwaiter\s*\(\s*\)\s*\.GetResult\s*\(\s*\)",
+    ),
+    (
+        "CS009", "warning",
+        "Thread.Sleep blocks the thread (including the UI thread). Use await Task.Delay(ms) in async methods.",
+        "*.cs",
+        r"\bThread\s*\.\s*Sleep\s*\(",
+    ),
+    (
+        "CS010", "note",
+        "new Thread() bypasses the thread pool. Use Task.Run for CPU-bound work.",
+        "*.cs",
+        r"\bnew\s+Thread\s*\(",
+    ),
+    # ── C# — Memory ─────────────────────────────────────────────────────────
+    (
+        "CS011", "warning",
+        "GC.Collect() disrupts GC heuristics and hurts throughput. Fix the allocation pattern instead.",
+        "*.cs",
+        r"\bGC\s*\.\s*Collect\s*\(\s*\)",
+    ),
+    # ── C# — Output / logging ───────────────────────────────────────────────
+    (
+        "CS012", "warning",
+        "WinUI 3 apps have no console window — Console output is silently dropped. Use Debug.WriteLine or a structured logger.",
+        "*.cs",
+        r"\bConsole\s*\.\s*Write(Line)?\s*\(",
+    ),
+    # ── C# — Time ───────────────────────────────────────────────────────────
+    (
+        "CS013", "note",
+        "DateTime.Now includes local timezone offset. Use DateTime.UtcNow or DateTimeOffset.UtcNow for timestamps and logging.",
+        "*.cs",
+        r"\bDateTime\s*\.\s*Now\b",
+    ),
+    # ── C# — WinUI 3 / UWP API issues ──────────────────────────────────────
+    (
+        "CS014", "error",
+        "Windows.UI.Xaml is the UWP namespace. WinUI 3 uses Microsoft.UI.Xaml. Mixing namespaces causes runtime failures.",
+        "*.cs",
+        r"Windows\.UI\.Xaml",
+    ),
+    (
+        "CS015", "error",
+        "ApplicationView is a deprecated UWP API not available in WinUI 3. Use Microsoft.UI.Windowing.AppWindow instead.",
+        "*.cs",
+        r"\bApplicationView\b",
+    ),
+    (
+        "CS016", "error",
+        "CoreWindow does not exist in WinUI 3 Desktop. Use Microsoft.UI.Xaml.Window or AppWindow instead.",
+        "*.cs",
+        r"\bCoreWindow\b",
+    ),
+    (
+        "CS017", "error",
+        "CoreDispatcher.RunAsync is the UWP API. Use DispatcherQueue.TryEnqueue in WinUI 3.",
+        "*.cs",
+        # Narrow the match: flag CoreDispatcher or explicit Dispatcher.RunAsync calls only.
+        r"(?:CoreDispatcher|Windows\.UI\.Core\.CoreDispatcher|Dispatcher\s*\.\s*RunAsync\s*\()",
+    ),
+    # ── C# — Code quality ───────────────────────────────────────────────────
+    (
+        "CS018", "note",
+        "#pragma warning disable suppresses compiler diagnostics. Fix the underlying issue instead of silencing the warning.",
+        "*.cs",
+        r"#pragma\s+warning\s+disable",
+    ),
+    (
+        "CS019", "note",
+        "dynamic bypasses static type checking. Use specific types, generics, or pattern matching instead.",
+        "*.cs",
+        r"\bdynamic\b",
+    ),
+    # ── C# — Security ───────────────────────────────────────────────────────
+    (
+        "CS020", "error",
+        "String.Format / interpolation used in SQL query — potential SQL injection. Use parameterised queries.",
+        "*.cs",
+        r'(?i)(SqlCommand|ExecuteQuery|ExecuteNonQuery|ExecuteScalar)\s*\([^)]*(\$"|string\.Format)',
+    ),
+    (
+        "CS022", "warning",
+        "Hardcoded credential or secret literal detected. Use environment variables or a secrets manager.",
+        "*.cs",
+        r'(?i)(password|secret|apikey|api_key|token)\s*=\s*"[^"]{4,}"',
+    ),
+    (
+        "CS023", "warning",
+        "new HttpClient() inside a method causes socket exhaustion under load. Use a static readonly HttpClient or IHttpClientFactory.",
+        "*.cs",
+        r"\bnew\s+HttpClient\s*\(",
+    ),
+    (
+        "CS024", "error",
+        ".Result on Task blocks the calling thread and deadlocks the WinUI 3 UI thread. Use await instead.",
+        "*.cs",
+        r"(?<!\w)\.Result\b(?!\s*(?:=|\?))",
+    ),
+    (
+        "CS025", "warning",
+        "Hardcoded http:// URL — use https:// to prevent man-in-the-middle attacks.",
+        "*.cs",
+        # Exclude well-known XML/XAML namespace hosts (false positives: schemas.microsoft.com, www.w3.org, openxmlformats)
+        r'"http://(?!schemas\.microsoft\.com|www\.w3\.org|schemas\.openxmlformats\.org)[^\"]{4,}"',
+    ),
+    (
+        "CS026", "warning",
+        "String interpolation in ProcessStartInfo.Arguments — validate or sanitise to prevent command injection.",
+        "*.cs",
+        r'Arguments\s*=\s*\$"',
+    ),
+    (
+        "CS027", "note",
+        "Environment.Exit() terminates the entire process immediately. Prefer returning false or throwing an exception in library/GUI code.",
+        "*.cs",
+        r"\bEnvironment\s*\.\s*Exit\s*\(",
+    ),
+    (
+        "CS028", "warning",
+        "SSL certificate validation disabled — man-in-the-middle attacks become possible.",
+        "*.cs",
+        r"ServerCertificateCustomValidationCallback\s*=",
+    ),
+    (
+        "CS029", "note",
+        "Regex constructed without a timeout — a crafted input string can cause catastrophic backtracking (ReDoS).",
+        "*.cs",
+        r"\bnew\s+Regex\s*\([^,)]+\)",
+    ),
+    # ── C# — .NET 9+ removed / deprecated APIs ─────────────────────────────
+    (
+        "CS030", "error",
+        "BinaryFormatter is removed in .NET 9+. Use System.Text.Json, XmlSerializer, or DataContractSerializer.",
+        "*.cs",
+        r"\bBinaryFormatter\b",
+    ),
+    (
+        "CS031", "error",
+        "NetDataContractSerializer is removed in .NET 9+. Use System.Text.Json or DataContractSerializer.",
+        "*.cs",
+        r"\bNetDataContractSerializer\b",
+    ),
+    (
+        "CS032", "warning",
+        "Task.Factory.StartNew bypasses Task.Run defaults. Use Task.Run for CPU-bound work; pass TaskCreationOptions.LongRunning only when genuinely needed.",
+        "*.cs",
+        r"\bTask\s*\.\s*Factory\s*\.\s*StartNew\s*\(",
+    ),
+    # ── C# — Security: XML / serialisation ────────────────────────────────────
+    (
+        "CS033", "error",
+        "XmlDocument.Load / XmlTextReader without DtdProcessing = Prohibit leaves XXE attack surface open. Set XmlReaderSettings.DtdProcessing = DtdProcessing.Prohibit.",
+        "*.cs",
+        r"\bXmlDocument\b|\bXmlTextReader\b",
+    ),
+    (
+        "CS034", "error",
+        "SoapFormatter is removed in .NET 9+. Use System.Text.Json or DataContractSerializer.",
+        "*.cs",
+        r"\bSoapFormatter\b",
+    ),
+    # ── C# — WinUI 3 specific additional patterns ──────────────────────────────
+    (
+        "CS039", "error",
+        "Dispatcher.BeginInvoke is WPF / WinForms API. In WinUI 3 use DispatcherQueue.TryEnqueue.",
+        "*.cs",
+        r"\bDispatcher\s*\.\s*BeginInvoke\s*\(",
+    ),
+    (
+        "CS040", "error",
+        "MessageBox.Show is WinForms / WPF. In WinUI 3 use ContentDialog or MessageDialogBuilder.",
+        "*.cs",
+        r"\bMessageBox\s*\.\s*Show\s*\(",
+    ),
+    (
+        "CS041", "error",
+        "System.Windows namespace is WPF. WinUI 3 uses Microsoft.UI.Xaml. Mixing causes runtime failures.",
+        "*.cs",
+        r"\bSystem\.Windows\b(?!\.Forms\b)",
+    ),
+    (
+        "CS042", "warning",
+        "XamlRoot not set on ContentDialog before ShowAsync — dialog will throw in WinUI 3. Set dialog.XamlRoot = this.XamlRoot.",
+        "*.cs",
+        r"ContentDialog\s*\{[^}]{0,300}ShowAsync|new\s+ContentDialog[^;]{0,300}\.ShowAsync",
+    ),
+    # ── C# — Encoding / string ────────────────────────────────────────────────
+    (
+        "CS043", "warning",
+        "Encoding.ASCII silently replaces non-ASCII characters with '?'. Use Encoding.UTF8 unless ASCII is verified safe.",
+        "*.cs",
+        r"\bEncoding\s*\.\s*ASCII\b",
+    ),
+    # ── C# — Suppression ─────────────────────────────────────────────────────
+    (
+        "CS044", "note",
+        "SuppressMessage suppresses static analysis. Fix the underlying issue or document a detailed justification.",
+        "*.cs",
+        r"\[SuppressMessage\b",
+    ),
+    # ── PowerShell ──────────────────────────────────────────────────────────
+    (
+        "PS001", "error",
+        "Get-WmiObject is removed in PowerShell 7+ and Windows 11 25H2. Replace with Get-CimInstance.",
+        "*.ps1",
+        r"\bGet-WmiObject\b",
+    ),
+    (
+        "PS002", "error",
+        "wmic.exe is removed in Windows 11 25H2. Replace with Get-CimInstance queries.",
+        "*.ps1",
+        r"\bwmic\b",
+    ),
+    (
+        "PS003", "error",
+        "Invoke-Expression executes arbitrary strings — high injection risk. Avoid or validate strictly.",
+        "*.ps1",
+        r"\bInvoke-Expression\b|\biex\b",
+    ),
+    (
+        "PS004", "warning",
+        "Invoke-WebRequest / Invoke-RestMethod piped directly to Invoke-Expression executes untrusted remote code.",
+        "*.ps1",
+        r"(?i)(Invoke-WebRequest|Invoke-RestMethod|wget|curl).{0,120}Invoke-Expression",
+    ),
+    (
+        "PS005", "warning",
+        "Global $ErrorActionPreference = SilentlyContinue masks real errors. Use -ErrorAction SilentlyContinue per cmdlet.",
+        "*.ps1",
+        r"\$ErrorActionPreference\s*=\s*['\"]SilentlyContinue['\"]",
+    ),
+    (
+        "PS006", "warning",
+        "Set-StrictMode -Off removes undefined-variable detection. Only disable with a documented reason.",
+        "*.ps1",
+        r"(?i)Set-StrictMode\s+-Off",
+    ),
+    (
+        "PS007", "warning",
+        "[System.Net.WebClient] is deprecated. Use Invoke-RestMethod or Invoke-WebRequest instead.",
+        "*.ps1",
+        r"\[System\.Net\.WebClient\]",
+    ),
+    (
+        "PS008", "warning",
+        "ConvertTo-SecureString -AsPlainText stores a credential in plain text. Use Get-Credential or a secrets vault.",
+        "*.ps1",
+        r"ConvertTo-SecureString.{0,80}-AsPlainText|-AsPlainText.{0,80}ConvertTo-SecureString",
+    ),
+    (
+        "PS009", "warning",
+        "Hardcoded credential or secret literal in PowerShell. Use environment variables or a secrets manager.",
+        "*.ps1",
+        r'(?i)(password|secret|apikey|api_key|token)\s*=\s*["\'][^"\']{4,}["\']',
+    ),
+    (
+        "PS010", "warning",
+        "Remove-Item -Recurse -Force is irreversible. Validate path is non-root and non-empty before executing.",
+        "*.ps1",
+        r"(?i)Remove-Item.{0,80}-(?:Recurse|Force).{0,80}-(?:Recurse|Force)",
+    ),
+    (
+        "PS011", "error",
+        "ServerCertificateValidationCallback = { $true } disables TLS validation — man-in-the-middle risk.",
+        "*.ps1",
+        r"(?i)ServerCertificateValidationCallback\s*=\s*\{[^}]{0,40}\$true",
+    ),
+    (
+        "PS012", "warning",
+        "net user / net localgroup modifies local accounts. Ensure this is intentional and audited.",
+        "*.ps1",
+        r"(?i)\bnet\s+(user|localgroup)\b",
+    ),
+    (
+        "PS013", "warning",
+        "Add-Type -TypeDefinition compiles and loads code at runtime. Validate the source is trusted.",
+        "*.ps1",
+        r"(?i)Add-Type\s+-TypeDefinition",
+    ),
+    (
+        "PS014", "warning",
+        "Hardcoded http:// URL in PowerShell — use https:// to prevent man-in-the-middle attacks.",
+        "*.ps1",
+        r"""['"](http://[^'"]{4,})['"]""",
+    ),
+    (
+        "PS015", "warning",
+        "Start-Process with a variable path — validate the executable path to prevent process injection.",
+        "*.ps1",
+        r"(?i)Start-Process\s+\$",
+    ),
+    # ── PowerShell 7 — removed / deprecated ─────────────────────────────────
+    (
+        "PS016", "error",
+        "Get-EventLog is removed in PowerShell 7+. Replace with Get-WinEvent -LogName or Get-WinEvent -FilterHashtable.",
+        "*.ps1",
+        r"\bGet-EventLog\b",
+    ),
+    (
+        "PS017", "error",
+        "Get-WmiObject is removed in PowerShell 7+ (alias). Use Get-CimInstance.",
+        "*.ps1",
+        r"\bgwmi\b",
+    ),
+    (
+        "PS018", "warning",
+        "[System.Net.ServicePointManager] is legacy networking API not available in .NET Core / PS7. Use Invoke-RestMethod with -SkipCertificateCheck or HttpClient.",
+        "*.ps1",
+        r"\[System\.Net\.ServicePointManager\]",
+    ),
+    (
+        "PS019", "warning",
+        "Invoke-Item with a variable path — validate path to prevent arbitrary file execution.",
+        "*.ps1",
+        r"(?i)\bInvoke-Item\s+\$",
+    ),
+    (
+        "PS020", "warning",
+        "& (call operator) with a variable — validate the command to prevent arbitrary code execution.",
+        "*.ps1",
+        r"(?m)^\s*&\s+\$",
+    ),
+    (
+        "PS021", "error",
+        "[System.Reflection.Assembly]::Load / LoadFile / LoadFrom at runtime — potential arbitrary code loading.",
+        "*.ps1",
+        r"(?i)\[System\.Reflection\.Assembly\]::(Load|LoadFile|LoadFrom)\s*\(",
+    ),
+    (
+        "PS022", "warning",
+        "Write-Host piped to another cmdlet — Write-Host outputs to the host, not the pipeline. Use Write-Output or return the value.",
+        "*.ps1",
+        r"Write-Host\s+.{1,120}\|",
+    ),
+    (
+        "PS023", "warning",
+        "Trap{} is legacy PowerShell error handling. Use try/catch/finally instead.",
+        "*.ps1",
+        r"(?i)\bTrap\b\s*\{",
+    ),
+    (
+        "PS024", "warning",
+        "Format-Table / Format-List in pipeline output — formatting cmdlets destroy the objects. Only use at pipeline end or for display.",
+        "*.ps1",
+        r"(?i)\b(Format-Table|Format-List|Format-Wide|ft\b|fl\b)\b.{0,80}\|",
+    ),
+    # ── Bash ────────────────────────────────────────────────────────────────
+    (
+        "SH001", "error",
+        "curl piped directly to shell executes untrusted remote code. Download, verify, then execute.",
+        "*.sh",
+        r"\bcurl\b.{0,200}\|\s*(ba)?sh\b",
+    ),
+    (
+        "SH002", "error",
+        "wget piped directly to shell executes untrusted remote code. Download, verify, then execute.",
+        "*.sh",
+        r"\bwget\b.{0,200}\|\s*(ba)?sh\b",
+    ),
+    (
+        "SH003", "warning",
+        "eval with variable input is an injection risk. Avoid eval or validate input strictly.",
+        "*.sh",
+        r"\beval\s+[\"'`$]",
+    ),
+    (
+        "SH004", "warning",
+        "Hardcoded credential or secret in shell script. Use environment variables or a secrets manager.",
+        "*.sh",
+        r'(?i)(password|secret|api_key|token)\s*=\s*["\'][^"\']{4,}["\']',
+    ),
+    (
+        "SH005", "warning",
+        "rm -rf with a variable path — validate path is non-root and non-empty to prevent data loss.",
+        "*.sh",
+        r"\brm\s+(-[a-zA-Z]*[rf][a-zA-Z]*\s+){1,2}\$",
+    ),
+    (
+        "SH006", "warning",
+        "Hardcoded http:// URL in shell script — use https:// to prevent man-in-the-middle attacks.",
+        "*.sh",
+        r"""['"](http://[^'"]{4,})['"]""",
+    ),
+    (
+        "SH007", "warning",
+        "sudo without -n flag may block CI with an interactive password prompt.",
+        "*.sh",
+        r"\bsudo\b(?!\s+-n)",
+    ),
+]
+
+SARIF_SCHEMA = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
+
+# ---------------------------------------------------------------------------
+
+def glob_files(root: Path, pattern: str):
+    return [p for p in root.rglob(pattern) if not any(
+        part.startswith(".") or part in ("bin", "obj", "node_modules")
+        for part in p.parts
+    )]
+
+
+def scan(root: Path):
+    findings = []
+    compiled = [(rid, level, msg, glob, re.compile(rx, re.MULTILINE))
+                for rid, level, msg, glob, rx in RULES]
+
+    for rid, level, msg, glob, pattern in compiled:
+        for filepath in glob_files(root, glob):
+            try:
+                text = filepath.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for m in pattern.finditer(text):
+                lineno = text[:m.start()].count("\n") + 1
+                col = m.start() - text.rfind("\n", 0, m.start())
+                findings.append({
+                    "ruleId": rid,
+                    "level": level,
+                    "message": msg,
+                    "uri": filepath.relative_to(root).as_posix(),
+                    "line": lineno,
+                    "col": col,
+                })
+    return findings
+
+
+def build_sarif(findings, rules_meta):
+    rules = []
+    seen = set()
+    for rid, level, msg, *_ in RULES:
+        if rid not in seen:
+            seen.add(rid)
+            rules.append({
+                "id": rid,
+                "name": rid,
+                "shortDescription": {"text": msg},
+                "defaultConfiguration": {"level": level},
+            })
+
+    results = []
+    for f in findings:
+        results.append({
+            "ruleId": f["ruleId"],
+            "level": f["level"],
+            "message": {"text": f["message"]},
+            "locations": [{"physicalLocation": {
+                "artifactLocation": {"uri": f["uri"], "uriBaseId": "%SRCROOT%"},
+                "region": {"startLine": f["line"], "startColumn": f["col"]},
+            }}],
+        })
+
+    return {
+        "$schema": SARIF_SCHEMA,
+        "version": "2.1.0",
+        "runs": [{"tool": {"driver": {"name": "pattern-check", "rules": rules}}, "results": results}],
+    }
+
+
+if __name__ == "__main__":
+    root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(".")
+    findings = scan(root)
+    sarif = build_sarif(findings, RULES)
+    out = Path("pattern-check.sarif")
+    out.write_text(json.dumps(sarif, indent=2))
+    print(f"{len(findings)} finding(s) written to {out}")
+    # Exit 0 always — findings go to GitHub Security tab, not CI failure.

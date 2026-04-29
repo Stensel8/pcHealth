@@ -1,0 +1,53 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+
+  "description": "Renovate manages NuGet packages with grouping and automerge. GitHub Actions are handled by Dependabot (.github/dependabot.yml). Both tools cover NuGet — Renovate for regular bumps, Dependabot for security advisories.",
+
+  "extends": ["config:recommended"],
+
+  "forkProcessing": "enabled",
+
+  "enabledManagers": ["nuget"],
+
+  "schedule": ["on monday"],
+
+  "labels": ["dependencies", "dotnet"],
+
+  "assignees": ["Stensel8"],
+
+  "commitMessagePrefix": "deps:",
+
+  "packageRules": [
+    {
+      "description": "Group all Windows App SDK packages into a single PR.",
+      "groupName": "Windows App SDK",
+      "labels": ["dependencies", "dotnet", "winui3"],
+      "matchPackageNames": [
+        "/^Microsoft\\.WindowsAppSDK/",
+        "/^Microsoft\\.Windows\\.SDK/"
+      ]
+    },
+    {
+      "description": "Group .NET BCL packages (System.*) into a single PR.",
+      "groupName": ".NET BCL",
+      "labels": ["dependencies", "dotnet"],
+      "matchPackageNames": [
+        "/^System\\./"
+      ]
+    },
+    {
+      "description": "Group Microsoft infrastructure packages into a single PR.",
+      "groupName": "Microsoft infra",
+      "labels": ["dependencies", "dotnet"],
+      "matchPackageNames": [
+        "/^Microsoft\\.Management\\./"
+      ]
+    },
+    {
+      "description": "Auto-merge patch updates that pass CI, to reduce review noise.",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    }
+  ]
+}
