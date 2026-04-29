@@ -94,12 +94,12 @@ public sealed partial class MainWindow : Window
     {
         Type? target = tag switch
         {
-            "health"     => typeof(HealthPage),
-            "tools"      => typeof(ToolsPage),
-            "programs"   => typeof(ProgramsPage),
+            "health" => typeof(HealthPage),
+            "tools" => typeof(ToolsPage),
+            "programs" => typeof(ProgramsPage),
             "licensekey" => typeof(LicenseKeyPage),
-            "settings"   => typeof(SettingsPage),
-            "info"       => typeof(InfoPage),
+            "settings" => typeof(SettingsPage),
+            "info" => typeof(InfoPage),
             _ => null
         };
 

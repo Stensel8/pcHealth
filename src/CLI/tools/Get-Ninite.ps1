@@ -12,7 +12,7 @@ Write-Host "`nDownloading Ninite installer (Edge, Chrome, VLC, 7-Zip)...`n" -For
 try {
     Invoke-WebRequest -Uri $uri -OutFile $dest -UseBasicParsing
     Write-Host "[OK] Download complete. Launching installer...`n" -ForegroundColor Green
-    Start-Process $dest
+    if (Test-Path $dest) { Start-Process -FilePath $dest } else { Write-Host "[!!] Installer not found: $dest" -ForegroundColor Red }
 } catch {
     Write-Host "[!] Download failed: $($_.Exception.Message)`n" -ForegroundColor Red
 }

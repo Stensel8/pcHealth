@@ -34,7 +34,9 @@ if (-not $onLinux) {
     )
     if (-not $isAdmin) {
         $shell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell' }
-        Start-Process $shell -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$PSCommandPath`"" -Verb RunAs
+        $shellCmd = Get-Command $shell -ErrorAction SilentlyContinue
+        if (-not $shellCmd) { Write-Host "[!!] Shell '$shell' not found." -ForegroundColor Red; exit 1 }
+        Start-Process -FilePath $shellCmd.Source -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$PSCommandPath`"" -Verb RunAs
         exit
     }
 }

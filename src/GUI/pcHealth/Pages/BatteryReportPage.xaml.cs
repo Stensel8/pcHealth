@@ -71,17 +71,17 @@ public sealed partial class BatteryReportPage : Page
 
     private static string DecodeBatteryStatus(ushort code) => code switch
     {
-        1  => "Discharging",
-        2  => "On AC power",
-        3  => "Fully charged",
-        4  => "Low",
-        5  => "Critical",
-        6  => "Charging",
-        7  => "Charging (High)",
-        8  => "Charging (Low)",
-        9  => "Charging (Critical)",
+        1 => "Discharging",
+        2 => "On AC power",
+        3 => "Fully charged",
+        4 => "Low",
+        5 => "Critical",
+        6 => "Charging",
+        7 => "Charging (High)",
+        8 => "Charging (Low)",
+        9 => "Charging (Critical)",
         11 => "Partially charged",
-        _  => $"Unknown ({code})",
+        _ => $"Unknown ({code})",
     };
 
     private static string DecodeChemistry(ushort code) => code switch
@@ -107,13 +107,12 @@ public sealed partial class BatteryReportPage : Page
 
             await Task.Run(() =>
             {
-                using var proc = Process.Start(new ProcessStartInfo
-                {
-                    FileName = "powercfg.exe",
-                    Arguments = $"/batteryreport /output \"{reportPath}\" /quiet",
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                });
+                var psi = new ProcessStartInfo { FileName = "powercfg.exe", UseShellExecute = false, CreateNoWindow = true };
+                psi.ArgumentList.Add("/batteryreport");
+                psi.ArgumentList.Add("/output");
+                psi.ArgumentList.Add(reportPath);
+                psi.ArgumentList.Add("/quiet");
+                using var proc = Process.Start(psi);
                 proc?.WaitForExit(30_000);
             });
 

@@ -206,7 +206,7 @@ public sealed partial class HardwareInfoPage : Page
 
         var sb = new StringBuilder();
         sb.AppendLine("pcHealth - Hardware Information");
-        sb.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine();
         AppendSection(sb, "CPU", data.Cpu);
         AppendSection(sb, "GPU", data.Gpu);

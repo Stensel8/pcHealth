@@ -187,7 +187,10 @@ function Show-WindowsProgramsMenu {
                             $appReg  = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\$($pkg.ExeName)" -ErrorAction SilentlyContinue
                             $exePath = if ($appReg) { $appReg.'(default)' } else { $pkg.ExeName }
                         }
-                        try   { Start-Process $exePath }
+                        try {
+                            if (Test-Path $exePath) { Start-Process -FilePath $exePath }
+                            else { Start-Process -FilePath $pkg.ExeName }
+                        }
                         catch { Write-Host "`n  [!!] Cannot open $($pkg.Name): $_" -ForegroundColor Red; Start-Sleep 2 }
                     }
                     # '3' or anything else: fall through back to menu

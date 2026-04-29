@@ -54,12 +54,13 @@ internal static class CliRunner
         // Escape single quotes so paths like C:\Users\O'Brien\... don't break PS syntax.
         var escaped = path.Replace("'", "''");
         var cmd = $"& '{escaped}'; Write-Host ''; Read-Host 'Press Enter to close'";
-        Start(new ProcessStartInfo
-        {
-            FileName = "pwsh.exe",
-            Arguments = $"-NoProfile -ExecutionPolicy Bypass -Command \"{cmd}\"",
-            UseShellExecute = true,
-        });
+        var psi = new ProcessStartInfo { FileName = "pwsh.exe", UseShellExecute = true };
+        psi.ArgumentList.Add("-NoProfile");
+        psi.ArgumentList.Add("-ExecutionPolicy");
+        psi.ArgumentList.Add("Bypass");
+        psi.ArgumentList.Add("-Command");
+        psi.ArgumentList.Add(cmd);
+        Start(psi);
     }
 
     /// <summary>Opens a URI (ms-settings:, https://, etc.) via the Windows shell.</summary>
@@ -153,12 +154,11 @@ internal static class CliRunner
             throw new ArgumentException("Invalid characters in winget arguments.", nameof(wingetArguments));
 
         var cmd = $"winget {wingetArguments}; Write-Host ''; Read-Host 'Press Enter to close'";
-        Start(new ProcessStartInfo
-        {
-            FileName = "pwsh.exe",
-            Arguments = $"-NoProfile -Command \"{cmd}\"",
-            UseShellExecute = true,
-        });
+        var psi = new ProcessStartInfo { FileName = "pwsh.exe", UseShellExecute = true };
+        psi.ArgumentList.Add("-NoProfile");
+        psi.ArgumentList.Add("-Command");
+        psi.ArgumentList.Add(cmd);
+        Start(psi);
     }
 
     /// <summary>

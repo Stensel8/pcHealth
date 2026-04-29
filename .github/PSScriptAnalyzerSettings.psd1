@@ -14,4 +14,15 @@
         'PSUseShouldProcessForStateChangingFunctions',
         'PSAvoidUsingCmdletAliases'
     )
+
+    # PSUseCompatibleCmdlets: flag cmdlets removed in PowerShell 7 (e.g. Get-EventLog, Get-WmiObject).
+    # Targets the PS7 Windows and Linux profiles so cross-platform gaps are caught.
+    Rules = @{
+        PSUseCompatibleCmdlets = @{
+            compatibility = @(
+                'core-7.2.0-windows',
+                'core-7.2.0-linux'
+            )
+        }
+    }
 }

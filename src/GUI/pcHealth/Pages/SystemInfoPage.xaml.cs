@@ -163,7 +163,7 @@ public sealed partial class SystemInfoPage : Page
 
         var sb = new StringBuilder();
         sb.AppendLine("pcHealth - System Information");
-        sb.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine();
         AppendSection(sb, "Operating System", data.Os);
         AppendSection(sb, "Machine", data.Machine);

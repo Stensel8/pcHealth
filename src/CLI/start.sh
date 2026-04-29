@@ -2,6 +2,7 @@
 # ============================================================================
 # pcHealth — CLI Launcher (Linux)
 # Checks dependencies, then starts the CLI elevated via sudo.
+# sudo is used intentionally throughout — this is an interactive launcher that needs privilege escalation.
 # ============================================================================
 
 set -euo pipefail

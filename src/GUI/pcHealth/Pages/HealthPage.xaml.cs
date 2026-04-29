@@ -15,16 +15,16 @@ namespace pcHealth.Pages;
 public sealed partial class HealthPage : Page
 {
     // Live battery update state
-    private TextBlock?      _battChargeLevelText;
-    private TextBlock?      _battPowerDrawText;
-    private ProgressBar?    _battProgressBar;
-    private int?            _battFullCapacityMwh;
+    private TextBlock? _battChargeLevelText;
+    private TextBlock? _battPowerDrawText;
+    private ProgressBar? _battProgressBar;
+    private int? _battFullCapacityMwh;
     private DispatcherTimer? _battTimer;
 
     public HealthPage()
     {
         InitializeComponent();
-        Loaded   += OnLoaded;
+        Loaded += OnLoaded;
         Unloaded += (_, _) => { _battTimer?.Stop(); _battTimer = null; };
     }
 
@@ -50,53 +50,53 @@ public sealed partial class HealthPage : Page
 
     private record GpuInfo(
         string Name,
-        int?   DriverAgeMonths,
-        int?   ReleaseYear,
+        int? DriverAgeMonths,
+        int? ReleaseYear,
         string? SeriesName);
 
     private record RamModule(
         string Slot,
         double CapacityGb,
-        int    SpeedMts,
-        int    MemoryType,   // SMBIOSMemoryType: 24=DDR3, 26=DDR4, 34=DDR5
+        int SpeedMts,
+        int MemoryType,   // SMBIOSMemoryType: 24=DDR3, 26=DDR4, 34=DDR5
         string PartNumber,
         string Manufacturer);
 
     private record DiskHealthInfo(
-        string      Name,
-        string      MediaType,
+        string Name,
+        string MediaType,
         CheckStatus HealthStatus,
-        string      HealthText,
-        byte?       Wear,
-        ushort?     Temperature,
-        ulong?      PowerOnHours,
-        string?     SpeedFlag
+        string HealthText,
+        byte? Wear,
+        ushort? Temperature,
+        ulong? PowerOnHours,
+        string? SpeedFlag
     );
 
     private record BatteryInfo(
-        string?  Name,
-        string?  Chemistry,
-        int?     DesignCapacityMwh,
-        int?     FullChargeCapacityMwh,
-        int?     RemainingCapacityMwh,
-        int?     ChargeRateMw,
-        string   StatusText,
-        int?     EstimatedRuntimeMin,
-        int?     CycleCount,
-        bool     CycleCountQueried,   // true even when CycleCount == 0 (driver reported it)
-        int?     BatteryAgeMonths
+        string? Name,
+        string? Chemistry,
+        int? DesignCapacityMwh,
+        int? FullChargeCapacityMwh,
+        int? RemainingCapacityMwh,
+        int? ChargeRateMw,
+        string StatusText,
+        int? EstimatedRuntimeMin,
+        int? CycleCount,
+        bool CycleCountQueried,   // true even when CycleCount == 0 (driver reported it)
+        int? BatteryAgeMonths
     );
 
     private record HealthData(
-        List<HealthRow>      Cpu,
-        List<GpuInfo>        Gpu,
-        List<RamModule>      Ram,
+        List<HealthRow> Cpu,
+        List<GpuInfo> Gpu,
+        List<RamModule> Ram,
         List<DiskHealthInfo> Smart,
-        bool                 SmartUsedSmartctl,
-        List<DriveRow>       DiskSpace,
-        List<HealthRow>      WinVer,
-        List<HealthRow>      Boot,
-        BatteryInfo?         Battery
+        bool SmartUsedSmartctl,
+        List<DriveRow> DiskSpace,
+        List<HealthRow> WinVer,
+        List<HealthRow> Boot,
+        BatteryInfo? Battery
     );
 
     private static readonly Dictionary<string, DateTime> _winReleaseDates = new()
@@ -114,32 +114,32 @@ public sealed partial class HealthPage : Page
     private sealed class HardwareDb
     {
         [JsonPropertyName("gpu_series")] public List<GpuSeriesEntry> GpuSeries { get; init; } = [];
-        [JsonPropertyName("gpu_models")] public List<GpuModelEntry>  GpuModels { get; init; } = [];
-        [JsonPropertyName("chipsets")]   public List<ChipsetEntry>   Chipsets  { get; init; } = [];
+        [JsonPropertyName("gpu_models")] public List<GpuModelEntry> GpuModels { get; init; } = [];
+        [JsonPropertyName("chipsets")] public List<ChipsetEntry> Chipsets { get; init; } = [];
     }
 
     private sealed class GpuSeriesEntry
     {
         [JsonPropertyName("pattern")] public string Pattern { get; init; } = "";
-        [JsonPropertyName("vendor")]  public string Vendor  { get; init; } = "";
-        [JsonPropertyName("series")]  public string Series  { get; init; } = "";
-        [JsonPropertyName("year")]    public int    Year    { get; init; }
+        [JsonPropertyName("vendor")] public string Vendor { get; init; } = "";
+        [JsonPropertyName("series")] public string Series { get; init; } = "";
+        [JsonPropertyName("year")] public int Year { get; init; }
     }
 
     private sealed class GpuModelEntry
     {
         [JsonPropertyName("name")] public string Name { get; init; } = "";
-        [JsonPropertyName("year")] public int    Year { get; init; }
+        [JsonPropertyName("year")] public int Year { get; init; }
     }
 
     private sealed class ChipsetEntry
     {
-        [JsonPropertyName("pattern")]  public string  Pattern  { get; init; } = "";
-        [JsonPropertyName("vendor")]   public string  Vendor   { get; init; } = "";
-        [JsonPropertyName("name")]     public string  Name     { get; init; } = "";
-        [JsonPropertyName("platform")] public string  Platform { get; init; } = "";
-        [JsonPropertyName("year")]     public int     Year     { get; init; }
-        [JsonPropertyName("note")]     public string? Note     { get; init; }
+        [JsonPropertyName("pattern")] public string Pattern { get; init; } = "";
+        [JsonPropertyName("vendor")] public string Vendor { get; init; } = "";
+        [JsonPropertyName("name")] public string Name { get; init; } = "";
+        [JsonPropertyName("platform")] public string Platform { get; init; } = "";
+        [JsonPropertyName("year")] public int Year { get; init; }
+        [JsonPropertyName("note")] public string? Note { get; init; }
     }
 
     private static HardwareDb? _hardwareDb;
@@ -175,12 +175,12 @@ public sealed partial class HealthPage : Page
 
     private static HealthData GatherData()
     {
-        var cpu       = new List<HealthRow>();
-        var gpu       = new List<GpuInfo>();
-        var ram       = new List<RamModule>();
+        var cpu = new List<HealthRow>();
+        var gpu = new List<GpuInfo>();
+        var ram = new List<RamModule>();
         var diskSpace = new List<DriveRow>();
-        var winVer    = new List<HealthRow>();
-        var boot      = new List<HealthRow>();
+        var winVer = new List<HealthRow>();
+        var boot = new List<HealthRow>();
 
         using var session = CimSession.Create(null);
 
@@ -221,7 +221,7 @@ public sealed partial class HealthPage : Page
             foreach (var inst in session.QueryInstances("root/cimv2", "WQL",
                 "SELECT Manufacturer, Product FROM Win32_BaseBoard"))
             {
-                var mfr  = (inst.CimInstanceProperties["Manufacturer"]?.Value?.ToString() ?? "").Trim();
+                var mfr = (inst.CimInstanceProperties["Manufacturer"]?.Value?.ToString() ?? "").Trim();
                 var prod = (inst.CimInstanceProperties["Product"]?.Value?.ToString() ?? "").Trim();
                 if (string.IsNullOrEmpty(prod)) break;
 
@@ -235,7 +235,7 @@ public sealed partial class HealthPage : Page
                 if (cs.Name != null && cs.Year > 0)
                 {
                     int age = DateTime.Today.Year - cs.Year;
-                    var st  = age >= 10 ? CheckStatus.Bad : age >= 7 ? CheckStatus.Warning : CheckStatus.Good;
+                    var st = age >= 10 ? CheckStatus.Bad : age >= 7 ? CheckStatus.Warning : CheckStatus.Good;
                     var label = cs.Platform != null ? $"{cs.Name} ({cs.Platform})" : cs.Name;
                     cpu.Add(new HealthRow("Chipset", label, CheckStatus.Info));
                     cpu.Add(new HealthRow("Chipset release", cs.Year.ToString(), st));
@@ -289,14 +289,14 @@ public sealed partial class HealthPage : Page
             foreach (var inst in session.QueryInstances("root/cimv2", "WQL",
                 "SELECT BankLabel, Capacity, Speed, ConfiguredClockSpeed, SMBIOSMemoryType, PartNumber, Manufacturer FROM Win32_PhysicalMemory"))
             {
-                var slot   = inst.CimInstanceProperties["BankLabel"]?.Value?.ToString()?.Trim() ?? "?";
+                var slot = inst.CimInstanceProperties["BankLabel"]?.Value?.ToString()?.Trim() ?? "?";
                 var capRaw = inst.CimInstanceProperties["Capacity"]?.Value;
                 double capGb = capRaw is ulong ul ? ul / 1_073_741_824.0
-                             : capRaw is uint   u  ? u  / 1_073_741_824.0 : 0;
+                             : capRaw is uint u ? u / 1_073_741_824.0 : 0;
 
                 // ConfiguredClockSpeed is more accurate than Speed
                 var cfgRaw = inst.CimInstanceProperties["ConfiguredClockSpeed"]?.Value;
-                int speed  = cfgRaw is uint cu ? (int)cu : cfgRaw is int ci ? ci : 0;
+                int speed = cfgRaw is uint cu ? (int)cu : cfgRaw is int ci ? ci : 0;
                 if (speed <= 0)
                 {
                     var spdRaw = inst.CimInstanceProperties["Speed"]?.Value;
@@ -306,7 +306,7 @@ public sealed partial class HealthPage : Page
                 var mtRaw = inst.CimInstanceProperties["SMBIOSMemoryType"]?.Value;
                 int memType = mtRaw is ushort us ? us : mtRaw is uint um ? (int)um : 0;
 
-                var pn  = inst.CimInstanceProperties["PartNumber"]?.Value?.ToString()?.Trim() ?? "";
+                var pn = inst.CimInstanceProperties["PartNumber"]?.Value?.ToString()?.Trim() ?? "";
                 var mfr = inst.CimInstanceProperties["Manufacturer"]?.Value?.ToString()?.Trim() ?? "";
                 ram.Add(new RamModule(slot, capGb, speed, memType, pn, ResolveRamManufacturer(mfr, pn)));
             }
@@ -335,8 +335,8 @@ public sealed partial class HealthPage : Page
                 .Where(d => d.DriveType == DriveType.Fixed && d.IsReady))
             {
                 long total = drive.TotalSize;
-                long free  = drive.AvailableFreeSpace;
-                long used  = total - free;
+                long free = drive.AvailableFreeSpace;
+                long used = total - free;
                 double pct = total > 0 ? (double)used / total * 100 : 0;
                 var s = pct > 90 ? CheckStatus.Bad : pct > 75 ? CheckStatus.Warning : CheckStatus.Good;
                 diskSpace.Add(new DriveRow(drive.Name.TrimEnd('\\'), used, total, s));
@@ -350,9 +350,9 @@ public sealed partial class HealthPage : Page
             using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
                 @"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
             var displayVer = key?.GetValue("DisplayVersion") as string;
-            var buildStr   = key?.GetValue("CurrentBuild") as string;
-            bool isWin11   = int.TryParse(buildStr, out int build) && build >= 22000;
-            var edition    = isWin11 ? "Windows 11" : "Windows 10";
+            var buildStr = key?.GetValue("CurrentBuild") as string;
+            bool isWin11 = int.TryParse(buildStr, out int build) && build >= 22000;
+            var edition = isWin11 ? "Windows 11" : "Windows 10";
 
             winVer.Add(new HealthRow("Version",
                 string.IsNullOrEmpty(displayVer) ? edition : $"{edition} {displayVer}",
@@ -489,7 +489,7 @@ public sealed partial class HealthPage : Page
             if (!desc.Contains("SMBus", StringComparison.OrdinalIgnoreCase)) continue;
 
             var dateStr = sub.GetValue("DriverDate") as string;
-            var verStr  = sub.GetValue("DriverVersion") as string;
+            var verStr = sub.GetValue("DriverVersion") as string;
 
             DateTime? driverDate = null;
             if (!string.IsNullOrEmpty(dateStr)
@@ -524,12 +524,12 @@ public sealed partial class HealthPage : Page
             using var proc = new Process();
             proc.StartInfo = new ProcessStartInfo
             {
-                FileName               = exe,
-                Arguments              = args,
-                UseShellExecute        = false,
+                FileName = exe,
+                Arguments = args,
+                UseShellExecute = false,
                 RedirectStandardOutput = true,
-                RedirectStandardError  = true,
-                CreateNoWindow         = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
             };
             proc.Start();
             var output = proc.StandardOutput.ReadToEnd();
@@ -575,9 +575,9 @@ public sealed partial class HealthPage : Page
                            : p.ValueKind == JsonValueKind.False ? false : (bool?)null;
                 var (healthText, healthStatus) = passed switch
                 {
-                    true  => ("Healthy", CheckStatus.Good),
+                    true => ("Healthy", CheckStatus.Good),
                     false => ("FAILING", CheckStatus.Bad),
-                    _     => ("Unknown", CheckStatus.Unknown),
+                    _ => ("Unknown", CheckStatus.Unknown),
                 };
 
                 byte? wear = null;
@@ -662,11 +662,11 @@ public sealed partial class HealthPage : Page
                 "SELECT DeviceId, Wear, Temperature, PowerOnHours FROM MSFT_StorageReliabilityCounter"))
             {
                 var rid = rel.CimInstanceProperties["DeviceId"]?.Value?.ToString() ?? "";
-                var w   = rel.CimInstanceProperties["Wear"]?.Value as byte?;
-                var rt  = rel.CimInstanceProperties["Temperature"]?.Value;
-                var t   = rt is ushort us ? us : rt is byte bt ? (ushort?)bt : null;
-                var rp  = rel.CimInstanceProperties["PowerOnHours"]?.Value;
-                var p   = rp is ulong ul ? ul : rp is uint ui ? (ulong?)ui : null;
+                var w = rel.CimInstanceProperties["Wear"]?.Value as byte?;
+                var rt = rel.CimInstanceProperties["Temperature"]?.Value;
+                var t = rt is ushort us ? us : rt is byte bt ? (ushort?)bt : null;
+                var rp = rel.CimInstanceProperties["PowerOnHours"]?.Value;
+                var p = rp is ulong ul ? ul : rp is uint ui ? (ulong?)ui : null;
                 relMap[rid] = (w, t, p);
             }
         }
@@ -678,7 +678,7 @@ public sealed partial class HealthPage : Page
             foreach (var disk in session.QueryInstances("root/Microsoft/Windows/Storage", "WQL",
                 "SELECT DeviceId, FriendlyName, HealthStatus, MediaType, BusType FROM MSFT_PhysicalDisk"))
             {
-                var name     = disk.CimInstanceProperties["FriendlyName"]?.Value?.ToString() ?? "Unknown";
+                var name = disk.CimInstanceProperties["FriendlyName"]?.Value?.ToString() ?? "Unknown";
                 var deviceId = disk.CimInstanceProperties["DeviceId"]?.Value?.ToString() ?? "";
 
                 var rawHealth = disk.CimInstanceProperties["HealthStatus"]?.Value;
@@ -686,10 +686,10 @@ public sealed partial class HealthPage : Page
                        : rawHealth is int i2 ? i2 : -1;
                 var (healthText, healthStatus) = hs switch
                 {
-                    0 => ("Healthy",   CheckStatus.Good),
-                    1 => ("Warning",   CheckStatus.Warning),
+                    0 => ("Healthy", CheckStatus.Good),
+                    1 => ("Warning", CheckStatus.Warning),
                     2 => ("Unhealthy", CheckStatus.Bad),
-                    _ => ("Unknown",   CheckStatus.Unknown),
+                    _ => ("Unknown", CheckStatus.Unknown),
                 };
 
                 var rawMedia = disk.CimInstanceProperties["MediaType"]?.Value;
@@ -701,18 +701,18 @@ public sealed partial class HealthPage : Page
                 {
                     (17, _) => "NVMe SSD",
                     (11, 4) => "SATA SSD",
-                    (_,  3) => "HDD",
+                    (_, 3) => "HDD",
                     (11, _) => "SATA",
-                    _       => mt == 4 ? "SSD" : "Disk",
+                    _ => mt == 4 ? "SSD" : "Disk",
                 };
 
                 string? speedFlag = (bt, mt) switch
                 {
                     (11, 4) => "SATA SSD — significantly slower than NVMe, consider upgrading",
                     (11, 3) => "SATA HDD — mechanical, much slower than SSD",
-                    (_,  3) => "HDD — mechanical, much slower than SSD",
-                    (3,  _) => "ATA — very old interface",
-                    _       => null,
+                    (_, 3) => "HDD — mechanical, much slower than SSD",
+                    (3, _) => "ATA — very old interface",
+                    _ => null,
                 };
 
                 relMap.TryGetValue(deviceId, out var rc);
@@ -737,10 +737,10 @@ public sealed partial class HealthPage : Page
     {
         string? name = null;
         string? chemistry = null;
-        int?    estimatedRuntimeMin = null;
-        int?    cycleCount = null;
-        bool    cycleCountQueried = false;
-        int?    batteryAgeMonths = null;
+        int? estimatedRuntimeMin = null;
+        int? cycleCount = null;
+        bool cycleCountQueried = false;
+        int? batteryAgeMonths = null;
 
         // Check battery presence and get basic data via Win32_Battery
         try
@@ -790,9 +790,9 @@ public sealed partial class HealthPage : Page
                 uint dateVal = rawDate is uint u ? u : rawDate is ushort us ? (uint)us : 0;
                 if (dateVal > 0)
                 {
-                    int day   = (int)(dateVal & 0x1F);
+                    int day = (int)(dateVal & 0x1F);
                     int month = (int)((dateVal >> 5) & 0x0F);
-                    int year  = (int)((dateVal >> 9) & 0x7F) + 1980;
+                    int year = (int)((dateVal >> 9) & 0x7F) + 1980;
                     if (month is >= 1 and <= 12 && day is >= 1 and <= 31 && year >= 2000)
                     {
                         var mfgDate = new DateTime(year, month, day);
@@ -812,10 +812,10 @@ public sealed partial class HealthPage : Page
 
             var statusText = report.Status switch
             {
-                BatteryStatus.Charging    => "Charging",
+                BatteryStatus.Charging => "Charging",
                 BatteryStatus.Discharging => "Discharging",
-                BatteryStatus.Idle        => "Idle",
-                _                         => "Unknown",
+                BatteryStatus.Idle => "Idle",
+                _ => "Unknown",
             };
 
             return new BatteryInfo(
@@ -859,13 +859,25 @@ public sealed partial class HealthPage : Page
         if (m.Success)
         {
             var model = m.Groups[1].Value;
-            int gen   = model.Length == 4 ? (model[0] - '0') : int.Parse(model[..2]);
-            int year  = gen switch
+            int gen = model.Length == 4 ? (model[0] - '0') : int.Parse(model[..2]);
+            int year = gen switch
             {
-                1  => 2010, 2  => 2011, 3  => 2012, 4  => 2013,
-                5  => 2015, 6  => 2015, 7  => 2017, 8  => 2018,
-                9  => 2019, 10 => 2020, 11 => 2021, 12 => 2022,
-                13 => 2023, 14 => 2023, 15 => 2024, _  => -1
+                1 => 2010,
+                2 => 2011,
+                3 => 2012,
+                4 => 2013,
+                5 => 2015,
+                6 => 2015,
+                7 => 2017,
+                8 => 2018,
+                9 => 2019,
+                10 => 2020,
+                11 => 2021,
+                12 => 2022,
+                13 => 2023,
+                14 => 2023,
+                15 => 2024,
+                _ => -1
             };
             if (year > 0) return (year, $"Intel {gen}{Ordinal(gen)} gen");
         }
@@ -874,7 +886,7 @@ public sealed partial class HealthPage : Page
         if (mu.Success)
         {
             int series = mu.Groups[1].Value[0] - '0';
-            int year   = series switch { 1 => 2023, 2 => 2024, _ => 2024 };
+            int year = series switch { 1 => 2023, 2 => 2024, _ => 2024 };
             return (year, $"Intel Core Ultra Series {series}");
         }
 
@@ -882,10 +894,18 @@ public sealed partial class HealthPage : Page
         if (mr.Success)
         {
             int series = mr.Groups[1].Value[0] - '0';
-            int year   = series switch
+            int year = series switch
             {
-                1 => 2017, 2 => 2018, 3 => 2019, 4 => 2020,
-                5 => 2021, 6 => 2022, 7 => 2023, 8 => 2024, 9 => 2024, _ => -1
+                1 => 2017,
+                2 => 2018,
+                3 => 2019,
+                4 => 2020,
+                5 => 2021,
+                6 => 2022,
+                7 => 2023,
+                8 => 2024,
+                9 => 2024,
+                _ => -1
             };
             if (year > 0) return (year, $"AMD Ryzen {series}000 series");
         }
@@ -906,11 +926,11 @@ public sealed partial class HealthPage : Page
         if (Regex.IsMatch(name, @"GTX\s*10\d{2}", RegexOptions.IgnoreCase)) return 2016;
         if (Regex.IsMatch(name, @"GTX\s*9\d{2}\b", RegexOptions.IgnoreCase)) return 2014;
 
-        if (Regex.IsMatch(name, @"RX\s*9\d{3}\b",  RegexOptions.IgnoreCase)) return 2025;
-        if (Regex.IsMatch(name, @"RX\s*7\d{3}\b",  RegexOptions.IgnoreCase)) return 2022;
-        if (Regex.IsMatch(name, @"RX\s*6\d{3}\b",  RegexOptions.IgnoreCase)) return 2020;
-        if (Regex.IsMatch(name, @"RX\s*5\d{3}\b",  RegexOptions.IgnoreCase)) return 2019;
-        if (Regex.IsMatch(name, @"RX\s*[45]\d{2}\b",RegexOptions.IgnoreCase)) return 2017;
+        if (Regex.IsMatch(name, @"RX\s*9\d{3}\b", RegexOptions.IgnoreCase)) return 2025;
+        if (Regex.IsMatch(name, @"RX\s*7\d{3}\b", RegexOptions.IgnoreCase)) return 2022;
+        if (Regex.IsMatch(name, @"RX\s*6\d{3}\b", RegexOptions.IgnoreCase)) return 2020;
+        if (Regex.IsMatch(name, @"RX\s*5\d{3}\b", RegexOptions.IgnoreCase)) return 2019;
+        if (Regex.IsMatch(name, @"RX\s*[45]\d{2}\b", RegexOptions.IgnoreCase)) return 2017;
 
         if (Regex.IsMatch(name, @"Arc\s*B\d{3}", RegexOptions.IgnoreCase)) return 2024;
         if (Regex.IsMatch(name, @"Arc\s*A\d{3}", RegexOptions.IgnoreCase)) return 2022;
@@ -925,21 +945,21 @@ public sealed partial class HealthPage : Page
         if (!string.IsNullOrEmpty(mfr) && mfr != "Unknown" && mfr.Length > 2) return mfr;
         return pn switch
         {
-            var p when p.StartsWith("CM",   StringComparison.OrdinalIgnoreCase) => "Corsair",
-            var p when p.StartsWith("CT",   StringComparison.OrdinalIgnoreCase)
-                    || p.StartsWith("BL",   StringComparison.OrdinalIgnoreCase) => "Crucial",
-            var p when p.StartsWith("KVR",  StringComparison.OrdinalIgnoreCase) => "Kingston",
-            var p when p.StartsWith("HX",   StringComparison.OrdinalIgnoreCase) => "HyperX / Kingston",
-            var p when p.StartsWith("F4-",  StringComparison.OrdinalIgnoreCase)
-                    || p.StartsWith("F5-",  StringComparison.OrdinalIgnoreCase) => "G.Skill",
-            var p when p.StartsWith("TED",  StringComparison.OrdinalIgnoreCase)
+            var p when p.StartsWith("CM", StringComparison.OrdinalIgnoreCase) => "Corsair",
+            var p when p.StartsWith("CT", StringComparison.OrdinalIgnoreCase)
+                    || p.StartsWith("BL", StringComparison.OrdinalIgnoreCase) => "Crucial",
+            var p when p.StartsWith("KVR", StringComparison.OrdinalIgnoreCase) => "Kingston",
+            var p when p.StartsWith("HX", StringComparison.OrdinalIgnoreCase) => "HyperX / Kingston",
+            var p when p.StartsWith("F4-", StringComparison.OrdinalIgnoreCase)
+                    || p.StartsWith("F5-", StringComparison.OrdinalIgnoreCase) => "G.Skill",
+            var p when p.StartsWith("TED", StringComparison.OrdinalIgnoreCase)
                     || p.StartsWith("TEAMGROUP", StringComparison.OrdinalIgnoreCase) => "TeamGroup",
-            var p when p.StartsWith("MTA",  StringComparison.OrdinalIgnoreCase)
-                    || p.StartsWith("MT",   StringComparison.OrdinalIgnoreCase) => "Micron",
+            var p when p.StartsWith("MTA", StringComparison.OrdinalIgnoreCase)
+                    || p.StartsWith("MT", StringComparison.OrdinalIgnoreCase) => "Micron",
             var p when p.StartsWith("M378", StringComparison.OrdinalIgnoreCase)
                     || p.StartsWith("M471", StringComparison.OrdinalIgnoreCase) => "Samsung",
-            var p when p.StartsWith("AD4",  StringComparison.OrdinalIgnoreCase)
-                    || p.StartsWith("AX4",  StringComparison.OrdinalIgnoreCase) => "ADATA",
+            var p when p.StartsWith("AD4", StringComparison.OrdinalIgnoreCase)
+                    || p.StartsWith("AX4", StringComparison.OrdinalIgnoreCase) => "ADATA",
             _ => mfr.Length > 0 ? mfr : "Unknown"
         };
     }
@@ -966,9 +986,9 @@ public sealed partial class HealthPage : Page
         foreach (var s in statuses)
         {
             if (s == CheckStatus.Bad) return CheckStatus.Bad;
-            if (s == CheckStatus.Warning && worst != CheckStatus.Bad)                         worst = CheckStatus.Warning;
-            if (s == CheckStatus.Good    && worst is CheckStatus.Info or CheckStatus.Unknown) worst = CheckStatus.Good;
-            if (s == CheckStatus.Unknown && worst == CheckStatus.Info)                        worst = CheckStatus.Unknown;
+            if (s == CheckStatus.Warning && worst != CheckStatus.Bad) worst = CheckStatus.Warning;
+            if (s == CheckStatus.Good && worst is CheckStatus.Info or CheckStatus.Unknown) worst = CheckStatus.Good;
+            if (s == CheckStatus.Unknown && worst == CheckStatus.Info) worst = CheckStatus.Unknown;
         }
         return worst;
     }
@@ -977,10 +997,10 @@ public sealed partial class HealthPage : Page
     {
         var key = status switch
         {
-            CheckStatus.Good    => "SystemFillColorSuccessBrush",
+            CheckStatus.Good => "SystemFillColorSuccessBrush",
             CheckStatus.Warning => "SystemFillColorCautionBrush",
-            CheckStatus.Bad     => "SystemFillColorCriticalBrush",
-            _                   => "TextFillColorSecondaryBrush",
+            CheckStatus.Bad => "SystemFillColorCriticalBrush",
+            _ => "TextFillColorSecondaryBrush",
         };
         if (Application.Current.Resources.TryGetValue(key, out var b))
             dot.Fill = (Brush)b;
@@ -990,13 +1010,13 @@ public sealed partial class HealthPage : Page
     {
         LoadingPanel.Visibility = Visibility.Collapsed;
 
-        SetStatusDot(CpuStatusDot,    PopulateCard(CpuRows,        data.Cpu,      CpuExpander));
-        SetStatusDot(GpuStatusDot,    PopulateGpuCard(GpuRows,     data.Gpu,      GpuExpander));
-        SetStatusDot(RamStatusDot,    PopulateRamCard(RamRows,      data.Ram,      RamExpander));
-        SetStatusDot(SmartStatusDot,  PopulateDiskHealthCard(SmartRows, data.Smart, data.SmartUsedSmartctl, SmartExpander));
-        SetStatusDot(DiskStatusDot,   PopulateDriveCard(DiskSpaceRows, data.DiskSpace, DiskExpander));
-        SetStatusDot(WinVerStatusDot, PopulateCard(WinVerRows,     data.WinVer,   WinVerExpander));
-        SetStatusDot(BootStatusDot,   PopulateCard(BootRows,       data.Boot,     BootExpander));
+        SetStatusDot(CpuStatusDot, PopulateCard(CpuRows, data.Cpu, CpuExpander));
+        SetStatusDot(GpuStatusDot, PopulateGpuCard(GpuRows, data.Gpu, GpuExpander));
+        SetStatusDot(RamStatusDot, PopulateRamCard(RamRows, data.Ram, RamExpander));
+        SetStatusDot(SmartStatusDot, PopulateDiskHealthCard(SmartRows, data.Smart, data.SmartUsedSmartctl, SmartExpander));
+        SetStatusDot(DiskStatusDot, PopulateDriveCard(DiskSpaceRows, data.DiskSpace, DiskExpander));
+        SetStatusDot(WinVerStatusDot, PopulateCard(WinVerRows, data.WinVer, WinVerExpander));
+        SetStatusDot(BootStatusDot, PopulateCard(BootRows, data.Boot, BootExpander));
 
         if (data.Battery != null)
             SetStatusDot(BatteryStatusDot, PopulateBatteryCard(BatteryRows, data.Battery, BatteryExpander));
@@ -1021,14 +1041,16 @@ public sealed partial class HealthPage : Page
 
             panel.Children.Add(new TextBlock
             {
-                Text = g.Name, Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
-                TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 4),
+                Text = g.Name,
+                Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 4),
             });
 
             if (g.ReleaseYear.HasValue)
             {
                 int age = DateTime.Today.Year - g.ReleaseYear.Value;
-                var s   = age >= 10 ? CheckStatus.Bad : age >= 5 ? CheckStatus.Warning : CheckStatus.Good;
+                var s = age >= 10 ? CheckStatus.Bad : age >= 5 ? CheckStatus.Warning : CheckStatus.Good;
                 statuses.Add(s);
                 if (g.SeriesName != null)
                     AddStatusRow(panel, "Generation", g.SeriesName, CheckStatus.Info);
@@ -1043,7 +1065,7 @@ public sealed partial class HealthPage : Page
             if (g.DriverAgeMonths.HasValue)
             {
                 int months = g.DriverAgeMonths.Value;
-                var s      = months > 18 ? CheckStatus.Warning : CheckStatus.Good;
+                var s = months > 18 ? CheckStatus.Warning : CheckStatus.Good;
                 statuses.Add(s);
                 var txt = months < 12
                     ? $"{months} month{(months == 1 ? "" : "s")}"
@@ -1071,7 +1093,7 @@ public sealed partial class HealthPage : Page
         }
 
         double totalGb = modules.Sum(m => m.CapacityGb);
-        int minSpeed   = modules.Where(m => m.SpeedMts > 0).Select(m => m.SpeedMts).DefaultIfEmpty(0).Min();
+        int minSpeed = modules.Where(m => m.SpeedMts > 0).Select(m => m.SpeedMts).DefaultIfEmpty(0).Min();
 
         var totalStatus = totalGb >= 16 ? CheckStatus.Good
                         : totalGb >= 12 ? CheckStatus.Warning
@@ -1087,14 +1109,17 @@ public sealed partial class HealthPage : Page
         {
             var ddrType = modules.FirstOrDefault(m => m.MemoryType > 0)?.MemoryType switch
             {
-                24 => "DDR3", 26 => "DDR4", 34 => "DDR5", _ => null
+                24 => "DDR3",
+                26 => "DDR4",
+                34 => "DDR5",
+                _ => null
             };
             var speedStatus = ddrType switch
             {
                 "DDR3" => CheckStatus.Bad,
                 "DDR4" => CheckStatus.Warning,
                 "DDR5" => CheckStatus.Good,
-                _      => minSpeed < 5200 ? CheckStatus.Warning : CheckStatus.Good,
+                _ => minSpeed < 5200 ? CheckStatus.Warning : CheckStatus.Good,
             };
             statuses.Add(speedStatus);
             var speedLabel = ddrType != null ? $"{minSpeed} MT/s ({ddrType})" : $"{minSpeed} MT/s";
@@ -1117,13 +1142,14 @@ public sealed partial class HealthPage : Page
             if (!first) AddSeparator(panel);
             first = false;
 
-            var capStr   = mod.CapacityGb > 0 ? $"{mod.CapacityGb:F0} GB" : "?";
+            var capStr = mod.CapacityGb > 0 ? $"{mod.CapacityGb:F0} GB" : "?";
             var speedStr = mod.SpeedMts > 0 ? $"{mod.SpeedMts} MT/s" : "Unknown speed";
             panel.Children.Add(new TextBlock
             {
                 Text = $"{mod.Slot}   {capStr}  {speedStr}",
                 Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
-                TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 4),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 4),
             });
 
             if (!string.IsNullOrEmpty(mod.PartNumber))
@@ -1153,7 +1179,8 @@ public sealed partial class HealthPage : Page
             {
                 Text = $"{d.Name}  ({d.MediaType})",
                 Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
-                TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 4),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 4),
             });
 
             statuses.Add(d.HealthStatus);
@@ -1170,7 +1197,7 @@ public sealed partial class HealthPage : Page
             if (d.Wear.HasValue && d.Wear.Value > 0)
             {
                 byte used = d.Wear.Value;
-                byte rem  = (byte)(100 - Math.Min(used, (byte)100));
+                byte rem = (byte)(100 - Math.Min(used, (byte)100));
                 var s = used > 80 ? CheckStatus.Bad : used > 50 ? CheckStatus.Warning : CheckStatus.Good;
                 statuses.Add(s);
                 AddStatusRow(panel, "Life remaining", $"{rem}%  ({used}% used)", s);
@@ -1209,10 +1236,10 @@ public sealed partial class HealthPage : Page
 
         foreach (var r in rows)
         {
-            double pct   = r.TotalBytes > 0 ? (double)r.UsedBytes / r.TotalBytes * 100 : 0;
-            string used  = $"{r.UsedBytes  / 1_073_741_824.0:F0} GB";
+            double pct = r.TotalBytes > 0 ? (double)r.UsedBytes / r.TotalBytes * 100 : 0;
+            string used = $"{r.UsedBytes / 1_073_741_824.0:F0} GB";
             string total = $"{r.TotalBytes / 1_073_741_824.0:F0} GB";
-            string free  = $"{(r.TotalBytes - r.UsedBytes) / 1_073_741_824.0:F0} GB free";
+            string free = $"{(r.TotalBytes - r.UsedBytes) / 1_073_741_824.0:F0} GB free";
             statuses.Add(r.Status);
             AddStatusRow(panel, r.Drive, $"{used} / {total}  ({pct:F0}%, {free} free)", r.Status);
             panel.Children.Add(new ProgressBar { Value = pct, Maximum = 100, Margin = new Thickness(0, 0, 0, 6) });
@@ -1232,15 +1259,15 @@ public sealed partial class HealthPage : Page
             var s = health >= 80 ? CheckStatus.Good : health >= 50 ? CheckStatus.Warning : CheckStatus.Bad;
             statuses.Add(s);
             double designWh = bat.DesignCapacityMwh.Value / 1000.0;
-            double fullWh   = bat.FullChargeCapacityMwh.Value / 1000.0;
+            double fullWh = bat.FullChargeCapacityMwh.Value / 1000.0;
             AddStatusRow(panel, "Battery health", $"{health:F0}%  ({fullWh:F1} Wh / {designWh:F1} Wh design)", s);
 
             // Explicit health status label
             var healthLabel = s switch
             {
-                CheckStatus.Good    => "Good",
+                CheckStatus.Good => "Good",
                 CheckStatus.Warning => "Aging — monitor regularly",
-                _                   => "Poor — consider replacing",
+                _ => "Poor — consider replacing",
             };
             AddStatusRow(panel, "Health status", healthLabel, s);
         }
@@ -1264,7 +1291,7 @@ public sealed partial class HealthPage : Page
             int mw = bat.ChargeRateMw.Value;
             string powerText = mw < 0 ? $"Discharging  ({Math.Abs(mw) / 1000.0:F1} W)"
                              : mw > 0 ? $"Charging  ({mw / 1000.0:F1} W)"
-                             :           "Idle  (plugged in, not charging)";
+                             : "Idle  (plugged in, not charging)";
             _battPowerDrawText = AddStatusRowRef(panel, "Power draw", powerText, CheckStatus.Info);
         }
         else
@@ -1343,7 +1370,7 @@ public sealed partial class HealthPage : Page
                 int mw = report.ChargeRateInMilliwatts.Value;
                 _battPowerDrawText.Text = mw < 0 ? $"Discharging  ({Math.Abs(mw) / 1000.0:F1} W)"
                                         : mw > 0 ? $"Charging  ({mw / 1000.0:F1} W)"
-                                        :           "Idle  (plugged in, not charging)";
+                                        : "Idle  (plugged in, not charging)";
             }
         }
         catch (Exception ex) { Debug.WriteLine($"[Health] Battery timer tick failed: {ex.Message}"); }
@@ -1352,8 +1379,8 @@ public sealed partial class HealthPage : Page
     private void AddSeparator(StackPanel panel) =>
         panel.Children.Add(new Border
         {
-            Height     = 1,
-            Margin     = new Thickness(0, 8, 0, 8),
+            Height = 1,
+            Margin = new Thickness(0, 8, 0, 8),
             Background = (Brush)Application.Current.Resources["CardStrokeColorDefaultBrush"],
         });
 
@@ -1373,41 +1400,41 @@ public sealed partial class HealthPage : Page
 
         var lbl = new TextBlock
         {
-            Text              = label,
-            Style             = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
-            Foreground        = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+            Text = label,
+            Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
+            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
             VerticalAlignment = VerticalAlignment.Center,
         };
 
         var (glyph, brushKey) = status switch
         {
-            CheckStatus.Good    => ("", "SystemFillColorSuccessBrush"),
-            CheckStatus.Bad     => ("", "SystemFillColorCriticalBrush"),
+            CheckStatus.Good => ("", "SystemFillColorSuccessBrush"),
+            CheckStatus.Bad => ("", "SystemFillColorCriticalBrush"),
             CheckStatus.Warning => ("", "SystemFillColorCautionBrush"),
-            CheckStatus.Info    => ("",       "TextFillColorSecondaryBrush"),
-            _                   => ("", "TextFillColorSecondaryBrush"),
+            CheckStatus.Info => ("", "TextFillColorSecondaryBrush"),
+            _ => ("", "TextFillColorSecondaryBrush"),
         };
 
         var icon = new FontIcon
         {
-            Glyph             = glyph,
-            FontSize          = 12,
+            Glyph = glyph,
+            FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
-            Foreground        = Application.Current.Resources.TryGetValue(brushKey, out var b)
+            Foreground = Application.Current.Resources.TryGetValue(brushKey, out var b)
                                     ? (Brush)b
                                     : (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
         };
 
         var val = new TextBlock
         {
-            Text                   = value,
+            Text = value,
             IsTextSelectionEnabled = true,
-            TextWrapping           = TextWrapping.Wrap,
-            VerticalAlignment      = VerticalAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
         };
 
         Grid.SetColumn(icon, 1);
-        Grid.SetColumn(val,  2);
+        Grid.SetColumn(val, 2);
         grid.Children.Add(lbl);
         grid.Children.Add(icon);
         grid.Children.Add(val);

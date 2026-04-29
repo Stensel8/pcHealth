@@ -55,15 +55,15 @@ public sealed partial class SecurityCheckPage : Page
                 @"root\Microsoft\Windows\Defender", "WQL",
                 "SELECT AMServiceEnabled, RealTimeProtectionEnabled, AntivirusEnabled, AntispywareEnabled FROM MSFT_MpComputerStatus"))
             {
-                bool svc    = inst.CimInstanceProperties["AMServiceEnabled"]?.Value is bool b1 && b1;
-                bool rt     = inst.CimInstanceProperties["RealTimeProtectionEnabled"]?.Value is bool b2 && b2;
-                bool av     = inst.CimInstanceProperties["AntivirusEnabled"]?.Value is bool b3 && b3;
-                bool asp    = inst.CimInstanceProperties["AntispywareEnabled"]?.Value is bool b4 && b4;
+                bool svc = inst.CimInstanceProperties["AMServiceEnabled"]?.Value is bool b1 && b1;
+                bool rt = inst.CimInstanceProperties["RealTimeProtectionEnabled"]?.Value is bool b2 && b2;
+                bool av = inst.CimInstanceProperties["AntivirusEnabled"]?.Value is bool b3 && b3;
+                bool asp = inst.CimInstanceProperties["AntispywareEnabled"]?.Value is bool b4 && b4;
 
-                defender.Add(new SecurityRow("Service",               svc ? "Running"  : "Stopped",  svc ? CheckStatus.Good : CheckStatus.Bad));
-                defender.Add(new SecurityRow("Real-time Protection",  rt  ? "Enabled"  : "Disabled", rt  ? CheckStatus.Good : CheckStatus.Bad));
-                defender.Add(new SecurityRow("Antivirus",             av  ? "Enabled"  : "Disabled", av  ? CheckStatus.Good : CheckStatus.Bad));
-                defender.Add(new SecurityRow("Antispyware",           asp ? "Enabled"  : "Disabled", asp ? CheckStatus.Good : CheckStatus.Bad));
+                defender.Add(new SecurityRow("Service", svc ? "Running" : "Stopped", svc ? CheckStatus.Good : CheckStatus.Bad));
+                defender.Add(new SecurityRow("Real-time Protection", rt ? "Enabled" : "Disabled", rt ? CheckStatus.Good : CheckStatus.Bad));
+                defender.Add(new SecurityRow("Antivirus", av ? "Enabled" : "Disabled", av ? CheckStatus.Good : CheckStatus.Bad));
+                defender.Add(new SecurityRow("Antispyware", asp ? "Enabled" : "Disabled", asp ? CheckStatus.Good : CheckStatus.Bad));
                 break;
             }
         }
@@ -85,14 +85,14 @@ public sealed partial class SecurityCheckPage : Page
                 "SELECT DriveLetter, ProtectionStatus FROM Win32_EncryptableVolume"))
             {
                 var drive = inst.CimInstanceProperties["DriveLetter"]?.Value?.ToString() ?? "?";
-                var raw   = inst.CimInstanceProperties["ProtectionStatus"]?.Value;
+                var raw = inst.CimInstanceProperties["ProtectionStatus"]?.Value;
                 // ProtectionStatus is uint32: 0 = Unprotected, 1 = Protected, 2 = Unknown
                 int ps = raw is uint u ? (int)u : raw is int i ? i : -1;
                 var (label, status) = ps switch
                 {
-                    1 => ("Encrypted",     CheckStatus.Good),
+                    1 => ("Encrypted", CheckStatus.Good),
                     0 => ("Not encrypted", CheckStatus.Warning),
-                    _ => ("Unknown",       CheckStatus.Unknown),
+                    _ => ("Unknown", CheckStatus.Unknown),
                 };
                 bitlocker.Add(new SecurityRow(drive, label, status));
                 anyDrive = true;
@@ -130,13 +130,13 @@ public sealed partial class SecurityCheckPage : Page
                 "SELECT IsActivated_InitialValue, IsEnabled_InitialValue, SpecVersion FROM Win32_Tpm"))
             {
                 bool activated = inst.CimInstanceProperties["IsActivated_InitialValue"]?.Value is bool a && a;
-                bool enabled   = inst.CimInstanceProperties["IsEnabled_InitialValue"]?.Value is bool en && en;
-                var spec       = inst.CimInstanceProperties["SpecVersion"]?.Value?.ToString();
-                var version    = !string.IsNullOrEmpty(spec) ? spec.Split(',')[0].Trim() : "Unknown";
+                bool enabled = inst.CimInstanceProperties["IsEnabled_InitialValue"]?.Value is bool en && en;
+                var spec = inst.CimInstanceProperties["SpecVersion"]?.Value?.ToString();
+                var version = !string.IsNullOrEmpty(spec) ? spec.Split(',')[0].Trim() : "Unknown";
 
-                tpm.Add(new SecurityRow("Version",   version,                   version != "Unknown" ? CheckStatus.Good : CheckStatus.Unknown));
-                tpm.Add(new SecurityRow("Enabled",   enabled   ? "Yes" : "No",  enabled   ? CheckStatus.Good : CheckStatus.Bad));
-                tpm.Add(new SecurityRow("Activated", activated ? "Yes" : "No",  activated ? CheckStatus.Good : CheckStatus.Bad));
+                tpm.Add(new SecurityRow("Version", version, version != "Unknown" ? CheckStatus.Good : CheckStatus.Unknown));
+                tpm.Add(new SecurityRow("Enabled", enabled ? "Yes" : "No", enabled ? CheckStatus.Good : CheckStatus.Bad));
+                tpm.Add(new SecurityRow("Activated", activated ? "Yes" : "No", activated ? CheckStatus.Good : CheckStatus.Bad));
                 found = true;
                 break;
             }
@@ -160,19 +160,19 @@ public sealed partial class SecurityCheckPage : Page
     {
         LoadingPanel.Visibility = Visibility.Collapsed;
 
-        PopulateCard(DefenderRows,   data.Defender,   DefenderCard);
-        PopulateCard(BitLockerRows,  data.BitLocker,  BitLockerCard);
+        PopulateCard(DefenderRows, data.Defender, DefenderCard);
+        PopulateCard(BitLockerRows, data.BitLocker, BitLockerCard);
         PopulateCard(SecureBootRows, data.SecureBoot, SecureBootCard);
-        PopulateCard(TpmRows,        data.Tpm,        TpmCard);
+        PopulateCard(TpmRows, data.Tpm, TpmCard);
 
         var sb = new StringBuilder();
         sb.AppendLine("pcHealth - Security Status");
-        sb.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
         sb.AppendLine();
         AppendSection(sb, "Windows Defender", data.Defender);
-        AppendSection(sb, "BitLocker",        data.BitLocker);
-        AppendSection(sb, "Secure Boot",      data.SecureBoot);
-        AppendSection(sb, "TPM",              data.Tpm);
+        AppendSection(sb, "BitLocker", data.BitLocker);
+        AppendSection(sb, "Secure Boot", data.SecureBoot);
+        AppendSection(sb, "TPM", data.Tpm);
         _copyText = sb.ToString();
         CopyBtn.IsEnabled = true;
     }
@@ -209,10 +209,10 @@ public sealed partial class SecurityCheckPage : Page
 
         var (glyph, brushKey) = status switch
         {
-            CheckStatus.Good    => ("", "SystemFillColorSuccessBrush"),
-            CheckStatus.Bad     => ("", "SystemFillColorCriticalBrush"),
+            CheckStatus.Good => ("", "SystemFillColorSuccessBrush"),
+            CheckStatus.Bad => ("", "SystemFillColorCriticalBrush"),
             CheckStatus.Warning => ("", "SystemFillColorCautionBrush"),
-            _                   => ("", "TextFillColorSecondaryBrush"),
+            _ => ("", "TextFillColorSecondaryBrush"),
         };
 
         var icon = new FontIcon
@@ -234,7 +234,7 @@ public sealed partial class SecurityCheckPage : Page
         };
 
         Grid.SetColumn(icon, 1);
-        Grid.SetColumn(val,  2);
+        Grid.SetColumn(val, 2);
         grid.Children.Add(lbl);
         grid.Children.Add(icon);
         grid.Children.Add(val);

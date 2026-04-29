@@ -20,7 +20,7 @@ Write-Host "  Distro: $distroName" -ForegroundColor DarkGray
 function Invoke-Update {
     param([string]$Label, [scriptblock]$Action)
     Write-Host "`n[>>] $Label" -ForegroundColor Yellow
-    & $Action
+    Invoke-Command -ScriptBlock $Action
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`n[OK] Update complete.`n" -ForegroundColor Green
     } else {

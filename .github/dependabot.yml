@@ -2,16 +2,17 @@ version: 2
 
 # Dependency update strategy:
 #
-#   Dependabot  ->  GitHub Actions (.github/workflows/)
-#                   NuGet packages  (src/GUI/pcHealth/)
+#   Dependabot  ->  GitHub Actions uses: owner/repo@sha  (.github/workflows/)
+#                   NuGet packages — security advisories  (src/GUI/pcHealth/)
 #
-#   Renovate    ->  NuGet packages with advanced grouping and automerge
+#   Renovate    ->  NuGet packages — regular bumps, grouping, automerge
+#                   docker:// action images (e.g. rhysd/actionlint)
 #                   (see renovate.json at the repo root)
 #
-# Both Dependabot and Renovate cover NuGet intentionally:
-#   - Dependabot integrates with GitHub Security Advisories for vulnerability alerts.
-#   - Renovate provides grouping, automerge, and richer update control.
-# If both open a PR for the same update, merge Renovate's (better metadata) and close Dependabot's.
+# NuGet is covered by both intentionally:
+#   - Dependabot fires on GitHub Security Advisories (vulnerability alerts).
+#   - Renovate handles scheduled bumps with grouping and automerge.
+# If both open a PR for the same update, merge Renovate's and close Dependabot's.
 
 updates:
   # GitHub Actions
