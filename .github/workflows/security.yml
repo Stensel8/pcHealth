@@ -20,7 +20,9 @@ concurrency:
 #
 #  powershell-lint  → PSScriptAnalyzer (src/CLI/ scripts)
 #  trivy-scan       → Trivy (filesystem vulnerability scan)
-#  devskim          → DevSkim (insecure code patterns)
+#  devskim          → DevSkim (insecure code patterns, C# / PS)
+#  semgrep          → Semgrep (OWASP Top 10, C# security rules, secrets)
+#  actionlint       → actionlint (validates GitHub Actions workflow YAML)
 #
 # Kept in a separate workflow so CI failures (lint, build,
 # commit messages) do not taint SARIF uploads in the
@@ -117,3 +119,57 @@ jobs:
         with:
           sarif_file: devskim-results.sarif
           category: devskim
+
+  # ----------------------------------------------------------
+  # SEMGREP
+  # Open-source static analysis with community rule packs:
+  #   auto     → language-aware rule selection (C#, PS, YAML)
+  #   p/owasp-top-ten → OWASP Top 10 coverage
+  #   p/secrets       → hardcoded secrets (complements TruffleHog)
+  # Results go to GitHub Advanced Security → Code scanning.
+  # Never blocks CI — always exits 0.
+  # ----------------------------------------------------------
+  semgrep:
+    name: Semgrep (OWASP / secrets / C#)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run Semgrep
+        uses: semgrep/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d # v1
+        with:
+          config: >-
+            auto
+            p/owasp-top-ten
+            p/secrets
+          generateSarif: "1"
+          auditOn: push pr
+
+      - name: Upload Semgrep results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+  # ----------------------------------------------------------
+  # ACTIONLINT
+  # Validates all GitHub Actions workflow YAML files for:
+  #   - type errors (wrong step output names, bad context refs)
+  #   - shellcheck integration (shell script steps)
+  #   - expression syntax errors
+  # Fails CI so broken workflows are caught before merge.
+  # ----------------------------------------------------------
+  actionlint:
+    name: GitHub Actions lint (actionlint)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run actionlint
+        uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
