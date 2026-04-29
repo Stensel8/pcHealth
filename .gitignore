@@ -84,4 +84,3 @@ coverage.xml
 .env.*.local
 /.claude
 .claude*
-pattern-check.sarif

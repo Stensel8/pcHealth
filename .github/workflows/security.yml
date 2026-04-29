@@ -21,7 +21,8 @@ concurrency:
 #  powershell-lint  → PSScriptAnalyzer (src/CLI/ scripts)
 #  trivy-scan       → Trivy (filesystem vulnerability scan)
 #  devskim          → DevSkim (insecure code patterns, C# / PS)
-#  semgrep          → Semgrep (OWASP Top 10, C# security rules, secrets)
+#  semgrep          → Semgrep (OWASP Top 10, C# rules, secrets)
+#  shellcheck       → ShellCheck (Bash script linting)
 #  actionlint       → actionlint (validates GitHub Actions workflow YAML)
 #
 # Kept in a separate workflow so CI failures (lint, build,
@@ -148,6 +149,7 @@ jobs:
             --config auto \
             --config p/owasp-top-ten \
             --config p/secrets \
+            --config p/csharp \
             --sarif \
             --output semgrep.sarif \
             src/ || true
@@ -158,6 +160,29 @@ jobs:
         with:
           sarif_file: semgrep.sarif
           category: semgrep
+
+  # ----------------------------------------------------------
+  # SHELLCHECK
+  # Standard bash linter — catches quoting bugs, injection
+  # risks (eval, curl|sh), and unsafe constructs in .sh files.
+  # Fails CI so script errors are caught before merge.
+  # ----------------------------------------------------------
+  shellcheck:
+    name: Shell script lint (ShellCheck)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run ShellCheck
+        run: |
+          mapfile -t scripts < <(find src -name '*.sh')
+          if [[ ${#scripts[@]} -eq 0 ]]; then
+            echo "No shell scripts found — skipping."
+          else
+            shellcheck --severity=warning "${scripts[@]}"
+          fi
 
   # ----------------------------------------------------------
   # ACTIONLINT

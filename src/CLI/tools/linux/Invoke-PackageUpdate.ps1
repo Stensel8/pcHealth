@@ -51,7 +51,7 @@ function Invoke-LinuxUpdate {
     foreach ($term in $terminals) {
         if (Get-Command $term.cmd -ErrorAction SilentlyContinue) {
             Write-Host "  Opening in $($term.cmd)..." -ForegroundColor DarkGray
-            & $term.cmd @($term.args) # nolint: PS020
+            & $term.cmd @($term.args)
             return
         }
     }
