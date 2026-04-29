@@ -1,23 +1,46 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
 
-  "description": "Renovate manages NuGet packages with grouping and automerge. GitHub Actions are handled by Dependabot (.github/dependabot.yml). Both tools cover NuGet — Renovate for regular bumps, Dependabot for security advisories.",
+  "description": "Renovate manages NuGet packages and docker:// action images. Regular GitHub Actions (uses: owner/repo@sha) are handled by Dependabot. Both cover NuGet — Renovate for regular bumps, Dependabot for security advisories.",
 
   "extends": ["config:recommended"],
 
   "forkProcessing": "enabled",
 
-  "enabledManagers": ["nuget"],
+  "enabledManagers": ["nuget", "github-actions"],
 
   "schedule": ["on monday"],
 
-  "labels": ["dependencies", "dotnet"],
+  "labels": ["dependencies"],
 
   "assignees": ["Stensel8"],
 
   "commitMessagePrefix": "deps:",
 
   "packageRules": [
+    {
+      "description": "NuGet labels.",
+      "matchManagers": ["nuget"],
+      "labels": ["dependencies", "dotnet"]
+    },
+    {
+      "description": "CI labels for GitHub Actions / Docker image updates.",
+      "matchManagers": ["github-actions"],
+      "labels": ["dependencies", "ci"]
+    },
+    {
+      "description": "Disable Renovate for owner/repo@sha actions — Dependabot handles those.",
+      "matchManagers": ["github-actions"],
+      "matchDatasources": ["github-tags", "github-releases", "git-tags"],
+      "enabled": false
+    },
+    {
+      "description": "Group all Docker-based action images into one PR.",
+      "matchManagers": ["github-actions"],
+      "matchDatasources": ["docker"],
+      "groupName": "Docker action images",
+      "labels": ["dependencies", "ci"]
+    },
     {
       "description": "Group all Windows App SDK packages into a single PR.",
       "groupName": "Windows App SDK",
