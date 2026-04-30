@@ -196,5 +196,3 @@ This repository consolidates and replaces several earlier pcHealth-related proje
 - [pcHealthPlus-VS](https://github.com/REALSDEALS/pcHealthPlus-VS) - Visual Studio variant (deprecated; migrated)
 - [pcHealth-GUI](https://github.com/iRepairzone-NL/pcHealth_GUI) - Python GUI variant (deprecated; migrated)
 - [Win_Scan](https://github.com/REALSDEALS/Win_Scan) - standalone Windows scanning utility (deprecated; migrated)
-
-_Alle pcHealth-gerelateerde projecten zijn teruggemigreerd naar deze repository; pcHealth is nu de enige actieve bron._
