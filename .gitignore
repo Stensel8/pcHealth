@@ -17,6 +17,9 @@ desktop.ini
 *.sln.DotSettings.user
 *.rsuser
 
+# Release artifacts
+dist/
+
 # Build output (C# / .NET)
 [Bb]in/
 [Oo]bj/
