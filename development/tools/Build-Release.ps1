@@ -1,9 +1,15 @@
 #Requires -Version 7.0
 # ============================================================================
 # pcHealth — Release builder
-# Builds the GUI as a self-contained portable EXE and packages both GUI and
+# Builds the GUI (framework-dependent, no MSIX) and packages both GUI and
 # CLI into distributable ZIP archives, ready for a GitHub Release or a
 # WinGet manifest submission.
+#
+# Prerequisites on the TARGET machine:
+#   - Windows App SDK 1.8 runtime
+#     winget install Microsoft.WindowsAppRuntime.1.8
+#   - .NET 10 Desktop Runtime
+#     winget install Microsoft.DotNet.DesktopRuntime.10
 #
 # Usage:
 #   pwsh -File development/tools/Build-Release.ps1
@@ -49,23 +55,22 @@ $null = New-Item $cliStage -ItemType Directory -Force
 
 # ── Build GUI ─────────────────────────────────────────────────────────────────
 
-Write-Host '[2/4] Building GUI (self-contained, no MSIX)...' -ForegroundColor Yellow
+Write-Host '[2/4] Building GUI...' -ForegroundColor Yellow
 
 $csproj = Join-Path $repoRoot 'src\GUI\pcHealth\pcHealth.csproj'
 
-dotnet publish $csproj `
-    --configuration Release `
-    --runtime $rid `
-    --self-contained `
-    --output $guiStage `
-    /p:WindowsPackageType=None `
-    /p:AppxPackageSigningEnabled=false `
-    /p:GenerateAppxPackageOnBuild=false `
-    /p:PublishProfile=""
+dotnet build $csproj --configuration Release --runtime $rid --no-self-contained --nologo
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "dotnet publish failed (exit $LASTEXITCODE)."
+    Write-Error "dotnet build failed (exit $LASTEXITCODE)."
 }
+
+# Read TargetFramework from csproj so the bin path never drifts.
+$tfm      = ([xml](Get-Content $csproj)).Project.PropertyGroup.TargetFramework |
+                Where-Object { $_ } | Select-Object -First 1
+$binOut   = Join-Path $repoRoot "src\GUI\pcHealth\bin\Release\$tfm\$rid"
+
+Copy-Item "$binOut\*" $guiStage -Recurse
 
 # ── Package ZIPs ──────────────────────────────────────────────────────────────
 
