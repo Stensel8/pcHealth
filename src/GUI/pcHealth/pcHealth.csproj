@@ -13,14 +13,8 @@
     <AssemblyName>pcHealth</AssemblyName>
     <ApplicationIcon>Assets\pcHealth.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <!-- MSIX packaging -->
-    <WindowsPackageType>MSIX</WindowsPackageType>
-    <PackageCertificateThumbprint>C6E859E385306DA0808CB0FFB7AB6ED9C9B73216</PackageCertificateThumbprint>
-    <GenerateAppxPackageOnBuild>true</GenerateAppxPackageOnBuild>
-    <UapAppxPackageBuildMode>SideloadOnly</UapAppxPackageBuildMode>
-    <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
-    <EnableMsixTooling>true</EnableMsixTooling>
-    <PublishProfile>Properties\PublishProfiles\win10-x64.pubxml</PublishProfile>
+    <!-- Unpackaged deployment — no MSIX required -->
+    <WindowsPackageType>None</WindowsPackageType>
     <!-- Bundle the Windows App SDK runtime so users don't need it pre-installed. -->
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <!-- RID follows VS platform selection; CLI default is win-x64. -->
@@ -33,13 +27,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
-
-  <ItemGroup>
-    <!-- MSIX manifest -->
-    <None Include="Package.appxmanifest">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
 
   <ItemGroup>
     <!-- App assets: logo (SVG for in-app display, ICO for taskbar/title bar). -->

@@ -386,7 +386,7 @@ public sealed partial class HealthPage : Page
             using var reader = new EventLogReader(query);
             if (reader.ReadEvent() is { } rec)
             {
-                XNamespace ns = "http://schemas.microsoft.com/win/2004/08/events/event";
+                XNamespace ns = "http://schemas.microsoft.com/win/2004/08/events/event"; // DevSkim: ignore DS137138
                 var map = XDocument.Parse(rec.ToXml())
                     .Descendants(ns + "Data")
                     .Where(d => d.Attribute("Name") != null)

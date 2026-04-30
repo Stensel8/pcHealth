@@ -64,7 +64,7 @@ $smartctlOk = $onLinux `
        [bool](Get-Command smartctl -ErrorAction SilentlyContinue))
 
 Write-DepStatus 'PowerShell 7'  $pwshOk
-Write-DepStatus 'smartmontools' $smartctlOk $true
+Write-DepStatus -label 'smartmontools' -ok $smartctlOk -Optional $true
 
 # -- 3. Install missing dependencies ------------------------------------------
 if (-not $pwshOk) {
