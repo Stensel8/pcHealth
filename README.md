@@ -189,8 +189,12 @@ Or open an [issue](https://github.com/REALSDEALS/pcHealth/issues) on GitHub.
 
 ## Inspired by
 
-pcHealth consolidates and replaces the following earlier projects:
+This repository consolidates and replaces several earlier pcHealth-related projects. `pcHealth` is the original project and is now the canonical repository: related repositories have been migrated back into this repo and are considered deprecated. Functionality from the listed projects has been merged here where appropriate.
 
-- [pcHealthPlus](https://github.com/REALSDEALS/pcHealthPlus) - original batch-based health toolkit
-- [pcHealthPlus-VS](https://github.com/REALSDEALS/pcHealthPlus-VS) - Visual Studio variant of pcHealthPlus
-- [Win_Scan](https://github.com/REALSDEALS/Win_Scan) - standalone Windows scanning utility
+- [pcHealth](https://github.com/REALSDEALS/pcHealth) - original project (batch-based)
+- [pcHealthPlus](https://github.com/REALSDEALS/pcHealthPlus) - PowerShell-based toolkit (deprecated; migrated)
+- [pcHealthPlus-VS](https://github.com/REALSDEALS/pcHealthPlus-VS) - Visual Studio variant (deprecated; migrated)
+- [pcHealth-GUI](https://github.com/iRepairzone-NL/pcHealth_GUI) - Python GUI variant (deprecated; migrated)
+- [Win_Scan](https://github.com/REALSDEALS/Win_Scan) - standalone Windows scanning utility (deprecated; migrated)
+
+_Alle pcHealth-gerelateerde projecten zijn teruggemigreerd naar deze repository; pcHealth is nu de enige actieve bron._
