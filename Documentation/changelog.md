@@ -1,5 +1,15 @@
 # Changelog.md - pcHealth
 
+## 02-05-2026 - @Stensel8
+
+Linux — Topgrade integration replaces distro-specific package update script.
+
+- Added `linux/Invoke-Topgrade.ps1`: launches topgrade in a new terminal window with the user's graphical session environment correctly forwarded (`DBUS_SESSION_BUS_ADDRESS`, `WAYLAND_DISPLAY`, `DISPLAY`) so GNOME Shell extensions, gcloud, and other session-aware steps work correctly even when pcHealth is invoked via sudo.
+- Removed `linux/Invoke-PackageUpdate.ps1`: superseded by topgrade. All Linux package updates now go through topgrade.
+- Updated `Tools.ps1`: replaced "Update all packages" Linux entry with "Topgrade (full system upgrade)".
+- Updated `README.md` and `changelog.md` to reflect the new Linux update flow.
+- Configured `~/.config/topgrade.toml`: `pre_sudo = true`, `cleanup = true`, `disable = ["firmware", "config_update"]` per Chris Titus best practices. Firmware and pacnew handling are intentionally disabled — firmware is managed via system update or fwupd directly; pacnew files are resolved manually with `pacdiff`.
+
 ## 18-04-2026 - @Stensel8
 
 GUI — Settings and About pages, deprecated-pattern scanner, version baking.

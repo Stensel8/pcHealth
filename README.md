@@ -118,7 +118,11 @@ Option numbers are assigned sequentially at runtime per platform - Windows-only 
 | Continuous Ping Test          | All       | Continuous ping, Ctrl+C to stop                    |
 | Traceroute to Google          | All       | tracert / traceroute                               |
 | Reset Network Stack           | Windows   | DNS flush, Winsock reset, IPv4/IPv6 reset          |
-| Update all packages           | All       | winget (Windows) / distro package manager (Linux)  |
+| Update all packages           | Windows   | winget                                             |
+| Topgrade                      | Linux     | Full system upgrade: packages, flatpak, VS Code extensions, helm, uv, and more |
+| Disk Cleanup                  | Linux     | Package cache, journal logs, unused Flatpak runtimes, thumbnail cache |
+| Restart Audio                 | Linux     | Restarts PipeWire or PulseAudio user services      |
+| Reset Network Stack           | Linux     | Restarts NetworkManager, flushes DNS cache         |
 | Update HP Drivers             | Windows   | HP Image Assistant (HP devices only)               |
 | Restart Audio Drivers         | Windows   | Restarts audio services                            |
 | Open Battery Report           | Windows   | Opens previously generated report                  |
