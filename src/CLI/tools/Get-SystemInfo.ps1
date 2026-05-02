@@ -12,6 +12,7 @@ if ($IsLinux) {
 
     $osName = (Get-LinuxDistroInfo)['PRETTY_NAME']
 
+    # RAM
     $memInfo = @{}
     if (Test-Path '/proc/meminfo') {
         Get-Content '/proc/meminfo' | ForEach-Object {
@@ -20,17 +21,88 @@ if ($IsLinux) {
             }
         }
     }
-    $totalRamGB = if ($memInfo['MemTotal']) { [Math]::Round($memInfo['MemTotal'] / 1MB, 2) } else { 'N/A' }
+    $totalRamGB = if ($memInfo['MemTotal'])     { [Math]::Round($memInfo['MemTotal']     / 1MB, 2) } else { 'N/A' }
+    $usedRamGB  = if ($memInfo['MemTotal'] -and $memInfo['MemAvailable']) {
+                      [Math]::Round(($memInfo['MemTotal'] - $memInfo['MemAvailable']) / 1MB, 2)
+                  } else { 'N/A' }
+
+    # CPU model (brief — Hardware Info has the full lscpu dump)
+    $cpu = 'N/A'
+    if (Test-Path '/proc/cpuinfo') {
+        $cpuLine = Get-Content '/proc/cpuinfo' | Where-Object { $_ -match '^model name' } | Select-Object -First 1
+        if ($cpuLine -match '^model name\s*:\s*(.+)') { $cpu = $Matches[1].Trim() }
+    }
+
+    # Machine model from DMI
+    $vendor = try { (Get-Content '/sys/class/dmi/id/sys_vendor'   -ErrorAction Stop).Trim() } catch { $null }
+    $model  = try { (Get-Content '/sys/class/dmi/id/product_name' -ErrorAction Stop).Trim() } catch { $null }
+    $machine = if ($vendor -and $model) { "$vendor $model" } elseif ($model) { $model } else { 'N/A' }
+
+    # Firmware type
+    $firmwareType = if (Test-Path '/sys/firmware/efi') { 'UEFI' } else { 'Legacy BIOS' }
+
+    # Secure Boot
+    $secureBoot = 'N/A'
+    if (Get-Command mokutil -ErrorAction SilentlyContinue) {
+        $mokOut = (& mokutil --sb-state 2>$null).Trim()
+        $secureBoot = if ($mokOut -match 'enabled') { 'Enabled' } elseif ($mokOut -match 'disabled') { 'Disabled' } else { $mokOut }
+    } elseif (Test-Path '/sys/firmware/efi/efivars') {
+        $sbVar = Get-ChildItem '/sys/firmware/efi/efivars' -Filter 'SecureBoot-*' -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($sbVar) {
+            try {
+                $bytes = [System.IO.File]::ReadAllBytes($sbVar.FullName)
+                $secureBoot = if ($bytes.Length -ge 5 -and $bytes[4] -eq 1) { 'Enabled' } else { 'Disabled' }
+            } catch { }
+        }
+    }
+
+    # Last boot timestamp
+    $lastBoot = (& uptime -s 2>$null).Trim()
+    if (-not $lastBoot) { $lastBoot = 'N/A' }
+
+    # Desktop environment / Wayland or X11
+    $de      = $env:XDG_CURRENT_DESKTOP ?? $env:DESKTOP_SESSION ?? 'Unknown'
+    $session = $env:WAYLAND_DISPLAY ? 'Wayland' : ($env:DISPLAY ? 'X11' : 'Unknown')
+
+    # Shell (basename only)
+    $shell = $env:SHELL ?? 'Unknown'
+    if ($shell -match '/([^/]+)$') { $shell = $Matches[1] }
+
+    # Installed package count (distro-aware)
+    $pkgCount = 'N/A'
+    if (Get-Command pacman -ErrorAction SilentlyContinue) {
+        $pkgCount = "$(( & pacman -Q 2>$null).Count) (pacman)"
+    } elseif (Get-Command dpkg -ErrorAction SilentlyContinue) {
+        $pkgCount = "$(( & dpkg -l 2>$null | Where-Object { $_ -match '^ii' }).Count) (dpkg)"
+    } elseif (Get-Command rpm -ErrorAction SilentlyContinue) {
+        $pkgCount = "$(( & rpm -qa 2>$null).Count) (rpm)"
+    }
+
+    # Timezone
+    $timezone = (& timedatectl show --property=Timezone --value 2>$null).Trim()
+    if (-not $timezone) { $timezone = $env:TZ ?? (& date '+%Z' 2>$null).Trim() ?? 'N/A' }
 
     [PSCustomObject]@{
-        'Computer Name'   = $hostname
-        'OS Name'         = $osName
-        'Kernel'          = $kernel
-        'Architecture'    = $arch
-        'Total RAM (GB)'  = $totalRamGB
-        'Uptime'          = $uptime
-        'User'            = $user
+        'Computer Name'  = $hostname
+        'Machine'        = $machine
+        'OS Name'        = $osName
+        'Kernel'         = $kernel
+        'Architecture'   = $arch
+        'CPU'            = $cpu
+        'RAM Used (GB)'  = $usedRamGB
+        'RAM Total (GB)' = $totalRamGB
+        'Firmware'       = $firmwareType
+        'Secure Boot'    = "$secureBoot  [*]"
+        'Uptime'         = $uptime
+        'Last Boot'      = $lastBoot
+        'Desktop'        = $de
+        'Session'        = $session
+        'Shell'          = $shell
+        'Packages'       = $pkgCount
+        'Timezone'       = $timezone
+        'User'           = $user
     } | Format-List | Out-Host
+    Write-Host '  [*] Secure Boot shows the UEFI firmware state only. On Linux, actual enforcement depends on shim/MOK setup and varies per distro.' -ForegroundColor DarkGray
 
 } else {
     $os    = Get-CimInstance -ClassName Win32_OperatingSystem
