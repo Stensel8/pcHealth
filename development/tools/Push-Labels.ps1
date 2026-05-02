@@ -42,11 +42,9 @@ Write-Host "[Push-Labels] Repository : $repo" -ForegroundColor Cyan
 $labels = @(
     # ── Triage ────────────────────────────────────────────────────────────────
     @{ name = 'bug';           color = 'd73a4a'; description = 'Something is not working.' }
-    @{ name = 'documentation'; color = '0075ca'; description = 'Documentation changes.' }
+    @{ name = 'documentation'; color = '0075ca'; description = 'Requesting or tracking a documentation improvement.' }
     @{ name = 'enhancement';   color = 'a2eeef'; description = 'New feature or improvement.' }
     @{ name = 'question';      color = 'd876e3'; description = 'Further information is requested.' }
-    @{ name = 'tweak';         color = 'b60205'; description = 'Small improvement to existing code.' }
-    @{ name = 'update';        color = '0052cc'; description = 'Final commit for a release or pre-release.' }
 
     # ── Conventional commit types ─────────────────────────────────────────────
     @{ name = 'type/feature';  color = '0075ca'; description = 'New feature or functionality.' }
@@ -60,15 +58,16 @@ $labels = @(
     @{ name = 'type/test';     color = 'c2e0c6'; description = 'Test additions or changes.' }
 
     # ── CI / dependencies ─────────────────────────────────────────────────────
-    @{ name = 'ci';           color = '006b75'; description = 'CI/CD workflow changes.' }
-    @{ name = 'dependencies'; color = '0366d6'; description = 'Dependency or action version updates.' }
-    @{ name = 'dotnet';       color = '512bd4'; description = 'NuGet / .NET SDK changes.' }
+    @{ name = 'type/ci';    color = '006b75'; description = 'CI/CD workflow changes.' }
+    @{ name = 'type/deps';  color = '0366d6'; description = 'Dependency or action version updates.' }
+    @{ name = 'type/build'; color = 'fdb913'; description = 'Build system or tooling changes.' }
+    @{ name = 'dotnet';     color = '512bd4'; description = 'NuGet / .NET SDK changes.' }
     @{ name = 'winui3';       color = '0078d4'; description = 'WinUI 3 / Windows App SDK changes.' }
 
     # ── Status ────────────────────────────────────────────────────────────────
     @{ name = 'security';        color = 'e11d48'; description = 'Security-related changes or vulnerabilities.' }
     @{ name = 'breaking-change'; color = 'b60205'; description = 'Introduces a breaking change.' }
-    @{ name = 'pinned';          color = 'cfd3d7'; description = 'Pinned — never auto-closed by stale bot.' }
+    @{ name = 'pinned';          color = 'cfd3d7'; description = 'Pinned - never auto-closed by stale bot.' }
     @{ name = 'stale';           color = 'cfd3d7'; description = 'Auto-marked stale due to inactivity.' }
 
     # ── Platform ──────────────────────────────────────────────────────────────
@@ -111,9 +110,9 @@ foreach ($label in $labels) {
             if ($PSCmdlet.ShouldProcess($label.name, 'Update label')) {
                 Invoke-GhApi "repos/$repo/labels/$encoded", '-X', 'PATCH',
                     '-f', "color=$($label.color)", '-f', "description=$($label.description)" | Out-Null
-                Write-Host "  [updated]  $($label.name)" -ForegroundColor Yellow
-                $updated++
             }
+            Write-Host "  [updated]  $($label.name)" -ForegroundColor Yellow
+            $updated++
         } else {
             Write-Host "  [ok]       $($label.name)" -ForegroundColor DarkGray
             $skipped++
@@ -123,9 +122,9 @@ foreach ($label in $labels) {
             Invoke-GhApi "repos/$repo/labels", '-X', 'POST',
                 '-f', "name=$($label.name)", '-f', "color=$($label.color)",
                 '-f', "description=$($label.description)" | Out-Null
-            Write-Host "  [created]  $($label.name)" -ForegroundColor Green
-            $created++
         }
+        Write-Host "  [created]  $($label.name)" -ForegroundColor Green
+        $created++
     }
 }
 
@@ -137,9 +136,9 @@ if ($DeleteOrphans) {
             if ($PSCmdlet.ShouldProcess($live.name, 'Delete label')) {
                 $encoded = [uri]::EscapeDataString($live.name)
                 Invoke-GhApi "repos/$repo/labels/$encoded", '-X', 'DELETE' | Out-Null
-                Write-Host "  [deleted]  $($live.name)" -ForegroundColor Red
-                $deleted++
             }
+            Write-Host "  [deleted]  $($live.name)" -ForegroundColor Red
+            $deleted++
         }
     }
 }

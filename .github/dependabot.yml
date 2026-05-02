@@ -3,9 +3,9 @@ version: 2
 # Dependency update strategy:
 #
 #   Dependabot  ->  GitHub Actions uses: owner/repo@sha  (.github/workflows/)
-#                   NuGet packages — security advisories  (src/GUI/pcHealth/)
+#                   NuGet packages - security advisories  (src/GUI/pcHealth/)
 #
-#   Renovate    ->  NuGet packages — regular bumps, grouping, automerge
+#   Renovate    ->  NuGet packages - regular bumps, grouping, automerge
 #                   docker:// action images (e.g. rhysd/actionlint)
 #                   (see renovate.json at the repo root)
 #

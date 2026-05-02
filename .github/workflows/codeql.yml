@@ -8,7 +8,7 @@ on:
   schedule:
     - cron: '0 4 * * 1'  # Every Monday at 04:00 UTC
 
-# Default minimal permissions — each job overrides only what it needs.
+# Default minimal permissions - each job overrides only what it needs.
 permissions: read-all
 
 # ============================================================

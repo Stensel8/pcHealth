@@ -1,36 +1,31 @@
-## What changed?
-<!-- Briefly describe the change. Reference an issue with "Closes #123" if applicable. -->
+## Summary
+
+<!-- What does this PR do? One or two sentences. Reference an issue with "Closes #123" if applicable. -->
 
 ## Type of change
 
-Mark the type that applies. Use this as the prefix in your commit message, e.g. `feat: add disk health check`.
+<!-- Check the one that applies. The type becomes the prefix of your commit message, e.g. `feat: add disk health check`. -->
 
-| | Type | When to use | Version impact |
-|---|---|---|---|
-| [ ] | `feat` | New functionality visible to the user | minor (1.2.0 → 1.3.0) |
-| [ ] | `fix` | Bug fix | patch (1.2.0 → 1.2.1) |
-| [ ] | `refactor` | Code restructure without behavior change | patch |
-| [ ] | `perf` | Performance improvement | patch |
-| [ ] | `deps` | Dependency or action version update | patch |
-| [ ] | `build` | Build system or tooling change | patch |
-| [ ] | `docs` | Documentation only | none |
-| [ ] | `chore` | Cleanup or configuration, no app impact | none |
-| [ ] | `style` | Formatting only, no logic change | none |
-| [ ] | `test` | Test additions or changes | none |
-| [ ] | `ci` | CI/CD workflow changes | none |
-| [ ] | `revert` | Reverts a previous commit | none |
+**Conventional Commit Types** - choose one:
+
+- [ ] `feat` - ![#0075ca](https://img.shields.io/badge/-0075ca) new functionality visible to the user
+- [ ] `fix` - ![#d73a4a](https://img.shields.io/badge/-d73a4a) bug fix
+- [ ] `refactor` - ![#fbca04](https://img.shields.io/badge/-fbca04) code restructure without behavior change
+- [ ] `perf` - ![#d4c5f9](https://img.shields.io/badge/-d4c5f9) performance improvement
+- [ ] `docs` - ![#0075ca](https://img.shields.io/badge/-0075ca) documentation only
+- [ ] `chore` - ![#e4e669](https://img.shields.io/badge/-e4e669) maintenance, cleanup, configuration
+- [ ] `style` - ![#bfd4f2](https://img.shields.io/badge/-bfd4f2) formatting only, no logic change
+- [ ] `test` - ![#c2e0c6](https://img.shields.io/badge/-c2e0c6) test additions or changes
+- [ ] `ci` - ![#006b75](https://img.shields.io/badge/-006b75) CI/CD workflow changes
+- [ ] `deps` - ![#0366d6](https://img.shields.io/badge/-0366d6) dependency or action version update
+- [ ] `build` - ![#fdb913](https://img.shields.io/badge/-fdb913) build system or tooling change
+- [ ] `revert` - ![#f9d0c4](https://img.shields.io/badge/-f9d0c4) reverts a previous commit
 
 Breaking change?
-- [ ] Yes — I used `feat!:` or `BREAKING CHANGE` in my commit (version bumps to next major)
-- [ ] No
-
-## How to test
-
-1.
-2.
-3.
+- [ ] Yes - I used `feat!:` or `BREAKING CHANGE` in my commit
 
 ## Checklist
-- [ ] Commits follow [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
+
+- [ ] PR title follows conventional commits (e.g. `fix: resolve startup crash`)
 - [ ] CI is green
 - [ ] No passwords, API keys or sensitive data in the code

@@ -1,5 +1,5 @@
 # ============================================================================
-# pcHealth — Local PSScriptAnalyzer runner
+# pcHealth - Local PSScriptAnalyzer runner
 # Uses the same settings file as the CI pipeline so results are identical.
 #
 # Usage:

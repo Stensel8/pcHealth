@@ -62,6 +62,14 @@
           - ".github/dependabot.yml"
           - "renovate.json"
 
+"security":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "SECURITY.md"
+          - ".github/workflows/security.yml"
+          - ".github/workflows/codeql.yml"
+          - ".github/workflows/dependency-review.yml"
+
 # ── Platform labels ───────────────────────────────────────────────────────────
 
 "windows-11":
