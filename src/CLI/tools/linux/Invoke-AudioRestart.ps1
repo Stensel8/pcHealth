@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- Restart Audio (Linux)
 # Detects PipeWire or PulseAudio and restarts the relevant user services.

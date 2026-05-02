@@ -52,7 +52,10 @@ if ($IsLinux) {
             try {
                 $bytes = [System.IO.File]::ReadAllBytes($sbVar.FullName)
                 $secureBoot = if ($bytes.Length -ge 5 -and $bytes[4] -eq 1) { 'Enabled' } else { 'Disabled' }
-            } catch { }
+            } catch {
+                # If reading the efivar fails, mark secure boot state as unknown
+                $secureBoot = 'Unknown'
+            }
         }
     }
 

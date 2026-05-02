@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 # ============================================================================
 # pcHealth -- CLI Launcher
 # PS5.1-compatible bootstrap: enforces PS7, admin/root, and optional deps.

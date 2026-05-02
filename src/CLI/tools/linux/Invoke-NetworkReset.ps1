@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- Network Reset (Linux)
 # Restarts NetworkManager (or systemd-networkd) and flushes the DNS cache.

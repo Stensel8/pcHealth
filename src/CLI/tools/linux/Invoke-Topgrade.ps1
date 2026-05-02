@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 7.0
 # ============================================================================
 # pcHealth -- Topgrade (Linux)
 # Runs topgrade to update all managed software in one pass.
