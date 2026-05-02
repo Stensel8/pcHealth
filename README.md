@@ -48,17 +48,13 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 ### Linux
 
+**Requirements:** PowerShell 7 must be installed first (the launcher is a `.ps1` file — there is no bash wrapper). Install it via your package manager, e.g. `sudo pacman -S powershell` on Arch/CachyOS or see [aka.ms/powershell](https://aka.ms/powershell) for other distros.
+
 1. Download or clone this repository.
-2. Run `start.sh` - it checks for PowerShell 7 and installs it if needed:
+2. Run `Start.ps1` elevated:
 
 ```bash
-bash src/CLI/start.sh
-```
-
-Or launch directly if PowerShell 7 is already installed:
-
-```bash
-sudo pwsh ./src/CLI/Start.ps1
+sudo pwsh src/CLI/Start.ps1
 ```
 
 ### GUI

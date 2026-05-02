@@ -94,7 +94,7 @@ if ($IsLinux) {
                     [PSCustomObject]@{ GPU = $Matches[1].Trim() }
                 }
             })
-            if ($gpuObjects) { $gpuObjects | Format-Table -AutoSize | Out-Host } else { $gpuLines | Out-Host }
+            if ($gpuObjects) { $gpuObjects | Format-Table -AutoSize -HideTableHeaders | Out-Host } else { $gpuLines | Out-Host }
         } else { Write-Warning "No GPU found via lspci." }
     } else {
         Write-Warning "lspci not available. Install pciutils."
