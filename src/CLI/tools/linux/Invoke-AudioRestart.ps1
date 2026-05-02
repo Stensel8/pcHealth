@@ -47,9 +47,9 @@ $hasPulse   = [bool](Get-Command pulseaudio -ErrorAction SilentlyContinue)
 
 if ($isPipeWire) {
     Write-Host "  Detected: PipeWire`n" -ForegroundColor DarkGray
-    Invoke-UserServiceUnit 'Restarting pipewire...'        restart pipewire
-    Invoke-UserServiceUnit 'Restarting pipewire-pulse...'  restart pipewire-pulse
-    Invoke-UserServiceUnit 'Restarting wireplumber...'     restart wireplumber
+    Invoke-UserServiceUnit -Label 'Restarting pipewire...'       -Action restart -Unit pipewire
+    Invoke-UserServiceUnit -Label 'Restarting pipewire-pulse...' -Action restart -Unit pipewire-pulse
+    Invoke-UserServiceUnit -Label 'Restarting wireplumber...'    -Action restart -Unit wireplumber
 } elseif ($hasPulse) {
     Write-Host "  Detected: PulseAudio`n" -ForegroundColor DarkGray
     # Kill then start as two separate invocations to avoid a shell compound command.

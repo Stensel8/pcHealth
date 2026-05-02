@@ -26,7 +26,16 @@ if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
     Write-Host '[setup] PSScriptAnalyzer not found. Installing...' -ForegroundColor Cyan
     Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
 }
-Import-Module PSScriptAnalyzer -ErrorAction Stop
+if (-not (Get-Module -Name PSScriptAnalyzer)) {
+    try {
+        Import-Module PSScriptAnalyzer -ErrorAction Stop
+    } catch {
+        # The VS Code extension can load the assembly into the AppDomain without registering
+        # it as a session module, so Get-Module returns false but Import-Module conflicts.
+        # If Invoke-ScriptAnalyzer is callable the assembly is usable; proceed silently.
+        if (-not (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue)) { throw }
+    }
+}
 
 # ── Same settings file the CI pipeline uses ───────────────────────────────────
 $settingsFile = (Resolve-Path (Join-Path $PSScriptRoot '..\..' '.github' 'PSScriptAnalyzerSettings.psd1')).Path
