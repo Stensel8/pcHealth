@@ -19,7 +19,7 @@ param(
 )
 
 # Re-launch under pwsh 7 when invoked from Windows PowerShell 5.
-# #Requires -Version 7.0 would throw at parse time and block this re-launch.
+# Requires -Version 7.0 would throw at parse time and block this re-launch.
 if ($PSVersionTable.PSVersion.Major -lt 7) {
     $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
     if (-not $pwsh) {
