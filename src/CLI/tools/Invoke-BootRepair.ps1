@@ -52,12 +52,24 @@ if ($win) {
 } else { Write-Warning "Windows partition not found, skipping disk repair." }
 Write-Host "[OK] Disk repair done.`n" -ForegroundColor Green
 
-Write-Host "[>>] Step 2/3 -- SFC (offline)..." -ForegroundColor Yellow
+Write-Host "[>>] Step 2/3 -- SFC..." -ForegroundColor Yellow
 if ($win) {
-    Start-Process -FilePath "$env:SystemRoot\System32\sfc.exe" `
-        -ArgumentList "/scannow /offbootdir=`"$win\`" /offwindir=`"$windir`"" `
-        -Wait -NoNewWindow
-} else { Write-Warning "Skipping offline SFC." }
+    if (Test-Path 'X:\') {
+        # WinRE always maps its RAM-disk to X:\ — this is enforced by the Windows
+        # boot environment and is not a user-configurable drive letter, so this
+        # check reliably distinguishes a WinRE session from a normal Windows boot.
+        # In WinRE, pass offline boot/win dirs so SFC targets the installed OS.
+        Start-Process -FilePath "$env:SystemRoot\System32\sfc.exe" `
+            -ArgumentList "/scannow /offbootdir=`"$win\`" /offwindir=`"$windir`"" `
+            -Wait -NoNewWindow
+    } else {
+        # Live session: /offbootdir and /offwindir are not valid here; run the normal online scan.
+        Write-Warning "Running live SFC scan — for a full offline repair, use WinRE."
+        Start-Process -FilePath "$env:SystemRoot\System32\sfc.exe" `
+            -ArgumentList '/scannow' `
+            -Wait -NoNewWindow
+    }
+} else { Write-Warning "Skipping SFC — Windows partition not found." }
 Write-Host "[OK] SFC done.`n" -ForegroundColor Green
 
 Write-Host "[>>] Step 3/3 -- BOOTREC..." -ForegroundColor Yellow

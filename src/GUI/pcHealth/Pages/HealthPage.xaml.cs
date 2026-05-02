@@ -33,6 +33,9 @@ public sealed partial class HealthPage : Page
         try
         {
             var data = await Task.Run(GatherData);
+            // Guard: don't populate UI (or start the battery timer) if the page was
+            // navigated away before GatherData completed.
+            if (!IsLoaded) return;
             PopulateUi(data);
         }
         catch (Exception ex)
@@ -531,14 +534,78 @@ public sealed partial class HealthPage : Page
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             proc.Start();
-            var output = proc.StandardOutput.ReadToEnd();
+            // Read stdout and stderr concurrently so a full stderr buffer cannot
+            // block the process and prevent stdout from ever reaching EOF.
+            var stderrTask = proc.StandardError.ReadToEndAsync(cts.Token);
+            string output;
+            try
+            {
+                output = proc.StandardOutput.ReadToEndAsync(cts.Token).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+                proc.Kill(entireProcessTree: true);
+                Debug.WriteLine($"[Health] RunCapture '{exe} {args}' timed out after 30s");
+                return null;
+            }
+            try { stderrTask.GetAwaiter().GetResult(); } catch { /* drain only */ }
             proc.WaitForExit();
             return output;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[Health] RunCapture '{exe} {args}' failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Like <see cref="RunCapture"/> but accepts a device path and extra flags separately
+    /// so the device path is added via <see cref="ProcessStartInfo.ArgumentList"/> and is
+    /// correctly quoted by the OS, even when it contains spaces or special characters.
+    /// </summary>
+    private static string? RunCaptureWithArgs(string exe, string devicePath, IReadOnlyList<string> extraArgs)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = exe,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            // Each argument is already tokenised by the caller — no space-splitting needed.
+            foreach (var arg in extraArgs)
+                psi.ArgumentList.Add(arg);
+            psi.ArgumentList.Add(devicePath);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            using var proc = new Process { StartInfo = psi };
+            proc.Start();
+            var stderrTask = proc.StandardError.ReadToEndAsync(cts.Token);
+            string output;
+            try
+            {
+                output = proc.StandardOutput.ReadToEndAsync(cts.Token).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
+            {
+                proc.Kill(entireProcessTree: true);
+                Debug.WriteLine($"[Health] RunCaptureWithArgs '{exe} {devicePath}' timed out after 30s");
+                return null;
+            }
+            try { stderrTask.GetAwaiter().GetResult(); } catch { /* drain only */ }
+            proc.WaitForExit();
+            return output;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Health] RunCaptureWithArgs '{exe} {devicePath}' failed: {ex.Message}");
             return null;
         }
     }
@@ -560,7 +627,14 @@ public sealed partial class HealthPage : Page
                 var devType = dev.TryGetProperty("type", out var t) ? t.GetString() : null;
                 if (string.IsNullOrEmpty(devName)) continue;
 
-                var dataJson = RunCapture(smartctlPath, $"-a \"{devName}\" --json");
+                // Build per-device arguments via ArgumentList so device paths with
+                // spaces or special characters are quoted correctly by the OS.
+                // Pass each flag as its own element so no space-splitting is needed.
+                var scanArgs = (!string.IsNullOrEmpty(devType) && devType != "auto")
+                    ? new List<string> { "-a", "-d", devType, "--json" }
+                    : new List<string> { "-a", "--json" };
+
+                var dataJson = RunCaptureWithArgs(smartctlPath, devName!, scanArgs);
                 if (string.IsNullOrWhiteSpace(dataJson)) continue;
 
                 using var dataDoc = JsonDocument.Parse(dataJson);

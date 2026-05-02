@@ -1,4 +1,3 @@
-#Requires -Version 7.0
 # ============================================================================
 # pcHealth — Local PSScriptAnalyzer runner
 # Uses the same settings file as the CI pipeline so results are identical.
@@ -19,6 +18,18 @@ param(
     [string] $Severity = 'Warning'
 )
 
+# Re-launch under pwsh 7 when invoked from Windows PowerShell 5.
+# Requires -Version 7.0 would throw at parse time and block this re-launch.
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
+    if (-not $pwsh) {
+        Write-Error 'PowerShell 7 (pwsh) is required. Install from https://aka.ms/pscore6'
+        return
+    }
+    & $pwsh.Source -File $PSCommandPath @PSBoundParameters
+    return
+}
+
 $ErrorActionPreference = 'Stop'
 
 # ── Ensure PSScriptAnalyzer is available ──────────────────────────────────────
@@ -26,7 +37,9 @@ if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
     Write-Host '[setup] PSScriptAnalyzer not found. Installing...' -ForegroundColor Cyan
     Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
 }
-Import-Module PSScriptAnalyzer -ErrorAction Stop
+if (-not (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue)) {
+    Import-Module PSScriptAnalyzer -ErrorAction Stop
+}
 
 # ── Same settings file the CI pipeline uses ───────────────────────────────────
 $settingsFile = (Resolve-Path (Join-Path $PSScriptRoot '..\..' '.github' 'PSScriptAnalyzerSettings.psd1')).Path

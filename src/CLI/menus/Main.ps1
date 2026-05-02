@@ -36,8 +36,14 @@ function Show-MainMenu {
             switch ($choice) {
                 '1' { $target = 'tools' }
                 '2' { $target = 'programs' }
-                '3' { Start-Process 'https://github.com/REALSDEALS/pcHealth' }
-                '4' { Start-Process 'https://github.com/REALSDEALS/pcHealth/releases' }
+                '3' {
+                    try { Start-Process 'https://github.com/REALSDEALS/pcHealth' -ErrorAction Stop }
+                    catch { Write-Host "`n  [!!] Could not open browser: $_" -ForegroundColor Red; Start-Sleep 1 }
+                }
+                '4' {
+                    try { Start-Process 'https://github.com/REALSDEALS/pcHealth/releases' -ErrorAction Stop }
+                    catch { Write-Host "`n  [!!] Could not open browser: $_" -ForegroundColor Red; Start-Sleep 1 }
+                }
                 '5' { $target = 'exit' }
                 default {
                     Write-Host "`n  Invalid choice." -ForegroundColor Red

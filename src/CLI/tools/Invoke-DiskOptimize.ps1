@@ -5,5 +5,6 @@
 # ============================================================================
 
 Write-Host "`nOpening Disk Optimization...`n" -ForegroundColor Cyan
-Start-Process dfrgui.exe
+# Use full system path to avoid PATH-hijacking on compromised environments.
+Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\dfrgui.exe')
 Write-Host "[OK] Disk Optimization window opened.`n" -ForegroundColor Green

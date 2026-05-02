@@ -5,5 +5,6 @@
 # ============================================================================
 
 Write-Host "`nOpening Disk Cleanup...`n" -ForegroundColor Cyan
-Start-Process cleanmgr.exe
+# Use full system path to avoid PATH-hijacking on compromised environments.
+Start-Process -FilePath (Join-Path $env:SystemRoot 'System32\cleanmgr.exe')
 Write-Host "[OK] Disk Cleanup window opened.`n" -ForegroundColor Green
