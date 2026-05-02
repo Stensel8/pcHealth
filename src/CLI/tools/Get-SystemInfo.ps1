@@ -120,8 +120,11 @@ if ($IsLinux) {
     $fw        = Get-CimInstance -ClassName Win32_BIOS -ErrorAction SilentlyContinue
     # $env:firmware_type is only set in WinPE/MDT; in a normal session it is always empty.
     # Read PEFirmwareType from the registry instead: 1 = BIOS, 2 = UEFI.
+    # Use -Name so only this one value is retrieved; accessing a missing property on the
+    # whole key would return $null in PowerShell, but -Name throws a clean error instead.
     $fwTypeRaw = try {
-        (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control' -ErrorAction Stop).PEFirmwareType
+        (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control' `
+            -Name PEFirmwareType -ErrorAction Stop).PEFirmwareType
     } catch { $null }
     $fwType    = switch ($fwTypeRaw) { 2 { 'UEFI' } 1 { 'Legacy BIOS' } default { 'Unknown' } }
     $fwVersion = if ($fw.SMBIOSBIOSVersion) { $fw.SMBIOSBIOSVersion } else { 'Unknown' }

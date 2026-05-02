@@ -20,7 +20,9 @@ if ($IsLinux) {
             $ok = (Read-Host "`n  Log off $env:USER? (y/n)").Trim().ToLower()
             if ($ok -eq 'y') {
                 # loginctl terminates the current user session cleanly.
-                & loginctl terminate-user $env:USER
+                # Quote the username so loginctl receives it as a single token even
+                # if $env:USER contains spaces (uncommon but possible).
+                & loginctl terminate-user "$env:USER"
             } else { Write-Host "`n  Cancelled.`n" -ForegroundColor DarkGray }
         }
         '2' {

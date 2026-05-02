@@ -560,7 +560,7 @@ public sealed partial class HealthPage : Page
     /// so the device path is added via <see cref="ProcessStartInfo.ArgumentList"/> and is
     /// correctly quoted by the OS, even when it contains spaces or special characters.
     /// </summary>
-    private static string? RunCaptureWithArgs(string exe, string devicePath, string extraArgs)
+    private static string? RunCaptureWithArgs(string exe, string devicePath, IReadOnlyList<string> extraArgs)
     {
         try
         {
@@ -572,8 +572,8 @@ public sealed partial class HealthPage : Page
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
-            // Add each argument individually; the runtime will quote as needed.
-            foreach (var arg in extraArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            // Each argument is already tokenised by the caller — no space-splitting needed.
+            foreach (var arg in extraArgs)
                 psi.ArgumentList.Add(arg);
             psi.ArgumentList.Add(devicePath);
 
@@ -614,9 +614,10 @@ public sealed partial class HealthPage : Page
 
                 // Build per-device arguments via ArgumentList so device paths with
                 // spaces or special characters are quoted correctly by the OS.
-                var scanArgs = $"-a --json";
+                // Pass each flag as its own element so no space-splitting is needed.
+                var scanArgs = new List<string> { "-a", "--json" };
                 if (!string.IsNullOrEmpty(devType) && devType != "auto")
-                    scanArgs = $"-a -d {devType} --json";
+                    scanArgs = ["-a", "-d", devType, "--json"];
 
                 var dataJson = RunCaptureWithArgs(smartctlPath, devName!, scanArgs);
                 if (string.IsNullOrWhiteSpace(dataJson)) continue;

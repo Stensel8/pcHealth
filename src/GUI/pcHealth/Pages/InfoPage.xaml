@@ -42,9 +42,9 @@
                     Padding="20,14">
                 <StackPanel Spacing="12">
                     <HyperlinkButton Content="View source code"
-                                     NavigateUri="https://github.com/REALSDEALS/pcHealth"/>
+                                     NavigateUri="https://github.com/Stensel8/pcHealth"/>
                     <HyperlinkButton Content="Report an issue"
-                                     NavigateUri="https://github.com/REALSDEALS/pcHealth/issues"/>
+                                     NavigateUri="https://github.com/Stensel8/pcHealth/issues"/>
                 </StackPanel>
             </Border>
 

@@ -18,7 +18,7 @@ if ($onLinux) {
         Read-Host 'Press Enter to exit'
         exit 1
     }
-    $kernelMajor = [int]($kernelStr -split '[.\-]')[0]
+    $kernelMajor = [int]($kernelStr -split '[.-]')[0]
     if ($kernelMajor -lt 6) {
         Write-Host "[!!] pcHealth cannot run on kernel $kernelStr." -ForegroundColor Red
         Write-Host "     Minimum required: kernel 6.0." -ForegroundColor Red

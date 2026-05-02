@@ -39,13 +39,16 @@ internal static class ProcessRunner
         proc.BeginOutputReadLine();
         proc.BeginErrorReadLine();
 
-        // Combine caller's CancellationToken with our deadline so the process
-        // is always killed if it exceeds the timeout, even when no external token is provided.
-        using var timeoutCts = timeout > TimeSpan.Zero
-            ? CancellationTokenSource.CreateLinkedTokenSource(ct)
+        // Build an effective CancellationToken that fires when either the caller
+        // cancels OR the timeout elapses, whichever comes first.
+        // Use two separate sources so each concern is independently disposable.
+        using var timeoutSource = timeout > TimeSpan.Zero
+            ? new CancellationTokenSource(timeout)
             : null;
-        if (timeoutCts is not null) timeoutCts.CancelAfter(timeout);
-        var effectiveCt = timeoutCts?.Token ?? ct;
+        using var linkedCts = timeoutSource is not null
+            ? CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutSource.Token)
+            : null;
+        var effectiveCt = linkedCts?.Token ?? ct;
 
         try
         {

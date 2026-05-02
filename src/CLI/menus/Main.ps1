@@ -18,7 +18,7 @@ function Show-MainMenu {
             Write-PcHeader 'Main Menu'
 
             Write-Host "  Thanks for downloading and using pcHealth!"
-            Write-Host "  Made by REALSDEALS - Licensed under GNU-3" -ForegroundColor DarkGray
+            Write-Host "  Made by Stensel8 - Licensed under GNU-3" -ForegroundColor DarkGray
             Write-Host "  You are now using pcHealth - $Global:PcPlatformLabel - V$Global:PcVersion`n" -ForegroundColor DarkGray
             Write-PcDivider
 
@@ -36,8 +36,14 @@ function Show-MainMenu {
             switch ($choice) {
                 '1' { $target = 'tools' }
                 '2' { $target = 'programs' }
-                '3' { Start-Process 'https://github.com/REALSDEALS/pcHealth' }
-                '4' { Start-Process 'https://github.com/REALSDEALS/pcHealth/releases' }
+                '3' {
+                    try { Start-Process 'https://github.com/Stensel8/pcHealth' -ErrorAction Stop }
+                    catch { Write-Host "`n  [!!] Could not open browser: $_" -ForegroundColor Red; Start-Sleep 1 }
+                }
+                '4' {
+                    try { Start-Process 'https://github.com/Stensel8/pcHealth/releases' -ErrorAction Stop }
+                    catch { Write-Host "`n  [!!] Could not open browser: $_" -ForegroundColor Red; Start-Sleep 1 }
+                }
                 '5' { $target = 'exit' }
                 default {
                     Write-Host "`n  Invalid choice." -ForegroundColor Red
