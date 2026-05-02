@@ -1,4 +1,3 @@
-#Requires -Version 7.0
 # ============================================================================
 # pcHealth — Local PSScriptAnalyzer runner
 # Uses the same settings file as the CI pipeline so results are identical.
@@ -18,6 +17,18 @@ param(
     [ValidateSet('Information', 'Warning', 'Error')]
     [string] $Severity = 'Warning'
 )
+
+# Re-launch under pwsh 7 when invoked from Windows PowerShell 5.
+# #Requires -Version 7.0 would throw at parse time and block this re-launch.
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
+    if (-not $pwsh) {
+        Write-Error 'PowerShell 7 (pwsh) is required. Install from https://aka.ms/pscore6'
+        return
+    }
+    & $pwsh.Source -File $PSCommandPath @PSBoundParameters
+    return
+}
 
 $ErrorActionPreference = 'Stop'
 
