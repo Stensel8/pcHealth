@@ -23,7 +23,9 @@ internal static class AppSettings
     public static bool GetBool(string key, bool fallback = true)
     {
         var raw = Get(key);
-        return raw == "" ? fallback : raw == "true";
+        if (raw == "") return fallback;
+        // Accept "true"/"True"/"TRUE" and "1" as true; everything else is false.
+        return raw.Equals("true", StringComparison.OrdinalIgnoreCase) || raw == "1";
     }
 
     public static void Set(string key, string value)

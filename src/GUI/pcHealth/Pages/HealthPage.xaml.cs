@@ -33,6 +33,9 @@ public sealed partial class HealthPage : Page
         try
         {
             var data = await Task.Run(GatherData);
+            // Guard: don't populate UI (or start the battery timer) if the page was
+            // navigated away before GatherData completed.
+            if (!IsLoaded) return;
             PopulateUi(data);
         }
         catch (Exception ex)
@@ -532,13 +535,62 @@ public sealed partial class HealthPage : Page
                 CreateNoWindow = true,
             };
             proc.Start();
+            // Read output before WaitForExit to avoid a deadlock when the
+            // redirected buffer fills up.
             var output = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit();
+            // 30-second hard cap: a drive that is failing or unresponsive can
+            // cause smartctl to hang indefinitely without this guard.
+            if (!proc.WaitForExit(30_000))
+            {
+                proc.Kill(entireProcessTree: true);
+                Debug.WriteLine($"[Health] RunCapture '{exe} {args}' timed out after 30s");
+                return null;
+            }
             return output;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[Health] RunCapture '{exe} {args}' failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Like <see cref="RunCapture"/> but accepts a device path and extra flags separately
+    /// so the device path is added via <see cref="ProcessStartInfo.ArgumentList"/> and is
+    /// correctly quoted by the OS, even when it contains spaces or special characters.
+    /// </summary>
+    private static string? RunCaptureWithArgs(string exe, string devicePath, string extraArgs)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = exe,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+            };
+            // Add each argument individually; the runtime will quote as needed.
+            foreach (var arg in extraArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                psi.ArgumentList.Add(arg);
+            psi.ArgumentList.Add(devicePath);
+
+            using var proc = new Process { StartInfo = psi };
+            proc.Start();
+            var output = proc.StandardOutput.ReadToEnd();
+            if (!proc.WaitForExit(30_000))
+            {
+                proc.Kill(entireProcessTree: true);
+                Debug.WriteLine($"[Health] RunCaptureWithArgs '{exe} {devicePath}' timed out after 30s");
+                return null;
+            }
+            return output;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Health] RunCaptureWithArgs '{exe} {devicePath}' failed: {ex.Message}");
             return null;
         }
     }
@@ -560,7 +612,13 @@ public sealed partial class HealthPage : Page
                 var devType = dev.TryGetProperty("type", out var t) ? t.GetString() : null;
                 if (string.IsNullOrEmpty(devName)) continue;
 
-                var dataJson = RunCapture(smartctlPath, $"-a \"{devName}\" --json");
+                // Build per-device arguments via ArgumentList so device paths with
+                // spaces or special characters are quoted correctly by the OS.
+                var scanArgs = $"-a --json";
+                if (!string.IsNullOrEmpty(devType) && devType != "auto")
+                    scanArgs = $"-a -d {devType} --json";
+
+                var dataJson = RunCaptureWithArgs(smartctlPath, devName!, scanArgs);
                 if (string.IsNullOrWhiteSpace(dataJson)) continue;
 
                 using var dataDoc = JsonDocument.Parse(dataJson);

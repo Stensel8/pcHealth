@@ -9,7 +9,7 @@ namespace pcHealth;
 internal static class UpdateChecker
 {
     private const string ReleasesApi =
-        "https://api.github.com/repos/REALSDEALS/pcHealth/releases/latest";
+        "https://api.github.com/repos/Stensel8/pcHealth/releases/latest";
 
     // Reuse one HttpClient for the lifetime of the app — creating a new instance
     // per call exhausts sockets and is flagged by static analysis.
@@ -50,7 +50,12 @@ internal static class UpdateChecker
         var current = Assembly.GetExecutingAssembly().GetName().Version;
         if (current is null) return false;
 
+        // Strip leading 'v'/'V' and any pre-release suffix before parsing.
         var clean = remoteTag.TrimStart('v', 'V').Trim();
+        // Version.TryParse requires dot-separated numbers; drop anything after a hyphen
+        // (e.g. "2.1.0-rc1" → "2.1.0") so the comparison works correctly.
+        var dashIdx = clean.IndexOf('-');
+        if (dashIdx > 0) clean = clean[..dashIdx];
         return Version.TryParse(clean, out var remote) && remote > current;
     }
 

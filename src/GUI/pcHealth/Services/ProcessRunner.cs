@@ -8,12 +8,19 @@ namespace pcHealth;
 /// </summary>
 internal static class ProcessRunner
 {
+    /// <param name="timeout">
+    /// Optional upper bound on how long to wait for the process.
+    /// Defaults to 10 minutes. Pass <see cref="TimeSpan.Zero"/> for no timeout.
+    /// </param>
     public static async Task RunAsync(
         string fileName,
         string arguments,
         Action<string> onLine,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        TimeSpan timeout = default)
     {
+        if (timeout == default) timeout = TimeSpan.FromMinutes(10);
+
         var psi = new ProcessStartInfo(fileName, arguments)
         {
             UseShellExecute = false,
@@ -32,9 +39,17 @@ internal static class ProcessRunner
         proc.BeginOutputReadLine();
         proc.BeginErrorReadLine();
 
+        // Combine caller's CancellationToken with our deadline so the process
+        // is always killed if it exceeds the timeout, even when no external token is provided.
+        using var timeoutCts = timeout > TimeSpan.Zero
+            ? CancellationTokenSource.CreateLinkedTokenSource(ct)
+            : null;
+        if (timeoutCts is not null) timeoutCts.CancelAfter(timeout);
+        var effectiveCt = timeoutCts?.Token ?? ct;
+
         try
         {
-            await proc.WaitForExitAsync(ct);
+            await proc.WaitForExitAsync(effectiveCt);
         }
         catch (OperationCanceledException)
         {
