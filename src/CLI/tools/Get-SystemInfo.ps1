@@ -125,7 +125,11 @@ if ($IsLinux) {
     $fwTypeRaw = try {
         (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control' `
             -Name PEFirmwareType -ErrorAction Stop).PEFirmwareType
-    } catch { $null }
+    } catch {
+        # PEFirmwareType is absent on some OEM or pre-UEFI systems; log and fall through.
+        Write-Debug "PEFirmwareType registry property not found: $_"
+        $null
+    }
     $fwType    = switch ($fwTypeRaw) { 2 { 'UEFI' } 1 { 'Legacy BIOS' } default { 'Unknown' } }
     $fwVersion = if ($fw.SMBIOSBIOSVersion) { $fw.SMBIOSBIOSVersion } else { 'Unknown' }
     $fwDate    = if ($fw.ReleaseDate) { $fw.ReleaseDate.ToString('yyyy-MM-dd') } else { 'Unknown' }

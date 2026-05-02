@@ -8,9 +8,15 @@ namespace pcHealth;
 /// </summary>
 internal static class ProcessRunner
 {
+    /// <summary>
+    /// Default wall-clock timeout applied when the caller does not specify one.
+    /// Prevents a hung process from blocking the UI indefinitely.
+    /// </summary>
+    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(10);
+
     /// <param name="timeout">
     /// Optional upper bound on how long to wait for the process.
-    /// Defaults to 10 minutes. Pass <see cref="TimeSpan.Zero"/> for no timeout.
+    /// Defaults to <see cref="DefaultTimeout"/> (10 min). Pass <see cref="TimeSpan.Zero"/> for no timeout.
     /// </param>
     public static async Task RunAsync(
         string fileName,
@@ -19,7 +25,7 @@ internal static class ProcessRunner
         CancellationToken ct = default,
         TimeSpan timeout = default)
     {
-        if (timeout == default) timeout = TimeSpan.FromMinutes(10);
+        if (timeout == default) timeout = DefaultTimeout;
 
         var psi = new ProcessStartInfo(fileName, arguments)
         {

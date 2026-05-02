@@ -55,7 +55,10 @@ Write-Host "[OK] Disk repair done.`n" -ForegroundColor Green
 Write-Host "[>>] Step 2/3 -- SFC..." -ForegroundColor Yellow
 if ($win) {
     if (Test-Path 'X:\') {
-        # WinRE/offline environment: pass offline boot/win dirs so SFC targets the installed OS.
+        # WinRE always maps its RAM-disk to X:\ — this is enforced by the Windows
+        # boot environment and is not a user-configurable drive letter, so this
+        # check reliably distinguishes a WinRE session from a normal Windows boot.
+        # In WinRE, pass offline boot/win dirs so SFC targets the installed OS.
         Start-Process -FilePath "$env:SystemRoot\System32\sfc.exe" `
             -ArgumentList "/scannow /offbootdir=`"$win\`" /offwindir=`"$windir`"" `
             -Wait -NoNewWindow
