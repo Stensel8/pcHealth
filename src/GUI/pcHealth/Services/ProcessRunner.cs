@@ -8,15 +8,10 @@ namespace pcHealth;
 /// </summary>
 internal static class ProcessRunner
 {
-    /// <summary>
-    /// Default wall-clock timeout applied when the caller does not specify one.
-    /// Prevents a hung process from blocking the UI indefinitely.
-    /// </summary>
-    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(10);
-
     /// <param name="timeout">
-    /// Optional upper bound on how long to wait for the process.
-    /// Defaults to <see cref="DefaultTimeout"/> (10 min). Pass <see cref="TimeSpan.Zero"/> for no timeout.
+    /// Optional wall-clock timeout. Pass <see cref="TimeSpan.Zero"/> (the default) for no timeout.
+    /// Operations like SFC, DISM /RestoreHealth, and winget upgrade can exceed 30+ minutes on
+    /// slow or unhealthy machines, so callers should opt in to a timeout only when appropriate.
     /// </param>
     public static async Task RunAsync(
         string fileName,
@@ -25,8 +20,6 @@ internal static class ProcessRunner
         CancellationToken ct = default,
         TimeSpan timeout = default)
     {
-        if (timeout == default) timeout = DefaultTimeout;
-
         var psi = new ProcessStartInfo(fileName, arguments)
         {
             UseShellExecute = false,
@@ -45,22 +38,15 @@ internal static class ProcessRunner
         proc.BeginOutputReadLine();
         proc.BeginErrorReadLine();
 
-        // Build an effective CancellationToken that fires when either the caller
-        // cancels OR the timeout elapses, whichever comes first.
-        CancellationToken effectiveCt;
-        CancellationTokenSource? timeoutSource = null;
-        CancellationTokenSource? linkedCts = null;
+        CancellationTokenSource? timeoutCts = null;
         try
         {
+            CancellationToken effectiveCt = ct;
             if (timeout > TimeSpan.Zero)
             {
-                timeoutSource = new CancellationTokenSource(timeout);
-                linkedCts     = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutSource.Token);
-                effectiveCt   = linkedCts.Token;
-            }
-            else
-            {
-                effectiveCt = ct;
+                timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                timeoutCts.CancelAfter(timeout);
+                effectiveCt = timeoutCts.Token;
             }
 
             await proc.WaitForExitAsync(effectiveCt);
@@ -72,8 +58,7 @@ internal static class ProcessRunner
         }
         finally
         {
-            linkedCts?.Dispose();
-            timeoutSource?.Dispose();
+            timeoutCts?.Dispose();
         }
     }
 }

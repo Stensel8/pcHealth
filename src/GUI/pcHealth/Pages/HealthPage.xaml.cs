@@ -534,18 +534,25 @@ public sealed partial class HealthPage : Page
                 RedirectStandardError = true,
                 CreateNoWindow = true,
             };
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             proc.Start();
-            // Read output before WaitForExit to avoid a deadlock when the
-            // redirected buffer fills up.
-            var output = proc.StandardOutput.ReadToEnd();
-            // 30-second hard cap: a drive that is failing or unresponsive can
-            // cause smartctl to hang indefinitely without this guard.
-            if (!proc.WaitForExit(30_000))
+            // Read stdout and stderr concurrently so a full stderr buffer cannot
+            // block the process and prevent stdout from ever reaching EOF.
+            var stderrTask = proc.StandardError.ReadToEndAsync(cts.Token);
+            string output;
+            try
+            {
+                output = proc.StandardOutput.ReadToEndAsync(cts.Token).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
             {
                 proc.Kill(entireProcessTree: true);
                 Debug.WriteLine($"[Health] RunCapture '{exe} {args}' timed out after 30s");
                 return null;
             }
+            try { stderrTask.GetAwaiter().GetResult(); } catch { /* drain only */ }
+            proc.WaitForExit();
             return output;
         }
         catch (Exception ex)
@@ -577,15 +584,23 @@ public sealed partial class HealthPage : Page
                 psi.ArgumentList.Add(arg);
             psi.ArgumentList.Add(devicePath);
 
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             using var proc = new Process { StartInfo = psi };
             proc.Start();
-            var output = proc.StandardOutput.ReadToEnd();
-            if (!proc.WaitForExit(30_000))
+            var stderrTask = proc.StandardError.ReadToEndAsync(cts.Token);
+            string output;
+            try
+            {
+                output = proc.StandardOutput.ReadToEndAsync(cts.Token).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
             {
                 proc.Kill(entireProcessTree: true);
                 Debug.WriteLine($"[Health] RunCaptureWithArgs '{exe} {devicePath}' timed out after 30s");
                 return null;
             }
+            try { stderrTask.GetAwaiter().GetResult(); } catch { /* drain only */ }
+            proc.WaitForExit();
             return output;
         }
         catch (Exception ex)

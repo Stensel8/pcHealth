@@ -74,6 +74,8 @@ function Show-ToolsMenu {
             Clear-PcHost
             try {
                 & (Join-Path $t $entry.Script)
+            } catch [System.Management.Automation.PipelineStoppedException] {
+                # Ctrl+C inside a tool script — return cleanly without showing an error
             } catch {
                 Write-Host "`n[!!] Tool error: $_`n" -ForegroundColor Red
                 Start-Sleep -Seconds 2
