@@ -14,6 +14,14 @@ $user   = $env:SUDO_USER ?? $env:USER
 $userId = (& id -u "$user" 2>$null).Trim()
 $dbus   = $env:DBUS_SESSION_BUS_ADDRESS ?? "unix:path=/run/user/$userId/bus"
 
+# Validate the DBUS address has the expected format before embedding it in an
+# env key=value argument. A well-formed address starts with a known transport prefix.
+if ($dbus -notmatch '^(unix|tcp|nonce-tcp|autolaunch):') {
+    Write-Host "[!!] Unexpected DBUS_SESSION_BUS_ADDRESS format: $dbus" -ForegroundColor Red
+    Write-Host "     Aborting to avoid passing an untrusted value to env." -ForegroundColor Red
+    return
+}
+
 # Invoke a systemctl --user command as the target user, forwarding DBUS via the
 # environment rather than injecting it into a shell command string.
 # systemctl and its arguments are passed as individual tokens — no shell involved.

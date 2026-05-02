@@ -41,23 +41,33 @@ internal static class ProcessRunner
 
         // Build an effective CancellationToken that fires when either the caller
         // cancels OR the timeout elapses, whichever comes first.
-        // Use two separate sources so each concern is independently disposable.
-        using var timeoutSource = timeout > TimeSpan.Zero
-            ? new CancellationTokenSource(timeout)
-            : null;
-        using var linkedCts = timeoutSource is not null
-            ? CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutSource.Token)
-            : null;
-        var effectiveCt = linkedCts?.Token ?? ct;
-
+        CancellationToken effectiveCt;
+        CancellationTokenSource? timeoutSource = null;
+        CancellationTokenSource? linkedCts = null;
         try
         {
+            if (timeout > TimeSpan.Zero)
+            {
+                timeoutSource = new CancellationTokenSource(timeout);
+                linkedCts     = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutSource.Token);
+                effectiveCt   = linkedCts.Token;
+            }
+            else
+            {
+                effectiveCt = ct;
+            }
+
             await proc.WaitForExitAsync(effectiveCt);
         }
         catch (OperationCanceledException)
         {
             proc.Kill(entireProcessTree: true);
             throw;
+        }
+        finally
+        {
+            linkedCts?.Dispose();
+            timeoutSource?.Dispose();
         }
     }
 }

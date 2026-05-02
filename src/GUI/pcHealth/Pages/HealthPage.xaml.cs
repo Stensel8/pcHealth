@@ -615,9 +615,9 @@ public sealed partial class HealthPage : Page
                 // Build per-device arguments via ArgumentList so device paths with
                 // spaces or special characters are quoted correctly by the OS.
                 // Pass each flag as its own element so no space-splitting is needed.
-                var scanArgs = new List<string> { "-a", "--json" };
-                if (!string.IsNullOrEmpty(devType) && devType != "auto")
-                    scanArgs = ["-a", "-d", devType, "--json"];
+                var scanArgs = (!string.IsNullOrEmpty(devType) && devType != "auto")
+                    ? new List<string> { "-a", "-d", devType, "--json" }
+                    : new List<string> { "-a", "--json" };
 
                 var dataJson = RunCaptureWithArgs(smartctlPath, devName!, scanArgs);
                 if (string.IsNullOrWhiteSpace(dataJson)) continue;
