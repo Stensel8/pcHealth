@@ -37,7 +37,7 @@ function Get-KeyFromDigitalProductId {
         $productKey = ''
 
         $isWin8Plus = ($key[14] -shr 3) -band 1
-        $key[14]    = ($key[14] -band 0xF7) -bor (($isWin8Plus -band 2) -shl 2)
+        $key[14]    = $key[14] -band 0xF7   # clear bit 3 (N-insertion flag) before base-24 decode
 
         for ($i = 24; $i -ge 0; $i--) {
             $cur = 0

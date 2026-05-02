@@ -34,7 +34,14 @@ if ($distroId -in $archIds -or $distroLike -match 'arch') {
     if (Get-Command paccache -ErrorAction SilentlyContinue) {
         Invoke-Cleanup 'Clearing pacman cache (keeping last 2 versions)...' { sudo paccache -rk2 }
     }
-    Invoke-Cleanup 'Removing unneeded pacman dependencies...' { sudo pacman -Rns (pacman -Qdtq) --noconfirm 2>$null; $true }
+    # Only remove orphans when there is actually something to remove;
+    # passing an empty list to pacman -Rns causes a non-zero exit and confuses users.
+    $orphans = @(& pacman -Qdtq 2>$null)
+    if ($orphans.Count -gt 0) {
+        Invoke-Cleanup 'Removing unneeded pacman dependencies...' { sudo pacman -Rns $orphans --noconfirm }
+    } else {
+        Write-Host "[--] No unneeded pacman dependencies found, skipping.`n" -ForegroundColor DarkGray
+    }
 } elseif ($distroId -in @('ubuntu', 'debian', 'linuxmint', 'pop', 'elementary', 'zorin', 'kali') -or $distroLike -match 'debian|ubuntu') {
     Invoke-Cleanup 'Removing unneeded apt packages...' { sudo apt autoremove -y }
     Invoke-Cleanup 'Cleaning apt cache...'             { sudo apt autoclean }

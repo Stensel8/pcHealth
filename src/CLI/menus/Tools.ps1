@@ -72,7 +72,12 @@ function Show-ToolsMenu {
             $entry = $active[$num - 1]
             Set-PcTheme 'Action'
             Clear-PcHost
-            & (Join-Path $t $entry.Script)
+            try {
+                & (Join-Path $t $entry.Script)
+            } catch {
+                Write-Host "`n[!!] Tool error: $_`n" -ForegroundColor Red
+                Start-Sleep -Seconds 2
+            }
             $nav = Read-PcNavChoice 'Back to Tools Menu'
             switch ($nav) {
                 '2' { return 'main' }

@@ -118,7 +118,12 @@ if ($IsLinux) {
     $fullBuild = if ($ubr) { "$($os.BuildNumber).$ubr" } else { $os.BuildNumber }
 
     $fw        = Get-CimInstance -ClassName Win32_BIOS -ErrorAction SilentlyContinue
-    $fwType    = if ($env:firmware_type) { $env:firmware_type } else { 'Unknown' }
+    # $env:firmware_type is only set in WinPE/MDT; in a normal session it is always empty.
+    # Read PEFirmwareType from the registry instead: 1 = BIOS, 2 = UEFI.
+    $fwTypeRaw = try {
+        (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control' -ErrorAction Stop).PEFirmwareType
+    } catch { $null }
+    $fwType    = switch ($fwTypeRaw) { 2 { 'UEFI' } 1 { 'Legacy BIOS' } default { 'Unknown' } }
     $fwVersion = if ($fw.SMBIOSBIOSVersion) { $fw.SMBIOSBIOSVersion } else { 'Unknown' }
     $fwDate    = if ($fw.ReleaseDate) { $fw.ReleaseDate.ToString('yyyy-MM-dd') } else { 'Unknown' }
 

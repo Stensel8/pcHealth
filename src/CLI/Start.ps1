@@ -13,7 +13,12 @@ $isPwsh7 = $PSVersionTable.PSVersion.Major -ge 7
 # -- Linux: kernel version check + root guard ---------------------------------
 if ($onLinux) {
     $kernelStr   = (& uname -r 2>$null).Trim()
-    $kernelMajor = [int]($kernelStr -split '\.')[0]
+    if (-not $kernelStr) {
+        Write-Host "[!!] Could not determine kernel version (uname -r returned nothing)." -ForegroundColor Red
+        Read-Host 'Press Enter to exit'
+        exit 1
+    }
+    $kernelMajor = [int]($kernelStr -split '[.\-]')[0]
     if ($kernelMajor -lt 6) {
         Write-Host "[!!] pcHealth cannot run on kernel $kernelStr." -ForegroundColor Red
         Write-Host "     Minimum required: kernel 6.0." -ForegroundColor Red
