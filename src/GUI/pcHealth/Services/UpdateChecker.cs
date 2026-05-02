@@ -9,7 +9,7 @@ namespace pcHealth;
 internal static class UpdateChecker
 {
     private const string ReleasesApi =
-        "https://api.github.com/repos/Stensel8/pcHealth/releases/latest";
+        "https://api.github.com/repos/REALSDEALS/pcHealth/releases/latest";
 
     // Reuse one HttpClient for the lifetime of the app — creating a new instance
     // per call exhausts sockets and is flagged by static analysis.

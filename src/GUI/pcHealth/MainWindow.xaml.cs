@@ -62,7 +62,7 @@ public sealed partial class MainWindow : Window
         };
 
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
-            CliRunner.OpenUri("https://github.com/Stensel8/pcHealth/releases/latest");
+            CliRunner.OpenUri("https://github.com/REALSDEALS/pcHealth/releases/latest");
     }
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
