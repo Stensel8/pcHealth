@@ -58,9 +58,26 @@ if (-not $smartctl) {
 
 if ($IsLinux) {
     # -- CPU ------------------------------------------------------------------
-    Write-SectionHeader 'CPU Information'
+    Write-SectionHeader 'CPU'
     if (Get-Command lscpu -ErrorAction SilentlyContinue) {
-        & lscpu 2>$null | Out-Host
+        $lscpuData = @{}
+        & lscpu 2>$null | ForEach-Object {
+            if ($_ -match '^(.+?):\s+(.+)$') { $lscpuData[$Matches[1].Trim()] = $Matches[2].Trim() }
+        }
+        $maxMHz = $lscpuData['CPU max MHz']
+        $maxMHzStr = if ($maxMHz) { "$([Math]::Round([double]($maxMHz -replace ',', '.'), 0)) MHz" } else { 'N/A' }
+        [PSCustomObject]@{
+            'CPU Name'       = $lscpuData['Model name']         ?? 'N/A'
+            'Architecture'   = $lscpuData['Architecture']       ?? 'N/A'
+            'Cores'          = $lscpuData['Core(s) per socket'] ?? 'N/A'
+            'Threads'        = $lscpuData['CPU(s)']             ?? 'N/A'
+            'Max Speed'      = $maxMHzStr
+            'L1d Cache'      = $lscpuData['L1d cache']          ?? 'N/A'
+            'L1i Cache'      = $lscpuData['L1i cache']          ?? 'N/A'
+            'L2 Cache'       = $lscpuData['L2 cache']           ?? 'N/A'
+            'L3 Cache'       = $lscpuData['L3 cache']           ?? 'N/A'
+            'Virtualization' = $lscpuData['Virtualization']     ?? 'N/A'
+        } | Format-List | Out-Host
     } elseif (Test-Path '/proc/cpuinfo') {
         Get-Content '/proc/cpuinfo' | Where-Object { $_ -match '^(model name|cpu MHz|cpu cores|siblings)' } | Out-Host
     } else {
@@ -68,10 +85,17 @@ if ($IsLinux) {
     }
 
     # -- GPU ------------------------------------------------------------------
-    Write-SectionHeader 'GPU Information'
+    Write-SectionHeader 'GPU'
     if (Get-Command lspci -ErrorAction SilentlyContinue) {
-        $gpus = & lspci 2>$null | Where-Object { $_ -match 'VGA|3D|Display' }
-        if ($gpus) { $gpus | Out-Host } else { Write-Warning "No GPU found via lspci." }
+        $gpuLines = & lspci 2>$null | Where-Object { $_ -match 'VGA|3D|Display' }
+        if ($gpuLines) {
+            $gpuObjects = @($gpuLines | ForEach-Object {
+                if ($_ -match '^[\w:\.]+\s+(?:VGA compatible controller|Display controller|3D controller):\s*(.+)$') {
+                    [PSCustomObject]@{ GPU = $Matches[1].Trim() }
+                }
+            })
+            if ($gpuObjects) { $gpuObjects | Format-Table -AutoSize -HideTableHeaders | Out-Host } else { $gpuLines | Out-Host }
+        } else { Write-Warning "No GPU found via lspci." }
     } else {
         Write-Warning "lspci not available. Install pciutils."
     }
@@ -79,27 +103,31 @@ if ($IsLinux) {
     # -- Storage --------------------------------------------------------------
     Write-SectionHeader 'Storage'
     if ($smartctl) {
-        $scanData = (& $smartctl --scan --json 2>$null) | ConvertFrom-Json -ErrorAction SilentlyContinue
+        $scanJson = (& $smartctl --scan --json 2>$null) -join "`n"
+        $scanData = $scanJson | ConvertFrom-Json -ErrorAction SilentlyContinue
         $devices  = $scanData.devices
         if ($devices) {
             $rows = @(foreach ($dev in $devices) {
-                $data = (& $smartctl -a $dev.name --json 2>$null) | ConvertFrom-Json -ErrorAction SilentlyContinue
+                $devArgs = @('-a', $dev.name, '--json')
+                if ($dev.type -and $dev.type -ne 'auto') { $devArgs += @('-d', $dev.type) }
+                $devJson = (& $smartctl @devArgs 2>$null) -join "`n"
+                $data    = $devJson | ConvertFrom-Json -ErrorAction SilentlyContinue
                 if (-not $data -or -not $data.model_name) { continue }
                 $mediaType = if ($dev.type -eq 'nvme') { 'SSD' } elseif ($data.rotation_rate -gt 0) { 'HDD' } else { 'SSD' }
                 $lifeLeft = 'N/A'
                 if ($dev.type -eq 'nvme') {
                     $pct = $data.nvme_smart_health_information_log.percentage_used
-                    if ($null -ne $pct) { $lifeLeft = "$([Math]::Max(0,100-[int]$pct))%" }
+                    if ($null -ne $pct) { $lifeLeft = "$([Math]::Max(0, 100 - [int]$pct))%" }
                 } elseif ($mediaType -eq 'SSD') {
-                    $attr = $data.ata_smart_attributes.table | Where-Object { $_.id -in @(231,202,177) } | Select-Object -First 1
+                    $attr = $data.ata_smart_attributes.table | Where-Object { $_.id -in @(231, 202, 177) } | Select-Object -First 1
                     if ($attr) { $lifeLeft = "$($attr.value)%" }
                 }
                 [PSCustomObject]@{
                     Model       = $data.model_name
                     Type        = $mediaType
-                    'Size (GB)' = if ($data.capacity.bytes) { [Math]::Round($data.capacity.bytes/1GB,0) } else { 'N/A' }
-                    'Temp (degC)' = if ($null -ne $data.temperature.current) { $data.temperature.current } else { 'N/A' }
-                    Hours       = if ($data.power_on_time.hours) { $data.power_on_time.hours } else { 'N/A' }
+                    'Size (GB)' = if ($data.capacity.bytes)          { [Math]::Round($data.capacity.bytes / 1GB, 0) } else { 'N/A' }
+                    'Temp (C)'  = if ($null -ne $data.temperature.current) { $data.temperature.current }             else { 'N/A' }
+                    Hours       = if ($data.power_on_time.hours)     { $data.power_on_time.hours }                   else { 'N/A' }
                     'Life Left' = $lifeLeft
                     Health      = if ($data.smart_status.passed -eq $true) { 'Healthy' } elseif ($data.smart_status.passed -eq $false) { 'FAILING' } else { 'Unknown' }
                 }
@@ -116,10 +144,24 @@ if ($IsLinux) {
 
     # -- RAM ------------------------------------------------------------------
     Write-SectionHeader 'Memory (RAM)'
-    if (Get-Command free -ErrorAction SilentlyContinue) {
+    $mi = @{}
+    if (Test-Path '/proc/meminfo') {
+        Get-Content '/proc/meminfo' | ForEach-Object {
+            if ($_ -match '^(\w+):\s+(\d+)') { $mi[$Matches[1]] = [long]$Matches[2] }
+        }
+    }
+    if ($mi['MemTotal']) {
+        $buffCache = ($mi['Buffers'] ?? 0) + ($mi['Cached'] ?? 0) + ($mi['SReclaimable'] ?? 0)
+        [PSCustomObject]@{
+            'Total (GB)'      = [Math]::Round($mi['MemTotal']                              / 1MB, 2)
+            'Used (GB)'       = [Math]::Round(($mi['MemTotal'] - $mi['MemAvailable'])      / 1MB, 2)
+            'Available (GB)'  = [Math]::Round($mi['MemAvailable']                          / 1MB, 2)
+            'Buff/Cache (GB)' = [Math]::Round($buffCache                                   / 1MB, 2)
+            'Swap Total (GB)' = [Math]::Round($mi['SwapTotal']                             / 1MB, 2)
+            'Swap Used (GB)'  = [Math]::Round(($mi['SwapTotal'] - $mi['SwapFree'])         / 1MB, 2)
+        } | Format-List | Out-Host
+    } elseif (Get-Command free -ErrorAction SilentlyContinue) {
         & free -h 2>$null | Out-Host
-    } elseif (Test-Path '/proc/meminfo') {
-        Get-Content '/proc/meminfo' | Select-Object -First 5 | Out-Host
     } else {
         Write-Warning "RAM information not available."
     }

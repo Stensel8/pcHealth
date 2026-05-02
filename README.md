@@ -48,17 +48,13 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 ### Linux
 
+**Requirements:** PowerShell 7 must be installed first (the launcher is a `.ps1` file — there is no bash wrapper). Install it via your package manager, e.g. `sudo pacman -S powershell` on Arch/CachyOS or see [aka.ms/powershell](https://aka.ms/powershell) for other distros.
+
 1. Download or clone this repository.
-2. Run `start.sh` - it checks for PowerShell 7 and installs it if needed:
+2. Run `Start.ps1` elevated:
 
 ```bash
-bash src/CLI/start.sh
-```
-
-Or launch directly if PowerShell 7 is already installed:
-
-```bash
-sudo pwsh ./src/CLI/Start.ps1
+sudo pwsh src/CLI/Start.ps1
 ```
 
 ### GUI
@@ -118,7 +114,11 @@ Option numbers are assigned sequentially at runtime per platform - Windows-only 
 | Continuous Ping Test          | All       | Continuous ping, Ctrl+C to stop                    |
 | Traceroute to Google          | All       | tracert / traceroute                               |
 | Reset Network Stack           | Windows   | DNS flush, Winsock reset, IPv4/IPv6 reset          |
-| Update all packages           | All       | winget (Windows) / distro package manager (Linux)  |
+| Update all packages           | Windows   | winget                                             |
+| Topgrade                      | Linux     | Full system upgrade: packages, flatpak, VS Code extensions, helm, uv, and more |
+| Disk Cleanup                  | Linux     | Package cache, journal logs, unused Flatpak runtimes, thumbnail cache |
+| Restart Audio                 | Linux     | Restarts PipeWire or PulseAudio user services      |
+| Reset Network Stack           | Linux     | Restarts NetworkManager, flushes DNS cache         |
 | Update HP Drivers             | Windows   | HP Image Assistant (HP devices only)               |
 | Restart Audio Drivers         | Windows   | Restarts audio services                            |
 | Open Battery Report           | Windows   | Opens previously generated report                  |

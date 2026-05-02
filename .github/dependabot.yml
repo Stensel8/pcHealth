@@ -21,8 +21,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
@@ -55,8 +54,7 @@ updates:
   - package-ecosystem: "nuget"
     directory: "/src/GUI/pcHealth"
     schedule:
-      interval: "weekly"
-      day: "tuesday"
+      interval: "daily"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"

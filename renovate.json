@@ -9,7 +9,7 @@
 
   "enabledManagers": ["nuget", "github-actions"],
 
-  "schedule": ["on monday"],
+  "schedule": ["at any time"],
 
   "labels": ["dependencies"],
 

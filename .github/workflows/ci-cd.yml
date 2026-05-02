@@ -176,7 +176,6 @@ jobs:
           output: lychee/out.md
           fail: true
           jobSummary: true
-
   # ----------------------------------------------------------
   # SECRET SCAN
   # Searches for API keys, passwords and tokens in the code.
