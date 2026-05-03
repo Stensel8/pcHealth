@@ -90,6 +90,13 @@ public sealed partial class HealthPage : Page
         int? BatteryAgeMonths
     );
 
+    private record SecurityInfo(
+        List<HealthRow> Defender,
+        List<HealthRow> BitLocker,
+        List<HealthRow> SecureBoot,
+        List<HealthRow> Tpm
+    );
+
     private record HealthData(
         List<HealthRow> Cpu,
         List<GpuInfo> Gpu,
@@ -99,7 +106,9 @@ public sealed partial class HealthPage : Page
         List<DriveRow> DiskSpace,
         List<HealthRow> WinVer,
         List<HealthRow> Boot,
-        BatteryInfo? Battery
+        BatteryInfo? Battery,
+        SecurityInfo Security,
+        List<HealthRow> LegacyFeatures
     );
 
     private static readonly Dictionary<string, DateTime> _winReleaseDates = new()
@@ -178,6 +187,10 @@ public sealed partial class HealthPage : Page
 
     private static HealthData GatherData()
     {
+        // Start slow independent tasks immediately so they run alongside the CIM hardware queries.
+        var legacyTask   = Task.Run(GatherLegacyFeatures);
+        var securityTask = Task.Run(static () => { using var s = CimSession.Create(null); return GatherSecurityInfo(s); });
+
         var cpu = new List<HealthRow>();
         var gpu = new List<GpuInfo>();
         var ram = new List<RamModule>();
@@ -435,9 +448,11 @@ public sealed partial class HealthPage : Page
         }
         catch (Exception ex) { Debug.WriteLine($"[Health] Startup programs failed: {ex.Message}"); }
 
-        var battery = GatherBatteryInfo(session);
+        var battery        = GatherBatteryInfo(session);
+        var security       = securityTask.GetAwaiter().GetResult();
+        var legacyFeatures = legacyTask.GetAwaiter().GetResult();
 
-        return new HealthData(cpu, gpu, ram, smart, usedSmartctl, diskSpace, winVer, boot, battery);
+        return new HealthData(cpu, gpu, ram, smart, usedSmartctl, diskSpace, winVer, boot, battery, security, legacyFeatures);
     }
 
     // ── Hardware DB lookups ───────────────────────────────────────────────────
@@ -1094,6 +1109,9 @@ public sealed partial class HealthPage : Page
 
         if (data.Battery != null)
             SetStatusDot(BatteryStatusDot, PopulateBatteryCard(BatteryRows, data.Battery, BatteryExpander));
+
+        SetStatusDot(SecurityStatusDot, PopulateSecurityCard(SecurityRows, data.Security, SecurityExpander));
+        SetStatusDot(LegacyStatusDot,   PopulateLegacyFeaturesCard(LegacyRows, data.LegacyFeatures, LegacyExpander));
     }
 
     private CheckStatus PopulateCard(StackPanel panel, List<HealthRow> rows, Expander expander)
@@ -1448,6 +1466,277 @@ public sealed partial class HealthPage : Page
             }
         }
         catch (Exception ex) { Debug.WriteLine($"[Health] Battery timer tick failed: {ex.Message}"); }
+    }
+
+    // ── Security gathering ────────────────────────────────────────────────────
+
+    private static SecurityInfo GatherSecurityInfo(CimSession session)
+    {
+        var defender   = new List<HealthRow>();
+        var bitlocker  = new List<HealthRow>();
+        var secureBoot = new List<HealthRow>();
+        var tpm        = new List<HealthRow>();
+
+        // SecurityCenter2: all registered AV products (determines 3rd-party AV context)
+        bool hasActiveThirdPartyAv = false;
+        try
+        {
+            foreach (var inst in session.QueryInstances(
+                @"ROOT\SecurityCenter2", "WQL",
+                "SELECT displayName, productState FROM AntiVirusProduct"))
+            {
+                var avName = inst.CimInstanceProperties["displayName"]?.Value?.ToString()?.Trim() ?? "Unknown";
+                var psRaw  = inst.CimInstanceProperties["productState"]?.Value;
+                uint ps    = psRaw is uint u ? u : 0;
+                bool avActive = (ps & 0x1000) != 0 && (ps & 0x0100) == 0;
+                // Match only Microsoft's own AV — not 3rd-party products that happen to
+                // contain "Defender" in their name (e.g. Bitdefender, Total Defense, etc.)
+                bool isDefender = avName.StartsWith("Windows Defender",   StringComparison.OrdinalIgnoreCase)
+                               || avName.StartsWith("Microsoft Defender", StringComparison.OrdinalIgnoreCase)
+                               || avName.Equals("Windows Security",       StringComparison.OrdinalIgnoreCase);
+                if (!isDefender)
+                {
+                    if (avActive) hasActiveThirdPartyAv = true;
+                    defender.Add(new HealthRow("Registered AV", avName, avActive ? CheckStatus.Good : CheckStatus.Info));
+                }
+            }
+        }
+        catch (Exception ex) { Debug.WriteLine($"[Health] SecurityCenter2: {ex.Message}"); }
+
+        try
+        {
+            foreach (var inst in session.QueryInstances(
+                @"root\Microsoft\Windows\Defender", "WQL",
+                "SELECT AMServiceEnabled, RealTimeProtectionEnabled, AntivirusEnabled, AntispywareEnabled FROM MSFT_MpComputerStatus"))
+            {
+                bool svc = inst.CimInstanceProperties["AMServiceEnabled"]?.Value is bool b1 && b1;
+                bool rt  = inst.CimInstanceProperties["RealTimeProtectionEnabled"]?.Value is bool b2 && b2;
+                bool av  = inst.CimInstanceProperties["AntivirusEnabled"]?.Value is bool b3 && b3;
+                bool asp = inst.CimInstanceProperties["AntispywareEnabled"]?.Value is bool b4 && b4;
+                var  off = hasActiveThirdPartyAv ? CheckStatus.Info : CheckStatus.Bad;
+                var  rtLabel = rt ? "Enabled" : hasActiveThirdPartyAv ? "Disabled (passive mode)" : "Disabled";
+                defender.Add(new HealthRow("Defender Service",     svc ? "Running"  : "Stopped",  svc ? CheckStatus.Good : off));
+                defender.Add(new HealthRow("Real-time Protection", rtLabel,                        rt  ? CheckStatus.Good : off));
+                defender.Add(new HealthRow("Antivirus",            av  ? "Enabled"  : "Disabled",  av  ? CheckStatus.Good : off));
+                defender.Add(new HealthRow("Antispyware",          asp ? "Enabled"  : "Disabled",  asp ? CheckStatus.Good : off));
+                break;
+            }
+        }
+        catch (Exception ex) { Debug.WriteLine($"[Health] Defender: {ex.Message}"); }
+        if (defender.Count == 0) defender.Add(new HealthRow("Status", "Not available", CheckStatus.Unknown));
+
+        try
+        {
+            bool any = false;
+            foreach (var inst in session.QueryInstances(
+                @"ROOT\cimv2\Security\MicrosoftVolumeEncryption", "WQL",
+                "SELECT DriveLetter, ProtectionStatus FROM Win32_EncryptableVolume"))
+            {
+                var drive = inst.CimInstanceProperties["DriveLetter"]?.Value?.ToString() ?? "?";
+                var raw   = inst.CimInstanceProperties["ProtectionStatus"]?.Value;
+                int ps    = raw is uint u ? (int)u : raw is int i ? i : -1;
+                var (label, status) = ps switch
+                {
+                    1 => ("Encrypted",     CheckStatus.Good),
+                    0 => ("Not encrypted", CheckStatus.Warning),
+                    _ => ("Unknown",       CheckStatus.Unknown),
+                };
+                bitlocker.Add(new HealthRow(drive, label, status));
+                any = true;
+            }
+            if (!any) bitlocker.Add(new HealthRow("Status", "No encryptable drives found", CheckStatus.Unknown));
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Health] BitLocker: {ex.Message}");
+            bitlocker.Add(new HealthRow("Status", "Query failed (requires elevation)", CheckStatus.Unknown));
+        }
+
+        try
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+                @"SYSTEM\CurrentControlSet\Control\SecureBoot\State");
+            bool on = key?.GetValue("UEFISecureBootEnabled") is int v && v == 1;
+            secureBoot.Add(new HealthRow("Secure Boot", on ? "Enabled" : "Disabled",
+                on ? CheckStatus.Good : CheckStatus.Warning));
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Health] Secure Boot: {ex.Message}");
+            secureBoot.Add(new HealthRow("Secure Boot", "N/A (legacy BIOS?)", CheckStatus.Unknown));
+        }
+
+        try
+        {
+            bool found = false;
+            foreach (var inst in session.QueryInstances(
+                "root/cimv2/security/microsofttpm", "WQL",
+                "SELECT IsActivated_InitialValue, IsEnabled_InitialValue, SpecVersion FROM Win32_Tpm"))
+            {
+                bool activated = inst.CimInstanceProperties["IsActivated_InitialValue"]?.Value is bool a && a;
+                bool enabled   = inst.CimInstanceProperties["IsEnabled_InitialValue"]?.Value  is bool en && en;
+                var  spec      = inst.CimInstanceProperties["SpecVersion"]?.Value?.ToString();
+                var  version   = !string.IsNullOrEmpty(spec) ? spec.Split(',')[0].Trim() : "Unknown";
+                tpm.Add(new HealthRow("Version",   version,              version != "Unknown" ? CheckStatus.Good : CheckStatus.Unknown));
+                tpm.Add(new HealthRow("Enabled",   enabled   ? "Yes" : "No", enabled   ? CheckStatus.Good : CheckStatus.Bad));
+                tpm.Add(new HealthRow("Activated", activated ? "Yes" : "No", activated ? CheckStatus.Good : CheckStatus.Bad));
+                found = true;
+                break;
+            }
+            if (!found) tpm.Add(new HealthRow("Status", "TPM not found or not accessible", CheckStatus.Bad));
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Health] TPM: {ex.Message}");
+            tpm.Add(new HealthRow("Status", "Query failed", CheckStatus.Unknown));
+        }
+
+        return new SecurityInfo(defender, bitlocker, secureBoot, tpm);
+    }
+
+    private static List<HealthRow> GatherLegacyFeatures()
+    {
+        var rows = new List<HealthRow>();
+
+        // SMBv1 via registry — absent = disabled on Windows 10 1709+
+        try
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+                @"SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters");
+            var val   = key?.GetValue("SMB1");
+            bool smb1 = val is int i && i != 0;
+            rows.Add(new HealthRow("SMBv1 Protocol",
+                smb1 ? "Enabled — disable immediately" : "Disabled",
+                smb1 ? CheckStatus.Bad : CheckStatus.Good));
+        }
+        catch (Exception ex) { Debug.WriteLine($"[Health] SMBv1: {ex.Message}"); }
+
+        // Check each optional feature via DISM — more reliable than PowerShell for this,
+        // and running them in parallel hides the per-call overhead.
+        var featureMap = new Dictionary<string, (string Label, bool IsCritical)>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["VBScript"]                         = ("VBScript",                    true),
+            ["WindowsMediaPlayer"]               = ("Legacy Windows Media Player", false),
+            ["MicrosoftWindowsPowerShellV2Root"] = ("PowerShell v2",               false),
+            ["TelnetClient"]                     = ("Telnet Client",               false),
+            ["TFTP"]                             = ("TFTP Client",                 false),
+            ["DirectPlay"]                       = ("DirectPlay",                  false),
+        };
+
+        var dismPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System), "dism.exe");
+
+        if (File.Exists(dismPath))
+        {
+            var tasks = featureMap
+                .Select(kvp => Task.Run(() => (kvp.Key, kvp.Value, CheckDismFeature(dismPath, kvp.Key))))
+                .ToArray();
+            Task.WaitAll(tasks, TimeSpan.FromSeconds(30));
+
+            foreach (var t in tasks.Where(t => t.IsCompletedSuccessfully))
+            {
+                var (key, info, (found, enabled)) = t.Result;
+                if (!found)
+                    rows.Add(new HealthRow(info.Label, "Removed from OS", CheckStatus.Good));
+                else
+                {
+                    var s = enabled ? (info.IsCritical ? CheckStatus.Bad : CheckStatus.Warning) : CheckStatus.Good;
+                    rows.Add(new HealthRow(info.Label, enabled ? "Enabled" : "Disabled", s));
+                }
+            }
+        }
+        else
+        {
+            rows.Add(new HealthRow("Optional features", "dism.exe not found", CheckStatus.Unknown));
+        }
+
+        return rows;
+    }
+
+    private static readonly Regex _dismStateRegex = new(@"State\s*:\s*(\w[\w ]*)", RegexOptions.Multiline | RegexOptions.Compiled);
+
+    private static (bool Found, bool Enabled) CheckDismFeature(string dismPath, string featureName)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName               = dismPath,
+                UseShellExecute        = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError  = true,
+                CreateNoWindow         = true,
+            };
+            psi.ArgumentList.Add("/Online");
+            psi.ArgumentList.Add("/Get-FeatureInfo");
+            psi.ArgumentList.Add($"/FeatureName:{featureName}");
+
+            using var cts  = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var proc = new Process { StartInfo = psi };
+            proc.Start();
+            string output;
+            try   { output = proc.StandardOutput.ReadToEndAsync(cts.Token).GetAwaiter().GetResult(); }
+            catch (OperationCanceledException) { proc.Kill(entireProcessTree: true); return (false, false); }
+            try   { proc.StandardError.ReadToEndAsync(cts.Token).GetAwaiter().GetResult(); } catch { }
+            proc.WaitForExit();
+
+            if (proc.ExitCode != 0) return (false, false); // feature not found on this OS
+
+            var m = _dismStateRegex.Match(output);
+            if (!m.Success) return (false, false);
+            bool enabled = m.Groups[1].Value.Trim().StartsWith("Enabled", StringComparison.OrdinalIgnoreCase);
+            return (true, enabled);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[Health] DISM {featureName}: {ex.Message}");
+            return (false, false);
+        }
+    }
+
+    private CheckStatus PopulateSecurityCard(StackPanel panel, SecurityInfo data, Expander expander)
+    {
+        var statuses = new List<CheckStatus>();
+
+        void AddSection(string title, List<HealthRow> rows)
+        {
+            panel.Children.Add(new TextBlock
+            {
+                Text   = title,
+                Style  = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
+                Margin = new Thickness(0, 0, 0, 4),
+            });
+            foreach (var r in rows)
+            {
+                AddStatusRow(panel, r.Label, r.Value, r.Status);
+                if (r.Status != CheckStatus.Info) statuses.Add(r.Status);
+            }
+        }
+
+        AddSection("Windows Defender", data.Defender);
+        AddSeparator(panel);
+        AddSection("BitLocker", data.BitLocker);
+        AddSeparator(panel);
+        AddSection("Secure Boot", data.SecureBoot);
+        AddSeparator(panel);
+        AddSection("TPM", data.Tpm);
+
+        expander.Visibility = Visibility.Visible;
+        return WorstStatus(statuses.Count > 0 ? statuses : [CheckStatus.Info]);
+    }
+
+    private CheckStatus PopulateLegacyFeaturesCard(StackPanel panel, List<HealthRow> rows, Expander expander)
+    {
+        if (rows.Count == 0)
+        {
+            AddStatusRow(panel, "Status", "No checks available", CheckStatus.Unknown);
+            expander.Visibility = Visibility.Visible;
+            return CheckStatus.Unknown;
+        }
+        foreach (var r in rows)
+            AddStatusRow(panel, r.Label, r.Value, r.Status);
+        expander.Visibility = Visibility.Visible;
+        return WorstStatus(rows.Select(r => r.Status));
     }
 
     private void AddSeparator(StackPanel panel) =>
