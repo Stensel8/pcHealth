@@ -43,115 +43,61 @@ if (-not $isAdmin) {
     exit
 }
 
-# -- 2. Dependency check -------------------------------------------------------
+# -- 2. Dependency check and install -------------------------------------------
 Write-Host ''
 Write-Host '[pcHealth] Checking dependencies...' -ForegroundColor Cyan
 
-$pad = 24
+# Checks one dependency. Installs automatically via winget if missing.
+# Exits with an error if the dependency cannot be satisfied.
+function Assert-Dep {
+    param($Label, $WingetId, $ManualUrl, [scriptblock]$IsInstalled)
 
-function Write-DepStatus($label, $ok, [bool]$Optional = $false) {
-    $dots = '.' * ($pad - $label.Length)
-    if ($ok) {
-        Write-Host "  $label $dots OK"            -ForegroundColor Green
-    } elseif ($Optional) {
-        Write-Host "  $label $dots not installed" -ForegroundColor Yellow
-    } else {
-        Write-Host "  $label $dots NOT FOUND"     -ForegroundColor Red
+    $dots = '.' * [Math]::Max(2, 22 - $Label.Length)
+
+    if (& $IsInstalled) {
+        Write-Host "  $Label $dots OK" -ForegroundColor Green
+        return
     }
-}
 
-$pwshOk   = [bool](Get-Command pwsh -ErrorAction SilentlyContinue)
-$dotnetOk = $false
-if (Get-Command dotnet -ErrorAction SilentlyContinue) {
-    $sdks = dotnet --list-sdks 2>$null
-    $dotnetOk = ($sdks -match '^10\.')
-}
-$smartctlOk = (Test-Path (Join-Path $env:ProgramFiles 'smartmontools\bin\smartctl.exe')) -or
-              [bool](Get-Command smartctl -ErrorAction SilentlyContinue)
-
-Write-DepStatus 'PowerShell 7'   $pwshOk
-Write-DepStatus '.NET 10 SDK'    $dotnetOk
-Write-DepStatus 'smartmontools'  $smartctlOk  $true
-
-# -- 3. Install missing dependencies ------------------------------------------
-function Install-ViaWinget($displayName, $wingetId, $manualUrl) {
+    Write-Host "  $Label $dots NOT FOUND" -ForegroundColor Red
     Write-Host ''
-    Write-Host "[pcHealth] $displayName is required to run this application." -ForegroundColor Yellow
-
-    $answer = Read-Host '           Install now via winget? [Y/N]'
-    if ($answer -notmatch '^[Yy]') {
-        Write-Host ''
-        Write-Host "[!!] Cannot continue without $displayName." -ForegroundColor Red
-        Read-Host 'Press Enter to exit'
-        exit 1
-    }
 
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host "[!!] winget is not available. Install $displayName manually:" -ForegroundColor Red
-        Write-Host "     $manualUrl" -ForegroundColor Cyan
+        Write-Host "[!!] winget is not available. Install $Label manually:" -ForegroundColor Red
+        Write-Host "     $ManualUrl" -ForegroundColor Cyan
         Read-Host 'Press Enter to exit'
         exit 1
     }
 
-    Write-Host ''
-    Write-Host "[pcHealth] Installing $displayName..." -ForegroundColor Cyan
-    winget install --source winget --id $wingetId -e --silent `
+    Write-Host "[pcHealth] Installing $Label..." -ForegroundColor Cyan
+    winget install --source winget --id $WingetId -e --silent `
         --accept-package-agreements --accept-source-agreements
 
-    # Refresh PATH so newly installed tools are findable in this session.
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
                 [System.Environment]::GetEnvironmentVariable('Path', 'User')
-}
 
-if (-not $pwshOk) {
-    Install-ViaWinget 'PowerShell 7' 'Microsoft.PowerShell' 'https://aka.ms/powershell'
-
-    if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) {
-        Write-Host '[!!] Installation completed but pwsh was not found. Please restart and try again.' -ForegroundColor Red
+    if (-not (& $IsInstalled)) {
+        Write-Host "[!!] $Label installed but not detected. Please restart and re-run Start.ps1." -ForegroundColor Red
         Read-Host 'Press Enter to exit'
         exit 1
     }
-    Write-Host '[OK] PowerShell 7 installed.' -ForegroundColor Green
-}
 
-if (-not $dotnetOk) {
-    Install-ViaWinget '.NET 10 SDK' 'Microsoft.DotNet.SDK.10' 'https://dotnet.microsoft.com/download/dotnet/10.0'
-
-    if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
-        Write-Host '[!!] Installation completed but dotnet was not found. Please restart and try again.' -ForegroundColor Red
-        Read-Host 'Press Enter to exit'
-        exit 1
-    }
-    Write-Host '[OK] .NET 10 SDK installed.' -ForegroundColor Green
-}
-
-# -- 3b. Optional: smartmontools (SMART disk health data) ----------------------
-if (-not $smartctlOk) {
+    Write-Host "[OK] $Label installed." -ForegroundColor Green
     Write-Host ''
-    Write-Host '[pcHealth] smartmontools is recommended for full SMART disk health data.' -ForegroundColor Yellow
-    Write-Host '           Without it, life %, temperature and power-on hours are unavailable.' -ForegroundColor DarkGray
-
-    $answer = Read-Host '           Install now via winget? [Y/N]'
-    if ($answer -match '^[Yy]') {
-        if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-            Write-Host '[!!] winget not available. Install from: https://www.smartmontools.org/' -ForegroundColor Yellow
-        } else {
-            winget install --source winget --id smartmontools.smartmontools -e --silent `
-                --accept-package-agreements --accept-source-agreements
-            $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
-                        [System.Environment]::GetEnvironmentVariable('Path', 'User')
-            $smartctlOk = (Test-Path (Join-Path $env:ProgramFiles 'smartmontools\bin\smartctl.exe')) -or
-                          [bool](Get-Command smartctl -ErrorAction SilentlyContinue)
-            if ($smartctlOk) {
-                Write-Host '[OK] smartmontools installed.' -ForegroundColor Green
-            } else {
-                Write-Host '[!!] Install may need a restart to take effect.' -ForegroundColor Yellow
-            }
-        }
-    } else {
-        Write-Host '     Skipping — SMART data will be limited.' -ForegroundColor DarkGray
-    }
 }
+
+Assert-Dep 'PowerShell 7'     'Microsoft.PowerShell'        'https://aka.ms/powershell' `
+    { [bool](Get-Command pwsh -ErrorAction SilentlyContinue) }
+
+Assert-Dep '.NET 10 SDK'      'Microsoft.DotNet.SDK.10'     'https://dotnet.microsoft.com/download/dotnet/10.0' `
+    { (Get-Command dotnet -ErrorAction SilentlyContinue) -and ((dotnet --list-sdks 2>$null) -match '^10\.') }
+
+Assert-Dep 'Windows Terminal' 'Microsoft.WindowsTerminal'   'https://aka.ms/terminal' `
+    { [bool](Get-Command wt -ErrorAction SilentlyContinue) }
+
+Assert-Dep 'smartmontools'    'smartmontools.smartmontools' 'https://www.smartmontools.org/wiki/Download' `
+    { (Test-Path (Join-Path $env:ProgramFiles 'smartmontools\bin\smartctl.exe')) -or
+      [bool](Get-Command smartctl -ErrorAction SilentlyContinue) }
 
 # -- 4. Detect architecture and derive output EXE path from csproj ------------
 $projectFile = Join-Path $PSScriptRoot 'pcHealth\pcHealth.csproj'

@@ -152,6 +152,36 @@
                     <StackPanel x:Name="BatteryRows" Spacing="5" Padding="0,8,0,4"/>
                 </Expander>
 
+                <!-- Security -->
+                <Expander x:Name="SecurityExpander" IsExpanded="False" Visibility="Collapsed"
+                          HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                    <Expander.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <Ellipse x:Name="SecurityStatusDot" Width="10" Height="10" VerticalAlignment="Center"/>
+                            <FontIcon Glyph="&#xE72E;" FontSize="16" VerticalAlignment="Center"
+                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="Security" Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Expander.Header>
+                    <StackPanel x:Name="SecurityRows" Spacing="5" Padding="0,8,0,4"/>
+                </Expander>
+
+                <!-- Legacy Features -->
+                <Expander x:Name="LegacyExpander" IsExpanded="False" Visibility="Collapsed"
+                          HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                    <Expander.Header>
+                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <Ellipse x:Name="LegacyStatusDot" Width="10" Height="10" VerticalAlignment="Center"/>
+                            <FontIcon Glyph="&#xE8D9;" FontSize="16" VerticalAlignment="Center"
+                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                            <TextBlock Text="Legacy Features" Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Expander.Header>
+                    <StackPanel x:Name="LegacyRows" Spacing="5" Padding="0,8,0,4"/>
+                </Expander>
+
             </StackPanel>
         </ScrollViewer>
 

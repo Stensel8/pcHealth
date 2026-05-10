@@ -48,21 +48,29 @@ public sealed partial class MainWindow : Window
 
     private async Task CheckForUpdateAsync()
     {
-        var tag = await UpdateChecker.GetLatestTagAsync();
-        if (tag is null || !UpdateChecker.IsNewer(tag)) return;
-
-        var dialog = new ContentDialog
+        try
         {
-            Title = "Update available",
-            Content = $"Version {tag.TrimStart('v', 'V')} is available. You are on {UpdateChecker.GetCurrentVersion()}.",
-            PrimaryButtonText = "Open releases page",
-            CloseButtonText = "Later",
-            DefaultButton = ContentDialogButton.Primary,
-            XamlRoot = ContentFrame.XamlRoot,
-        };
+            var tag = await UpdateChecker.GetLatestTagAsync();
+            if (tag is null || !UpdateChecker.IsNewer(tag)) return;
 
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
-            CliRunner.OpenUri("https://github.com/REALSDEALS/pcHealth/releases/latest");
+            var dialog = new ContentDialog
+            {
+                Title = "Update available",
+                Content = $"Version {tag.TrimStart('v', 'V')} is available. You are on {UpdateChecker.GetCurrentVersion()}.",
+                PrimaryButtonText = "Open releases page",
+                CloseButtonText = "Later",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = ContentFrame.XamlRoot,
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+                CliRunner.OpenUri("https://github.com/REALSDEALS/pcHealth/releases/latest");
+        }
+        catch (Exception ex)
+        {
+            // Update check is best-effort; network errors or timeouts are expected on some setups.
+            System.Diagnostics.Debug.WriteLine($"[MainWindow] Update check failed: {ex.Message}");
+        }
     }
 
     private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)

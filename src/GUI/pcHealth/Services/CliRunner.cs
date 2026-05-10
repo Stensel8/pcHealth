@@ -146,7 +146,7 @@ internal static class CliRunner
     /// Runs a winget command in a new PowerShell 7 window and pauses after
     /// completion so the user can read the output before closing.
     /// </summary>
-    public static void RunWinget(string wingetArguments)
+    public static Process RunWinget(string wingetArguments)
     {
         // Reject PowerShell/shell metacharacters to prevent command injection.
         // winget IDs and flags consist only of alphanumerics, dots, dashes, and spaces.
@@ -158,7 +158,7 @@ internal static class CliRunner
         psi.ArgumentList.Add("-NoProfile");
         psi.ArgumentList.Add("-Command");
         psi.ArgumentList.Add(cmd);
-        Start(psi);
+        return Start(psi);
     }
 
     /// <summary>

@@ -1,3 +1,5 @@
+using pcHealth.Helpers;
+
 namespace pcHealth.Pages;
 
 public sealed partial class BootRepairPage : Page
@@ -33,12 +35,7 @@ public sealed partial class BootRepairPage : Page
 
         try
         {
-            void Append(string line) =>
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    OutputText.Text += line + "\n";
-                    OutputScroller.ScrollToVerticalOffset(double.MaxValue);
-                });
+            var Append = UiHelper.CreateAppendHandler(OutputText, OutputScroller, DispatcherQueue);
 
             var bootrec = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "bootrec.exe");
 

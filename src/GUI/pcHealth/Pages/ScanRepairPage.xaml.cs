@@ -1,3 +1,5 @@
+using pcHealth.Helpers;
+
 namespace pcHealth.Pages;
 
 public sealed partial class ScanRepairPage : Page
@@ -20,12 +22,7 @@ public sealed partial class ScanRepairPage : Page
 
         try
         {
-            void Append(string line) =>
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    OutputText.Text += line + "\n";
-                    OutputScroller.ScrollToVerticalOffset(double.MaxValue);
-                });
+            var Append = UiHelper.CreateAppendHandler(OutputText, OutputScroller, DispatcherQueue);
 
             // Step 1: SFC
             Append("=== Step 1/5 — SFC (initial scan) ===");

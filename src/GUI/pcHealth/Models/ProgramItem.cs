@@ -4,22 +4,22 @@ namespace pcHealth;
 
 public sealed class ProgramItem : INotifyPropertyChanged
 {
+    public ProgramItem()
+    {
+        Name = string.Empty;
+        Glyph = string.Empty;
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public required string Name { get; init; }
-    public required string Glyph { get; init; }
-    public string Note { get; init; } = "";
-    /// <summary>winget package ID. Empty string means open a browser URL instead.</summary>
-    public string WingetId { get; init; } = "";
-    /// <summary>Browser URL used when WingetId is empty.</summary>
-    public string BrowserUrl { get; init; } = "";
-    /// <summary>Executable name used to open the program when it is already installed.</summary>
-    public string ExeName { get; init; } = "";
-    /// <summary>
-    /// Substring to match against the registry DisplayName in the Uninstall keys.
-    /// Used to detect whether the program is already installed.
-    /// </summary>
-    public string RegistryName { get; init; } = "";
+    public string Name { get; set; } = string.Empty;
+    public string Glyph { get; set; } = string.Empty;
+    public string Note { get; set; } = "";
+    public string WingetId { get; set; } = "";
+    public string BrowserUrl { get; set; } = "";
+    public string ExeName { get; set; } = "";
+    public string RegistryName { get; set; } = "";
+    public string Category { get; set; } = "General";
 
     private void Notify(string name) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

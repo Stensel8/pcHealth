@@ -23,7 +23,7 @@
         <NavigationView.MenuItems>
             <NavigationViewItem Tag="health" Content="Health">
                 <NavigationViewItem.Icon>
-                    <FontIcon Glyph="&#xE95A;"/>
+                    <FontIcon Glyph="&#xE734;"/>
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
             <NavigationViewItem Tag="tools" Content="Tools">

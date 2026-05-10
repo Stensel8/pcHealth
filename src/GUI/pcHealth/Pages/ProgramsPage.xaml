@@ -24,9 +24,20 @@
         <ListView
             Grid.Row="1"
             x:Name="ProgramsList"
-            ItemsSource="{x:Bind Programs}"
             SelectionMode="None"
             Padding="24,8,24,24">
+
+            <ListView.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Key}"
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       Margin="0,12,0,6"/>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </ListView.GroupStyle>
 
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">

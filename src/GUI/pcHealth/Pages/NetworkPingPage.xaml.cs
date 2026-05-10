@@ -1,4 +1,5 @@
 using System.Net.NetworkInformation;
+using pcHealth.Helpers;
 
 namespace pcHealth.Pages;
 
@@ -6,6 +7,8 @@ public sealed partial class NetworkPingPage : Page
 {
     private const string Target = "8.8.8.8";
     private const int Count = 4;
+
+    private CancellationTokenSource? _cts;
 
     public NetworkPingPage()
     {
@@ -21,14 +24,20 @@ public sealed partial class NetworkPingPage : Page
         ResultsCard.Visibility = Visibility.Collapsed;
         SummaryCard.Visibility = Visibility.Collapsed;
 
+        _cts = new CancellationTokenSource();
+
         try
         {
+            // Run pings on a background thread so the UI stays responsive.
+            // The cancellation token is checked at the start of each iteration so the loop
+            // stops promptly when the user navigates away rather than waiting for all pings.
             var results = await Task.Run(() =>
             {
                 var list = new List<(bool Success, string Address, long Latency, string Status)>();
                 using var ping = new Ping();
                 for (int i = 0; i < Count; i++)
                 {
+                    _cts.Token.ThrowIfCancellationRequested();
                     try
                     {
                         var reply = ping.Send(Target, 4000);
@@ -36,13 +45,14 @@ public sealed partial class NetworkPingPage : Page
                             ? (true, reply.Address.ToString(), reply.RoundtripTime, "Reply")
                             : (false, Target, 0, reply.Status.ToString()));
                     }
+                    catch (OperationCanceledException) { throw; }
                     catch (Exception ex)
                     {
                         list.Add((false, Target, 0, ex.Message));
                     }
                 }
                 return list;
-            });
+            }, _cts.Token);
 
             ResultsCard.Visibility = Visibility.Visible;
 
@@ -54,7 +64,7 @@ public sealed partial class NetworkPingPage : Page
 
                 var statusIcon = new FontIcon
                 {
-                    Glyph = success ? "\uE930" : "\uE711",
+                    Glyph = success ? "" : "",
                     FontSize = 14,
                     VerticalAlignment = VerticalAlignment.Center,
                     Foreground = success
@@ -77,18 +87,21 @@ public sealed partial class NetworkPingPage : Page
                 if (success) successLatencies.Add(latency);
             }
 
-            // Summary
             SummaryCard.Visibility = Visibility.Visible;
-            AddSummaryRow("Packets sent", $"{Count}");
-            AddSummaryRow("Packets received", $"{successLatencies.Count}");
-            AddSummaryRow("Packet loss", $"{(Count - successLatencies.Count) * 100 / Count}%");
+            UiHelper.AddLabelValueRow(SummaryRows, "Packets sent", $"{Count}");
+            UiHelper.AddLabelValueRow(SummaryRows, "Packets received", $"{successLatencies.Count}");
+            UiHelper.AddLabelValueRow(SummaryRows, "Packet loss", $"{(Count - successLatencies.Count) * 100 / Count}%");
 
             if (successLatencies.Count > 0)
             {
-                AddSummaryRow("Min latency", $"{successLatencies.Min()} ms");
-                AddSummaryRow("Max latency", $"{successLatencies.Max()} ms");
-                AddSummaryRow("Average latency", $"{successLatencies.Average():0.0} ms");
+                UiHelper.AddLabelValueRow(SummaryRows, "Min latency", $"{successLatencies.Min()} ms");
+                UiHelper.AddLabelValueRow(SummaryRows, "Max latency", $"{successLatencies.Max()} ms");
+                UiHelper.AddLabelValueRow(SummaryRows, "Average latency", $"{successLatencies.Average():0.0} ms");
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // User navigated away — discard results silently.
         }
         catch (Exception ex)
         {
@@ -100,30 +113,14 @@ public sealed partial class NetworkPingPage : Page
         {
             Progress.IsActive = false;
             RunBtn.IsEnabled = true;
+            _cts?.Dispose();
+            _cts = null;
         }
-    }
-
-    private void AddSummaryRow(string label, string value)
-    {
-        var grid = new Grid { ColumnSpacing = 12, Margin = new Thickness(0, 1, 0, 1) };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(160) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-        grid.Children.Add(new TextBlock
-        {
-            Text = label,
-            Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
-            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
-        });
-
-        var val = new TextBlock { Text = value, IsTextSelectionEnabled = true };
-        Grid.SetColumn(val, 1);
-        grid.Children.Add(val);
-        SummaryRows.Children.Add(grid);
     }
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
     {
+        _cts?.Cancel();
         if (Frame.CanGoBack) Frame.GoBack();
     }
 }
