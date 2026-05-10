@@ -73,7 +73,8 @@ public sealed partial class HealthPage : Page
         byte? Wear,
         ushort? Temperature,
         ulong? PowerOnHours,
-        string? SpeedFlag
+        string? SpeedFlag,
+        ulong? TbwGb
     );
 
     private record BatteryInfo(
@@ -330,6 +331,8 @@ public sealed partial class HealthPage : Page
         catch (Exception ex) { Debug.WriteLine($"[Health] RAM query failed: {ex.Message}"); }
 
         // --- SMART ---
+        // smartmontools is a required dependency (installed by Start.ps1).
+        // CIM fallback handles the edge case where a restart is still needed after install.
         var smartctlPath = FindSmartctl();
         List<DiskHealthInfo> smart;
         bool usedSmartctl;
@@ -448,7 +451,11 @@ public sealed partial class HealthPage : Page
         }
         catch (Exception ex) { Debug.WriteLine($"[Health] Startup programs failed: {ex.Message}"); }
 
-        var battery        = GatherBatteryInfo(session);
+        var battery = GatherBatteryInfo(session);
+
+        // GatherData runs on a thread-pool thread (called from Task.Run in OnLoaded),
+        // so blocking here with GetAwaiter().GetResult() is safe — there is no UI-thread
+        // SynchronizationContext to deadlock against.
         var security       = securityTask.GetAwaiter().GetResult();
         var legacyFeatures = legacyTask.GetAwaiter().GetResult();
 
@@ -670,14 +677,17 @@ public sealed partial class HealthPage : Page
                 };
 
                 byte? wear = null;
-                if (devType == "nvme"
-                    && root.TryGetProperty("nvme_smart_health_information_log", out var nvmeLog)
+                // NVMe: percentage_used = life USED (0 = new, 100 = worn).
+                if (root.TryGetProperty("nvme_smart_health_information_log", out var nvmeLog)
                     && nvmeLog.TryGetProperty("percentage_used", out var pu))
                 {
                     wear = (byte)Math.Min(100, Math.Max(0, pu.GetInt32()));
                 }
-                else if (devType == "sat"
-                    && root.TryGetProperty("ata_smart_attributes", out var ata)
+                // SATA: normalized "value" field represents life REMAINING (100 = new, 0 = worn).
+                // 231 = SSD Life Left (Intel), 202 = Percent Lifetime (Crucial/various),
+                // 177 = Wear Leveling Count (Samsung and others).
+                // Detect by JSON structure rather than devType to handle Windows scan type variants.
+                else if (root.TryGetProperty("ata_smart_attributes", out var ata)
                     && ata.TryGetProperty("table", out var table))
                 {
                     foreach (var attr in table.EnumerateArray())
@@ -701,6 +711,30 @@ public sealed partial class HealthPage : Page
                 if (root.TryGetProperty("power_on_time", out var pot)
                     && pot.TryGetProperty("hours", out var h))
                     poh = (ulong)h.GetInt64();
+
+                ulong? tbwGb = null;
+                // NVMe: data_units_written is in 512,000-byte units.
+                if (root.TryGetProperty("nvme_smart_health_information_log", out var nvmeLog2)
+                    && nvmeLog2.TryGetProperty("data_units_written", out var duw))
+                {
+                    tbwGb = (ulong)duw.GetInt64() * 512000UL / 1_000_000_000UL;
+                }
+                // SATA: attr 241 (Total_LBAs_Written) or 246 (Crucial equivalent), raw value in 512-byte LBAs.
+                else if (root.TryGetProperty("ata_smart_attributes", out var ata2)
+                    && ata2.TryGetProperty("table", out var table2))
+                {
+                    foreach (var attr in table2.EnumerateArray())
+                    {
+                        if (!attr.TryGetProperty("id", out var idEl)) continue;
+                        if (idEl.GetInt32() is 241 or 246
+                            && attr.TryGetProperty("raw", out var raw)
+                            && raw.TryGetProperty("value", out var rawVal))
+                        {
+                            tbwGb = (ulong)rawVal.GetInt64() * 512UL / 1_000_000_000UL;
+                            break;
+                        }
+                    }
+                }
 
                 int rotRate = root.TryGetProperty("rotation_rate", out var rr) ? rr.GetInt32() : 0;
                 var mediaType = devType == "nvme" ? "NVMe SSD"
@@ -729,7 +763,7 @@ public sealed partial class HealthPage : Page
                 }
 
                 result.Add(new DiskHealthInfo(model!, mediaType, healthStatus, healthText,
-                    wear, temp, poh, speedFlag));
+                    wear, temp, poh, speedFlag, tbwGb));
             }
         }
         catch (Exception ex)
@@ -806,16 +840,16 @@ public sealed partial class HealthPage : Page
 
                 relMap.TryGetValue(deviceId, out var rc);
                 result.Add(new DiskHealthInfo(name, mediaType, healthStatus, healthText,
-                    rc.wear, rc.temp, rc.poh, speedFlag));
+                    rc.wear, rc.temp, rc.poh, speedFlag, null));
                 any = true;
             }
             if (!any)
-                result.Add(new DiskHealthInfo("No physical disks found", "", CheckStatus.Unknown, "N/A", null, null, null, null));
+                result.Add(new DiskHealthInfo("No physical disks found", "", CheckStatus.Unknown, "N/A", null, null, null, null, null));
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"[Health] SMART CIM failed: {ex.Message}");
-            result.Add(new DiskHealthInfo("Query failed", "", CheckStatus.Unknown, ex.Message, null, null, null, null));
+            result.Add(new DiskHealthInfo("Query failed", "", CheckStatus.Unknown, ex.Message, null, null, null, null, null));
         }
         return result;
     }
@@ -1284,34 +1318,35 @@ public sealed partial class HealthPage : Page
                 AddStatusRow(panel, "Interface note", d.SpeedFlag, CheckStatus.Warning);
             }
 
-            bool hasExtended = false;
-
-            if (d.Wear.HasValue && d.Wear.Value > 0)
+            // Life remaining — always shown so the column is never missing.
+            // Wear = % of drive life USED (from smartctl); 0% used = brand-new drive, still valid.
+            if (d.Wear.HasValue)
             {
                 byte used = d.Wear.Value;
                 byte rem = (byte)(100 - Math.Min(used, (byte)100));
                 var s = used > 80 ? CheckStatus.Bad : used > 50 ? CheckStatus.Warning : CheckStatus.Good;
                 statuses.Add(s);
                 AddStatusRow(panel, "Life remaining", $"{rem}%  ({used}% used)", s);
-                hasExtended = true;
             }
+            else
+            {
+                AddStatusRow(panel, "Life remaining", "Not reported by drive", CheckStatus.Unknown);
+            }
+
             if (d.Temperature.HasValue && d.Temperature.Value > 0)
             {
                 ushort t = d.Temperature.Value;
                 var s = t > 60 ? CheckStatus.Bad : t > 45 ? CheckStatus.Warning : CheckStatus.Good;
                 statuses.Add(s);
                 AddStatusRow(panel, "Temperature", $"{t}°C", s);
-                hasExtended = true;
             }
             if (d.PowerOnHours.HasValue && d.PowerOnHours.Value > 0)
             {
                 ulong h = d.PowerOnHours.Value;
                 AddStatusRow(panel, "Power-on hours", $"{h:N0}h", CheckStatus.Info);
-                hasExtended = true;
             }
-
-            if (!hasExtended && usedSmartctl)
-                AddStatusRow(panel, "Extended data", "Not reported by drive", CheckStatus.Info);
+            if (d.TbwGb.HasValue)
+                AddStatusRow(panel, "Total written", $"{d.TbwGb.Value:N0} GB", CheckStatus.Info);
         }
         expander.Visibility = Visibility.Visible;
         return WorstStatus(statuses);
@@ -1328,13 +1363,37 @@ public sealed partial class HealthPage : Page
 
         foreach (var r in rows)
         {
-            double pct = r.TotalBytes > 0 ? (double)r.UsedBytes / r.TotalBytes * 100 : 0;
-            string used = $"{r.UsedBytes / 1_073_741_824.0:F0} GB";
-            string total = $"{r.TotalBytes / 1_073_741_824.0:F0} GB";
-            string free = $"{(r.TotalBytes - r.UsedBytes) / 1_073_741_824.0:F0} GB free";
+            double pct   = r.TotalBytes > 0 ? (double)r.UsedBytes / r.TotalBytes * 100 : 0;
+            double usedGb  = r.UsedBytes / 1_073_741_824.0;
+            double totalGb = r.TotalBytes / 1_073_741_824.0;
+            double freeGb  = (r.TotalBytes - r.UsedBytes) / 1_073_741_824.0;
+
             statuses.Add(r.Status);
-            AddStatusRow(panel, r.Drive, $"{used} / {total}  ({pct:F0}%, {free} free)", r.Status);
-            panel.Children.Add(new ProgressBar { Value = pct, Maximum = 100, Margin = new Thickness(0, 0, 0, 6) });
+            AddStatusRow(panel, r.Drive,
+                $"{usedGb:F0} GB used  /  {totalGb:F0} GB total  ·  {freeGb:F0} GB free",
+                r.Status);
+
+            // Progress bar + percentage label side by side.
+            var barRow = new Grid { Margin = new Thickness(0, 3, 0, 8) };
+            barRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            barRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var bar = new ProgressBar { Value = pct, Maximum = 100 };
+            Grid.SetColumn(bar, 0);
+
+            var pctLabel = new TextBlock
+            {
+                Text = $"{pct:F0}%",
+                Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
+                Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+                Margin = new Thickness(10, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(pctLabel, 1);
+
+            barRow.Children.Add(bar);
+            barRow.Children.Add(pctLabel);
+            panel.Children.Add(barRow);
         }
         expander.Visibility = Visibility.Visible;
         return WorstStatus(statuses);
@@ -1636,12 +1695,10 @@ public sealed partial class HealthPage : Page
             foreach (var t in tasks.Where(t => t.IsCompletedSuccessfully))
             {
                 var (key, info, (found, enabled)) = t.Result;
-                if (!found)
-                    rows.Add(new HealthRow(info.Label, "Removed from OS", CheckStatus.Good));
-                else
                 {
-                    var s = enabled ? (info.IsCritical ? CheckStatus.Bad : CheckStatus.Warning) : CheckStatus.Good;
-                    rows.Add(new HealthRow(info.Label, enabled ? "Enabled" : "Disabled", s));
+                    var active = found && enabled;
+                    var s = active ? (info.IsCritical ? CheckStatus.Bad : CheckStatus.Warning) : CheckStatus.Good;
+                    rows.Add(new HealthRow(info.Label, active ? "Enabled" : "Disabled", s));
                 }
             }
         }

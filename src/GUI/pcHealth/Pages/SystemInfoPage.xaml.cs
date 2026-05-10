@@ -1,5 +1,6 @@
 using Microsoft.Management.Infrastructure;
 using System.Text;
+using pcHealth.Helpers;
 
 namespace pcHealth.Pages;
 
@@ -176,7 +177,7 @@ public sealed partial class SystemInfoPage : Page
     private void PopulateCard(StackPanel panel, List<(string Label, string Value)> rows, Border card)
     {
         foreach (var (label, value) in rows)
-            AddRow(panel, label, value);
+            UiHelper.AddLabelValueRow(panel, label, value, labelWidth: 180);
         card.Visibility = Visibility.Visible;
     }
 
@@ -186,32 +187,6 @@ public sealed partial class SystemInfoPage : Page
         foreach (var (label, value) in rows)
             sb.AppendLine($"  {label,-22}: {value}");
         sb.AppendLine();
-    }
-
-    private void AddRow(StackPanel panel, string label, string value)
-    {
-        var grid = new Grid { ColumnSpacing = 12, Margin = new Thickness(0, 1, 0, 1) };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(180) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-        var lbl = new TextBlock
-        {
-            Text = label,
-            Style = (Style)Application.Current.Resources["CaptionTextBlockStyle"],
-            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
-            VerticalAlignment = VerticalAlignment.Top,
-        };
-        var val = new TextBlock
-        {
-            Text = value,
-            IsTextSelectionEnabled = true,
-            TextWrapping = TextWrapping.Wrap,
-        };
-
-        Grid.SetColumn(val, 1);
-        grid.Children.Add(lbl);
-        grid.Children.Add(val);
-        panel.Children.Add(grid);
     }
 
     private void CopyBtn_Click(object sender, RoutedEventArgs e)

@@ -1,4 +1,5 @@
 using Microsoft.Management.Infrastructure;
+using pcHealth.Helpers;
 
 namespace pcHealth.Pages;
 
@@ -16,18 +17,15 @@ public sealed partial class NetworkResetPage : Page
         OutputText.Text = "";
         StatusText.Text = "Resetting network stack…";
 
+        // Single append handler used consistently throughout — all output routes
+        // through this so every line gets scrolled into view automatically.
+        var Append = UiHelper.CreateAppendHandler(OutputText, OutputScroller, DispatcherQueue);
+
         try
         {
-            void Append(string line) =>
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    OutputText.Text += line + "\n";
-                    OutputScroller.ScrollToVerticalOffset(double.MaxValue);
-                });
-
             await Task.Run(() =>
             {
-                // Flush DNS
+                // Flush DNS via CIM (no external process needed).
                 Append("[>>] Flushing DNS cache…");
                 using var session = CimSession.Create(null);
                 try
@@ -40,35 +38,24 @@ public sealed partial class NetworkResetPage : Page
                 }
                 catch (Exception) { }
                 Append("[OK] DNS cache flushed.");
-
-                // Winsock reset
                 Append("[>>] Resetting Winsock catalog…");
             });
 
-            await ProcessRunner.RunAsync("netsh.exe", "winsock reset catalog",
-                line => DispatcherQueue.TryEnqueue(() => OutputText.Text += line + "\n"));
-            DispatcherQueue.TryEnqueue(() => OutputText.Text += "[OK] Winsock reset.\n");
+            await ProcessRunner.RunAsync("netsh.exe", "winsock reset catalog", Append);
+            Append("[OK] Winsock reset.");
 
-            // IPv4/IPv6 reset
-            DispatcherQueue.TryEnqueue(() => OutputText.Text += "[>>] Resetting IPv4 stack…\n");
-            await ProcessRunner.RunAsync("netsh.exe", "int ipv4 reset",
-                line => DispatcherQueue.TryEnqueue(() => OutputText.Text += line + "\n"));
+            Append("[>>] Resetting IPv4 stack…");
+            await ProcessRunner.RunAsync("netsh.exe", "int ipv4 reset", Append);
 
-            DispatcherQueue.TryEnqueue(() => OutputText.Text += "[>>] Resetting IPv6 stack…\n");
-            await ProcessRunner.RunAsync("netsh.exe", "int ipv6 reset",
-                line => DispatcherQueue.TryEnqueue(() => OutputText.Text += line + "\n"));
+            Append("[>>] Resetting IPv6 stack…");
+            await ProcessRunner.RunAsync("netsh.exe", "int ipv6 reset", Append);
 
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                OutputText.Text += "\n[OK] Network stack reset complete. Reboot to apply all changes.\n";
-                OutputScroller.ScrollToVerticalOffset(double.MaxValue);
-            });
-
+            Append("\n[OK] Network stack reset complete. Reboot to apply all changes.");
             StatusText.Text = "Done — reboot recommended.";
         }
         catch (Exception ex)
         {
-            DispatcherQueue.TryEnqueue(() => OutputText.Text += $"\n[Error] {ex.Message}\n");
+            Append($"\n[Error] {ex.Message}");
             StatusText.Text = "Error.";
         }
         finally

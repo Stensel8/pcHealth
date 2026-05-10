@@ -1,3 +1,5 @@
+using pcHealth.Helpers;
+
 namespace pcHealth.Pages;
 
 public sealed partial class ProgramsPage : Page
@@ -89,13 +91,17 @@ public sealed partial class ProgramsPage : Page
                 try
                 {
                     if (!string.IsNullOrEmpty(item.WingetId))
-                        CliRunner.RunWinget(
+                    {
+                        using var p = CliRunner.RunWinget(
                             $"install --id {item.WingetId} --force " +
                             "--accept-source-agreements --accept-package-agreements");
+                        await p.WaitForExitAsync();
+                        _ = CheckInstalledAsync(DispatcherQueue);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _ = ShowErrorAsync("Could not launch installer", ex.Message);
+                    _ = DialogHelper.ShowErrorAsync(XamlRoot, "Could not launch installer", ex.Message);
                 }
                 return;
             }
@@ -116,15 +122,21 @@ public sealed partial class ProgramsPage : Page
             try
             {
                 if (result == ContentDialogResult.Primary && !string.IsNullOrEmpty(item.ExeName))
+                {
                     CliRunner.OpenApp(item.ExeName, item.RegistryName);
+                }
                 else if (result == ContentDialogResult.Secondary && !string.IsNullOrEmpty(item.WingetId))
-                    CliRunner.RunWinget(
+                {
+                    using var p = CliRunner.RunWinget(
                         $"upgrade --id {item.WingetId} " +
                         "--accept-source-agreements --accept-package-agreements");
+                    await p.WaitForExitAsync();
+                    _ = CheckInstalledAsync(DispatcherQueue);
+                }
             }
             catch (Exception ex)
             {
-                _ = ShowErrorAsync(result == ContentDialogResult.Primary ? "Could not open program" : "Could not launch updater", ex.Message);
+                _ = DialogHelper.ShowErrorAsync(XamlRoot, result == ContentDialogResult.Primary ? "Could not open program" : "Could not launch updater", ex.Message);
             }
             return;
         }
@@ -133,9 +145,11 @@ public sealed partial class ProgramsPage : Page
         {
             if (!string.IsNullOrEmpty(item.WingetId))
             {
-                CliRunner.RunWinget(
+                using var p = CliRunner.RunWinget(
                     $"install --id {item.WingetId} " +
                     "--accept-source-agreements --accept-package-agreements");
+                await p.WaitForExitAsync();
+                _ = CheckInstalledAsync(DispatcherQueue);
             }
             else if (!string.IsNullOrEmpty(item.BrowserUrl))
             {
@@ -144,19 +158,8 @@ public sealed partial class ProgramsPage : Page
         }
         catch (Exception ex)
         {
-            _ = ShowErrorAsync("Could not launch installer", ex.Message);
+            _ = DialogHelper.ShowErrorAsync(XamlRoot, "Could not launch installer", ex.Message);
         }
     }
 
-    private async Task ShowErrorAsync(string title, string message)
-    {
-        var dialog = new ContentDialog
-        {
-            Title = title,
-            Content = message,
-            CloseButtonText = "OK",
-            XamlRoot = XamlRoot,
-        };
-        await dialog.ShowAsync();
-    }
 }

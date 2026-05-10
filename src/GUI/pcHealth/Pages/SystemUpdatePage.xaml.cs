@@ -1,3 +1,5 @@
+using pcHealth.Helpers;
+
 namespace pcHealth.Pages;
 
 public sealed partial class SystemUpdatePage : Page
@@ -20,12 +22,7 @@ public sealed partial class SystemUpdatePage : Page
 
         try
         {
-            void Append(string line) =>
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    OutputText.Text += line + "\n";
-                    OutputScroller.ScrollToVerticalOffset(double.MaxValue);
-                });
+            var Append = UiHelper.CreateAppendHandler(OutputText, OutputScroller, DispatcherQueue);
 
             await ProcessRunner.RunAsync(
                 "winget.exe",

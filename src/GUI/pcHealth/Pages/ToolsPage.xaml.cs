@@ -27,7 +27,6 @@ public sealed partial class ToolsPage : Page
         new ToolItem { Name = "Open CBS Log",                 Glyph = "",                                    PageType = typeof(CBSLogPage),            Category = "Maintenance", Platforms = new[] { "Windows" } },
         new ToolItem { Name = "Repair Winget",                Glyph = "",                                    PageType = typeof(WingetRepairPage),      Category = "Maintenance", Platforms = new[] { "Windows" } },
         // ── Security ─────────────────────────────────────────────────────────────
-        new ToolItem { Name = "Security Status",              Glyph = "",  Note = "Defender, BitLocker, TPM",PageType = typeof(SecurityCheckPage),     Category = "Security",    Platforms = new[] { "Windows" } },
         new ToolItem { Name = "BIOS Password Recovery",       Glyph = "",                                    PageType = typeof(BIOSPasswordPage),      Category = "Security",    Platforms = new[] { "Windows", "Linux" } },
         // ── Hardware ─────────────────────────────────────────────────────────────
         new ToolItem { Name = "Battery Report",               Glyph = "",  Note = "laptop only",             PageType = typeof(BatteryReportPage),     Category = "Hardware",    Platforms = new[] { "Windows" } },
