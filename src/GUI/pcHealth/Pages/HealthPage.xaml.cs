@@ -189,7 +189,7 @@ public sealed partial class HealthPage : Page
     private static HealthData GatherData()
     {
         // Start slow independent tasks immediately so they run alongside the CIM hardware queries.
-        var legacyTask   = Task.Run(GatherLegacyFeatures);
+        var legacyTask = Task.Run(GatherLegacyFeatures);
         var securityTask = Task.Run(static () => { using var s = CimSession.Create(null); return GatherSecurityInfo(s); });
 
         var cpu = new List<HealthRow>();
@@ -456,7 +456,7 @@ public sealed partial class HealthPage : Page
         // GatherData runs on a thread-pool thread (called from Task.Run in OnLoaded),
         // so blocking here with GetAwaiter().GetResult() is safe — there is no UI-thread
         // SynchronizationContext to deadlock against.
-        var security       = securityTask.GetAwaiter().GetResult();
+        var security = securityTask.GetAwaiter().GetResult();
         var legacyFeatures = legacyTask.GetAwaiter().GetResult();
 
         return new HealthData(cpu, gpu, ram, smart, usedSmartctl, diskSpace, winVer, boot, battery, security, legacyFeatures);
@@ -1145,7 +1145,7 @@ public sealed partial class HealthPage : Page
             SetStatusDot(BatteryStatusDot, PopulateBatteryCard(BatteryRows, data.Battery, BatteryExpander));
 
         SetStatusDot(SecurityStatusDot, PopulateSecurityCard(SecurityRows, data.Security, SecurityExpander));
-        SetStatusDot(LegacyStatusDot,   PopulateLegacyFeaturesCard(LegacyRows, data.LegacyFeatures, LegacyExpander));
+        SetStatusDot(LegacyStatusDot, PopulateLegacyFeaturesCard(LegacyRows, data.LegacyFeatures, LegacyExpander));
     }
 
     private CheckStatus PopulateCard(StackPanel panel, List<HealthRow> rows, Expander expander)
@@ -1363,10 +1363,10 @@ public sealed partial class HealthPage : Page
 
         foreach (var r in rows)
         {
-            double pct   = r.TotalBytes > 0 ? (double)r.UsedBytes / r.TotalBytes * 100 : 0;
-            double usedGb  = r.UsedBytes / 1_073_741_824.0;
+            double pct = r.TotalBytes > 0 ? (double)r.UsedBytes / r.TotalBytes * 100 : 0;
+            double usedGb = r.UsedBytes / 1_073_741_824.0;
             double totalGb = r.TotalBytes / 1_073_741_824.0;
-            double freeGb  = (r.TotalBytes - r.UsedBytes) / 1_073_741_824.0;
+            double freeGb = (r.TotalBytes - r.UsedBytes) / 1_073_741_824.0;
 
             statuses.Add(r.Status);
             AddStatusRow(panel, r.Drive,
@@ -1531,10 +1531,10 @@ public sealed partial class HealthPage : Page
 
     private static SecurityInfo GatherSecurityInfo(CimSession session)
     {
-        var defender   = new List<HealthRow>();
-        var bitlocker  = new List<HealthRow>();
+        var defender = new List<HealthRow>();
+        var bitlocker = new List<HealthRow>();
         var secureBoot = new List<HealthRow>();
-        var tpm        = new List<HealthRow>();
+        var tpm = new List<HealthRow>();
 
         // SecurityCenter2: all registered AV products (determines 3rd-party AV context)
         bool hasActiveThirdPartyAv = false;
@@ -1545,14 +1545,14 @@ public sealed partial class HealthPage : Page
                 "SELECT displayName, productState FROM AntiVirusProduct"))
             {
                 var avName = inst.CimInstanceProperties["displayName"]?.Value?.ToString()?.Trim() ?? "Unknown";
-                var psRaw  = inst.CimInstanceProperties["productState"]?.Value;
-                uint ps    = psRaw is uint u ? u : 0;
+                var psRaw = inst.CimInstanceProperties["productState"]?.Value;
+                uint ps = psRaw is uint u ? u : 0;
                 bool avActive = (ps & 0x1000) != 0 && (ps & 0x0100) == 0;
                 // Match only Microsoft's own AV — not 3rd-party products that happen to
                 // contain "Defender" in their name (e.g. Bitdefender, Total Defense, etc.)
-                bool isDefender = avName.StartsWith("Windows Defender",   StringComparison.OrdinalIgnoreCase)
+                bool isDefender = avName.StartsWith("Windows Defender", StringComparison.OrdinalIgnoreCase)
                                || avName.StartsWith("Microsoft Defender", StringComparison.OrdinalIgnoreCase)
-                               || avName.Equals("Windows Security",       StringComparison.OrdinalIgnoreCase);
+                               || avName.Equals("Windows Security", StringComparison.OrdinalIgnoreCase);
                 if (!isDefender)
                 {
                     if (avActive) hasActiveThirdPartyAv = true;
@@ -1569,15 +1569,15 @@ public sealed partial class HealthPage : Page
                 "SELECT AMServiceEnabled, RealTimeProtectionEnabled, AntivirusEnabled, AntispywareEnabled FROM MSFT_MpComputerStatus"))
             {
                 bool svc = inst.CimInstanceProperties["AMServiceEnabled"]?.Value is bool b1 && b1;
-                bool rt  = inst.CimInstanceProperties["RealTimeProtectionEnabled"]?.Value is bool b2 && b2;
-                bool av  = inst.CimInstanceProperties["AntivirusEnabled"]?.Value is bool b3 && b3;
+                bool rt = inst.CimInstanceProperties["RealTimeProtectionEnabled"]?.Value is bool b2 && b2;
+                bool av = inst.CimInstanceProperties["AntivirusEnabled"]?.Value is bool b3 && b3;
                 bool asp = inst.CimInstanceProperties["AntispywareEnabled"]?.Value is bool b4 && b4;
-                var  off = hasActiveThirdPartyAv ? CheckStatus.Info : CheckStatus.Bad;
-                var  rtLabel = rt ? "Enabled" : hasActiveThirdPartyAv ? "Disabled (passive mode)" : "Disabled";
-                defender.Add(new HealthRow("Defender Service",     svc ? "Running"  : "Stopped",  svc ? CheckStatus.Good : off));
-                defender.Add(new HealthRow("Real-time Protection", rtLabel,                        rt  ? CheckStatus.Good : off));
-                defender.Add(new HealthRow("Antivirus",            av  ? "Enabled"  : "Disabled",  av  ? CheckStatus.Good : off));
-                defender.Add(new HealthRow("Antispyware",          asp ? "Enabled"  : "Disabled",  asp ? CheckStatus.Good : off));
+                var off = hasActiveThirdPartyAv ? CheckStatus.Info : CheckStatus.Bad;
+                var rtLabel = rt ? "Enabled" : hasActiveThirdPartyAv ? "Disabled (passive mode)" : "Disabled";
+                defender.Add(new HealthRow("Defender Service", svc ? "Running" : "Stopped", svc ? CheckStatus.Good : off));
+                defender.Add(new HealthRow("Real-time Protection", rtLabel, rt ? CheckStatus.Good : off));
+                defender.Add(new HealthRow("Antivirus", av ? "Enabled" : "Disabled", av ? CheckStatus.Good : off));
+                defender.Add(new HealthRow("Antispyware", asp ? "Enabled" : "Disabled", asp ? CheckStatus.Good : off));
                 break;
             }
         }
@@ -1592,13 +1592,13 @@ public sealed partial class HealthPage : Page
                 "SELECT DriveLetter, ProtectionStatus FROM Win32_EncryptableVolume"))
             {
                 var drive = inst.CimInstanceProperties["DriveLetter"]?.Value?.ToString() ?? "?";
-                var raw   = inst.CimInstanceProperties["ProtectionStatus"]?.Value;
-                int ps    = raw is uint u ? (int)u : raw is int i ? i : -1;
+                var raw = inst.CimInstanceProperties["ProtectionStatus"]?.Value;
+                int ps = raw is uint u ? (int)u : raw is int i ? i : -1;
                 var (label, status) = ps switch
                 {
-                    1 => ("Encrypted",     CheckStatus.Good),
+                    1 => ("Encrypted", CheckStatus.Good),
                     0 => ("Not encrypted", CheckStatus.Warning),
-                    _ => ("Unknown",       CheckStatus.Unknown),
+                    _ => ("Unknown", CheckStatus.Unknown),
                 };
                 bitlocker.Add(new HealthRow(drive, label, status));
                 any = true;
@@ -1633,11 +1633,11 @@ public sealed partial class HealthPage : Page
                 "SELECT IsActivated_InitialValue, IsEnabled_InitialValue, SpecVersion FROM Win32_Tpm"))
             {
                 bool activated = inst.CimInstanceProperties["IsActivated_InitialValue"]?.Value is bool a && a;
-                bool enabled   = inst.CimInstanceProperties["IsEnabled_InitialValue"]?.Value  is bool en && en;
-                var  spec      = inst.CimInstanceProperties["SpecVersion"]?.Value?.ToString();
-                var  version   = !string.IsNullOrEmpty(spec) ? spec.Split(',')[0].Trim() : "Unknown";
-                tpm.Add(new HealthRow("Version",   version,              version != "Unknown" ? CheckStatus.Good : CheckStatus.Unknown));
-                tpm.Add(new HealthRow("Enabled",   enabled   ? "Yes" : "No", enabled   ? CheckStatus.Good : CheckStatus.Bad));
+                bool enabled = inst.CimInstanceProperties["IsEnabled_InitialValue"]?.Value is bool en && en;
+                var spec = inst.CimInstanceProperties["SpecVersion"]?.Value?.ToString();
+                var version = !string.IsNullOrEmpty(spec) ? spec.Split(',')[0].Trim() : "Unknown";
+                tpm.Add(new HealthRow("Version", version, version != "Unknown" ? CheckStatus.Good : CheckStatus.Unknown));
+                tpm.Add(new HealthRow("Enabled", enabled ? "Yes" : "No", enabled ? CheckStatus.Good : CheckStatus.Bad));
                 tpm.Add(new HealthRow("Activated", activated ? "Yes" : "No", activated ? CheckStatus.Good : CheckStatus.Bad));
                 found = true;
                 break;
@@ -1662,7 +1662,7 @@ public sealed partial class HealthPage : Page
         {
             using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
                 @"SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters");
-            var val   = key?.GetValue("SMB1");
+            var val = key?.GetValue("SMB1");
             bool smb1 = val is int i && i != 0;
             rows.Add(new HealthRow("SMBv1 Protocol",
                 smb1 ? "Enabled — disable immediately" : "Disabled",
@@ -1674,12 +1674,12 @@ public sealed partial class HealthPage : Page
         // and running them in parallel hides the per-call overhead.
         var featureMap = new Dictionary<string, (string Label, bool IsCritical)>(StringComparer.OrdinalIgnoreCase)
         {
-            ["VBScript"]                         = ("VBScript",                    true),
-            ["WindowsMediaPlayer"]               = ("Legacy Windows Media Player", false),
-            ["MicrosoftWindowsPowerShellV2Root"] = ("PowerShell v2",               false),
-            ["TelnetClient"]                     = ("Telnet Client",               false),
-            ["TFTP"]                             = ("TFTP Client",                 false),
-            ["DirectPlay"]                       = ("DirectPlay",                  false),
+            ["VBScript"] = ("VBScript", true),
+            ["WindowsMediaPlayer"] = ("Legacy Windows Media Player", false),
+            ["MicrosoftWindowsPowerShellV2Root"] = ("PowerShell v2", false),
+            ["TelnetClient"] = ("Telnet Client", false),
+            ["TFTP"] = ("TFTP Client", false),
+            ["DirectPlay"] = ("DirectPlay", false),
         };
 
         var dismPath = Path.Combine(
@@ -1718,23 +1718,23 @@ public sealed partial class HealthPage : Page
         {
             var psi = new ProcessStartInfo
             {
-                FileName               = dismPath,
-                UseShellExecute        = false,
+                FileName = dismPath,
+                UseShellExecute = false,
                 RedirectStandardOutput = true,
-                RedirectStandardError  = true,
-                CreateNoWindow         = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
             };
             psi.ArgumentList.Add("/Online");
             psi.ArgumentList.Add("/Get-FeatureInfo");
             psi.ArgumentList.Add($"/FeatureName:{featureName}");
 
-            using var cts  = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(15));
             using var proc = new Process { StartInfo = psi };
             proc.Start();
             string output;
-            try   { output = proc.StandardOutput.ReadToEndAsync(cts.Token).GetAwaiter().GetResult(); }
+            try { output = proc.StandardOutput.ReadToEndAsync(cts.Token).GetAwaiter().GetResult(); }
             catch (OperationCanceledException) { proc.Kill(entireProcessTree: true); return (false, false); }
-            try   { proc.StandardError.ReadToEndAsync(cts.Token).GetAwaiter().GetResult(); } catch { }
+            try { proc.StandardError.ReadToEndAsync(cts.Token).GetAwaiter().GetResult(); } catch { }
             proc.WaitForExit();
 
             if (proc.ExitCode != 0) return (false, false); // feature not found on this OS
@@ -1759,8 +1759,8 @@ public sealed partial class HealthPage : Page
         {
             panel.Children.Add(new TextBlock
             {
-                Text   = title,
-                Style  = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
+                Text = title,
+                Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
                 Margin = new Thickness(0, 0, 0, 4),
             });
             foreach (var r in rows)

@@ -88,14 +88,14 @@ public sealed partial class NetworkPingPage : Page
             }
 
             SummaryCard.Visibility = Visibility.Visible;
-            UiHelper.AddLabelValueRow(SummaryRows, "Packets sent",     $"{Count}");
+            UiHelper.AddLabelValueRow(SummaryRows, "Packets sent", $"{Count}");
             UiHelper.AddLabelValueRow(SummaryRows, "Packets received", $"{successLatencies.Count}");
-            UiHelper.AddLabelValueRow(SummaryRows, "Packet loss",      $"{(Count - successLatencies.Count) * 100 / Count}%");
+            UiHelper.AddLabelValueRow(SummaryRows, "Packet loss", $"{(Count - successLatencies.Count) * 100 / Count}%");
 
             if (successLatencies.Count > 0)
             {
-                UiHelper.AddLabelValueRow(SummaryRows, "Min latency",     $"{successLatencies.Min()} ms");
-                UiHelper.AddLabelValueRow(SummaryRows, "Max latency",     $"{successLatencies.Max()} ms");
+                UiHelper.AddLabelValueRow(SummaryRows, "Min latency", $"{successLatencies.Min()} ms");
+                UiHelper.AddLabelValueRow(SummaryRows, "Max latency", $"{successLatencies.Max()} ms");
                 UiHelper.AddLabelValueRow(SummaryRows, "Average latency", $"{successLatencies.Average():0.0} ms");
             }
         }
