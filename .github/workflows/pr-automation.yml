@@ -80,9 +80,18 @@ jobs:
   auto-checklist:
     name: Auto-tick type checklist
     runs-on: ubuntu-latest
-    if: github.event.action == 'opened' || github.event.action == 'ready_for_review'
+    if: >
+
+      (github.event.action == 'opened' || github.event.action == 'ready_for_review') &&
+
+      github.actor != 'renovate[bot]' &&
+
+      github.actor != 'dependabot[bot]'
+
     permissions:
+
       pull-requests: write
+
       issues: write
     steps:
       - name: Wait 10 s for author to tick manually
