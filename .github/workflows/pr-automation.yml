@@ -139,9 +139,8 @@ jobs:
             const titleValid = commitType !== null
               && /^\w+(\(.+\))?!?: \S/.test(pr.title);
 
-            // Detect breaking change: feat!: … or BREAKING CHANGE in body
-            const isBreaking = /^\w+(\(.+\))?!:/.test(pr.title)
-              || /BREAKING[- ]CHANGE/i.test(body);
+            // Detect breaking change: PR title only — body scan causes false positives from changelog text
+            const isBreaking = /^\w+(\(.+\))?!:/.test(pr.title);
 
             // ── Tick the matching type checkbox ───────────────────────
             if (commitType) {
