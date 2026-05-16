@@ -1,50 +1,109 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-
-  "description": "Renovate manages NuGet packages and docker:// action images. Regular GitHub Actions (uses: owner/repo@sha) are handled by Dependabot. Both cover NuGet — Renovate for regular bumps, Dependabot for security advisories.",
-
-  "extends": ["config:recommended"],
-
+  "extends": [
+    "config:recommended"
+  ],
+  "description": "Renovate manages NuGet packages and docker:// action images. Regular GitHub Actions (uses: owner/repo@sha) are handled by Dependabot. Both cover NuGet \u2014 Renovate for regular bumps, Dependabot for security advisories.",
+  "timezone": "Europe/Amsterdam",
+  "schedule": [
+    "every day"
+  ],
   "forkProcessing": "enabled",
-
-  "enabledManagers": ["nuget", "github-actions"],
-
-  "schedule": ["at any time"],
-
-  "labels": ["dependencies"],
-
-  "assignees": ["Stensel8"],
-
+  "pinDigests": true,
+  "assigneesFromCodeOwners": true,
+  "reviewersFromCodeOwners": true,
+  "enabledManagers": [
+    "nuget",
+    "github-actions"
+  ],
+  "labels": [
+    "dependencies"
+  ],
   "commitMessagePrefix": "deps:",
-
   "packageRules": [
     {
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
+      "groupName": "Docker images",
+      "addLabels": [
+        "docker"
+      ]
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions",
+      "addLabels": [
+        "github-actions"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "patch",
+        "digest"
+      ],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    },
+    {
       "description": "NuGet labels.",
-      "matchManagers": ["nuget"],
-      "labels": ["dependencies", "dotnet"]
+      "matchManagers": [
+        "nuget"
+      ],
+      "addLabels": [
+        "dotnet"
+      ]
     },
     {
       "description": "CI labels for GitHub Actions / Docker image updates.",
-      "matchManagers": ["github-actions"],
-      "labels": ["dependencies", "ci"]
+      "matchManagers": [
+        "github-actions"
+      ],
+      "addLabels": [
+        "ci"
+      ]
     },
     {
-      "description": "Disable Renovate for owner/repo@sha actions — Dependabot handles those.",
-      "matchManagers": ["github-actions"],
-      "matchDatasources": ["github-tags", "github-releases", "git-tags"],
+      "description": "Disable Renovate for owner/repo@sha actions - Dependabot handles those.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDatasources": [
+        "github-tags",
+        "github-releases",
+        "git-tags"
+      ],
       "enabled": false
     },
     {
       "description": "Group all Docker-based action images into one PR.",
-      "matchManagers": ["github-actions"],
-      "matchDatasources": ["docker"],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
       "groupName": "Docker action images",
-      "labels": ["dependencies", "ci"]
+      "addLabels": [
+        "ci"
+      ]
     },
     {
       "description": "Group all Windows App SDK packages into a single PR.",
       "groupName": "Windows App SDK",
-      "labels": ["dependencies", "dotnet", "winui3"],
+      "addLabels": [
+        "dotnet",
+        "winui3"
+      ],
       "matchPackageNames": [
         "/^Microsoft\\.WindowsAppSDK/",
         "/^Microsoft\\.Windows\\.SDK/"
@@ -53,7 +112,9 @@
     {
       "description": "Group .NET BCL packages (System.*) into a single PR.",
       "groupName": ".NET BCL",
-      "labels": ["dependencies", "dotnet"],
+      "addLabels": [
+        "dotnet"
+      ],
       "matchPackageNames": [
         "/^System\\./"
       ]
@@ -61,16 +122,21 @@
     {
       "description": "Group Microsoft infrastructure packages into a single PR.",
       "groupName": "Microsoft infra",
-      "labels": ["dependencies", "dotnet"],
+      "addLabels": [
+        "dotnet"
+      ],
       "matchPackageNames": [
-        "/^Microsoft\\.Management\\./"
+        "/^Microsoft\\.Management\\/"
       ]
     },
     {
-      "description": "Auto-merge patch updates that pass CI, to reduce review noise.",
-      "matchUpdateTypes": ["patch"],
-      "automerge": true,
-      "automergeType": "pr"
+      "matchManagers": [
+        "nuget"
+      ],
+      "groupName": "NuGet packages",
+      "addLabels": [
+        "dotnet"
+      ]
     }
   ]
 }
