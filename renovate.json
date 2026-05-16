@@ -3,11 +3,8 @@
   "extends": [
     "config:recommended"
   ],
-  "description": "Renovate manages NuGet packages and docker:// action images. Regular GitHub Actions (uses: owner/repo@sha) are handled by Dependabot. Both cover NuGet \u2014 Renovate for regular bumps, Dependabot for security advisories.",
+  "description": "Renovate manages NuGet packages and docker:// action images. Regular GitHub Actions (uses: owner/repo@sha) are handled by Dependabot. Both cover NuGet — Renovate for regular bumps, Dependabot for security advisories.",
   "timezone": "Europe/Amsterdam",
-  "schedule": [
-    "every day"
-  ],
   "forkProcessing": "enabled",
   "pinDigests": true,
   "assigneesFromCodeOwners": true,
