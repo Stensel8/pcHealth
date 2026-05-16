@@ -38,20 +38,6 @@
       ]
     },
     {
-      "matchUpdateTypes": [
-        "patch",
-        "digest"
-      ],
-      "automerge": true,
-      "automergeType": "pr"
-    },
-    {
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "automerge": false
-    },
-    {
       "description": "NuGet labels.",
       "matchManagers": [
         "nuget"
@@ -135,5 +121,8 @@
         "dotnet"
       ]
     }
-  ]
+  ],
+  "automerge": true,
+  "automergeType": "pr",
+  "semanticCommits": "enabled"
 }
