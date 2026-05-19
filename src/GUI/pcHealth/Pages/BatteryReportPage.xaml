@@ -68,12 +68,13 @@
                                    Style="{StaticResource CaptionTextBlockStyle}"
                                    Text="Generates a detailed HTML report including battery capacity history, usage patterns, and drain data. The report opens in your default browser."/>
                         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
-                            <Button x:Name="GenerateBtn" Content="Generate &amp; Open Report"
+                            <Button Content="Generate &amp; Open Report"
                                     Style="{StaticResource AccentButtonStyle}"
-                                    Click="GenerateBtn_Click"/>
-                            <ProgressRing x:Name="GenerateProgress" IsActive="False"
+                                    Command="{x:Bind ViewModel.GenerateReportCommand}"/>
+                            <ProgressRing IsActive="{x:Bind ViewModel.IsGenerating, Mode=OneWay}"
                                           Width="20" Height="20" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="GenerateStatusText" VerticalAlignment="Center"
+                            <TextBlock Text="{x:Bind ViewModel.GenerateStatus, Mode=OneWay}"
+                                       VerticalAlignment="Center"
                                        Style="{StaticResource CaptionTextBlockStyle}"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         </StackPanel>

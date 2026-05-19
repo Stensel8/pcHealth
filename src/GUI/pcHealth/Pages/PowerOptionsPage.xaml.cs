@@ -1,32 +1,32 @@
-using System.Diagnostics;
+using pcHealth.ViewModels;
 
 namespace pcHealth.Pages;
 
 public sealed partial class PowerOptionsPage : Page
 {
-    public PowerOptionsPage()
-    {
-        InitializeComponent();
-    }
+    public PowerOptionsViewModel ViewModel { get; } = App.Services.GetRequiredService<PowerOptionsViewModel>();
+
+    public PowerOptionsPage() => InitializeComponent();
 
     private async void LogOffBtn_Click(object sender, RoutedEventArgs e)
     {
         if (!await ConfirmAsync("Log Off", "Sign out the current Windows session?")) return;
-        Process.Start(new ProcessStartInfo("shutdown.exe", "/l") { CreateNoWindow = true });
+        ViewModel.LogOffCommand.Execute(null);
     }
 
     private async void RestartBtn_Click(object sender, RoutedEventArgs e)
     {
         if (!await ConfirmAsync("Restart", "Restart the PC immediately?")) return;
-        Process.Start(new ProcessStartInfo("shutdown.exe", "/r /t 0") { CreateNoWindow = true });
+        ViewModel.RestartCommand.Execute(null);
     }
 
     private async void ShutdownBtn_Click(object sender, RoutedEventArgs e)
     {
         if (!await ConfirmAsync("Shutdown", "Shut down the PC immediately?")) return;
-        Process.Start(new ProcessStartInfo("shutdown.exe", "/s /t 0") { CreateNoWindow = true });
+        ViewModel.ShutdownCommand.Execute(null);
     }
 
+    // ContentDialog needs XamlRoot, so confirmation stays in code-behind.
     private async Task<bool> ConfirmAsync(string title, string message)
     {
         var dialog = new ContentDialog

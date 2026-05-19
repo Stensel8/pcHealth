@@ -1,14 +1,12 @@
+using pcHealth.ViewModels;
+
 namespace pcHealth.Pages;
 
 public sealed partial class WindowsUpdatePage : Page
 {
-    public WindowsUpdatePage()
-    {
-        InitializeComponent();
-    }
+    public WindowsUpdateViewModel ViewModel { get; } = App.Services.GetRequiredService<WindowsUpdateViewModel>();
 
-    private void OpenBtn_Click(object sender, RoutedEventArgs e) =>
-        CliRunner.OpenUri("ms-settings:windowsupdate");
+    public WindowsUpdatePage() => InitializeComponent();
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
     {

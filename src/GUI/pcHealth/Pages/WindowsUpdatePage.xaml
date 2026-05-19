@@ -36,7 +36,7 @@
                                    Text="Opens Windows Update in the Settings app. Use it to check for available updates and install them."/>
                         <Button Content="Open Windows Update"
                                 Style="{StaticResource AccentButtonStyle}"
-                                Click="OpenBtn_Click"/>
+                                Command="{x:Bind ViewModel.OpenCommand}"/>
                     </StackPanel>
                 </Border>
 

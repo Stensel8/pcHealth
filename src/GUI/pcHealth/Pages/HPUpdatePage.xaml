@@ -27,21 +27,22 @@
                  Message="HP Image Assistant is only useful on HP laptops and desktops."/>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" Padding="28,8,28,12" Spacing="10">
-            <Button x:Name="InstallBtn" Content="Install HP Image Assistant"
+            <Button Content="Install HP Image Assistant"
                     Style="{StaticResource AccentButtonStyle}"
-                    Click="InstallBtn_Click"/>
-            <ProgressRing x:Name="Progress" IsActive="False" Width="22" Height="22" VerticalAlignment="Center"/>
-            <TextBlock x:Name="StatusText" VerticalAlignment="Center"
+                    Command="{x:Bind ViewModel.InstallCommand}"/>
+            <ProgressRing IsActive="{x:Bind ViewModel.IsRunning, Mode=OneWay}" Width="22" Height="22" VerticalAlignment="Center"/>
+            <TextBlock Text="{x:Bind ViewModel.Status, Mode=OneWay}"
+                       VerticalAlignment="Center"
                        Style="{StaticResource CaptionTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </StackPanel>
 
-        <Border Grid.Row="3" Visibility="Collapsed" x:Name="OutputBorder"
+        <Border Grid.Row="3"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1" CornerRadius="8" Margin="28,0,28,8">
             <ScrollViewer x:Name="OutputScroller" VerticalScrollBarVisibility="Auto" Padding="16">
-                <TextBlock x:Name="OutputText"
+                <TextBlock Text="{x:Bind ViewModel.Output, Mode=OneWay}"
                            FontFamily="Cascadia Code, Consolas, Courier New"
                            FontSize="12" IsTextSelectionEnabled="True" TextWrapping="Wrap"/>
             </ScrollViewer>

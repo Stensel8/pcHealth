@@ -36,7 +36,7 @@
                                    Text="Opens the Windows Disk Cleanup utility (cleanmgr.exe). Scans for temporary files, thumbnails, system files, and other items that can be safely deleted."/>
                         <Button Content="Open Disk Cleanup"
                                 Style="{StaticResource AccentButtonStyle}"
-                                Click="OpenBtn_Click"/>
+                                Command="{x:Bind ViewModel.OpenCommand}"/>
                     </StackPanel>
                 </Border>
 

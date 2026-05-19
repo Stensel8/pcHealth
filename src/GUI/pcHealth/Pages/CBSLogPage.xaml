@@ -21,10 +21,10 @@
         </StackPanel>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Padding="28,0,28,12" Spacing="8">
-            <Button x:Name="OpenBtn" Content="Open in Notepad"
+            <Button Content="Open in Notepad"
                     Style="{StaticResource AccentButtonStyle}"
-                    Click="OpenBtn_Click"/>
-            <TextBlock x:Name="PathText"
+                    Command="{x:Bind ViewModel.OpenInNotepadCommand}"/>
+            <TextBlock Text="{x:Bind ViewModel.LogPath}"
                        VerticalAlignment="Center"
                        Style="{StaticResource CaptionTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -35,7 +35,7 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1" CornerRadius="8" Margin="28,0,28,8">
             <ScrollViewer x:Name="LogScroller" VerticalScrollBarVisibility="Auto" Padding="16">
-                <TextBlock x:Name="LogText"
+                <TextBlock Text="{x:Bind ViewModel.LogText, Mode=OneWay}"
                            FontFamily="Cascadia Code, Consolas, Courier New"
                            FontSize="11" IsTextSelectionEnabled="True"
                            TextWrapping="Wrap"
