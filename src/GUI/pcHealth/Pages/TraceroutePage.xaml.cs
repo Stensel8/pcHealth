@@ -1,104 +1,43 @@
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
+using pcHealth.ViewModels;
 
 namespace pcHealth.Pages;
 
 public sealed partial class TraceroutePage : Page
 {
-    private const string Target = "google.com";
-    private const int MaxHops = 30;
-    private const int Timeout = 4000;
-    private CancellationTokenSource? _cts;
+    public TracerouteViewModel ViewModel { get; } = App.Services.GetRequiredService<TracerouteViewModel>();
+
+    private int _renderedHopCount;
+    private static readonly Microsoft.UI.Xaml.Media.FontFamily MonoFont = new("Cascadia Code, Consolas, Courier New");
 
     public TraceroutePage()
     {
         InitializeComponent();
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    private async void RunBtn_Click(object sender, RoutedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        RunBtn.IsEnabled = false;
-        Progress.IsActive = true;
-        HopRows.Children.Clear();
-        ResultsCard.Visibility = Visibility.Visible;
-        StatusText.Text = $"Tracing route to {Target}…";
+        if (e.PropertyName != nameof(ViewModel.Hops)) return;
 
-        _cts = new CancellationTokenSource();
+        var hops = ViewModel.Hops;
 
-        try
+        // New run: ViewModel resets Hops to []. Clear rows and counter.
+        if (hops.Count < _renderedHopCount)
         {
-            IPAddress? targetAddress = null;
-            try
-            {
-                var addresses = await Dns.GetHostAddressesAsync(Target);
-                targetAddress = addresses.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork)
-                    ?? addresses.FirstOrDefault();
-            }
-            catch (Exception)
-            {
-                targetAddress = null;
-            }
-
-            await Task.Run(async () =>
-            {
-                using var ping = new Ping();
-                for (int ttl = 1; ttl <= MaxHops && !_cts.Token.IsCancellationRequested; ttl++)
-                {
-                    var options = new PingOptions(ttl, dontFragment: true);
-                    var buffer = new byte[32];
-
-                    PingReply? reply = null;
-                    try
-                    {
-                        reply = await ping.SendPingAsync(Target, Timeout, buffer, options);
-                    }
-                    catch (Exception ex)
-                    {
-                        var errMsg = ex.Message;
-                        var hopNum = ttl;
-                        DispatcherQueue.TryEnqueue(() =>
-                            AddHopRow(hopNum, "*", $"Error: {errMsg}", false));
-                        continue;
-                    }
-
-                    var address = reply.Address?.ToString() ?? "*";
-                    var latency = reply.Status == IPStatus.Success || reply.Status == IPStatus.TtlExpired
-                        ? $"{reply.RoundtripTime} ms" : "*";
-                    var hopTtl = ttl;
-
-                    DispatcherQueue.TryEnqueue(() =>
-                        AddHopRow(hopTtl, address, latency, reply.Status == IPStatus.Success));
-
-                    if (reply.Status == IPStatus.Success) break;
-                    if (reply.Status == IPStatus.TimedOut && ttl > 5) continue;
-                }
-            }, _cts.Token);
-
-            StatusText.Text = targetAddress is not null
-                ? $"Destination: {targetAddress}"
-                : "Done.";
+            HopRows.Children.Clear();
+            ResultsCard.Visibility = Visibility.Collapsed;
+            _renderedHopCount = 0;
         }
-        catch (OperationCanceledException)
-        {
-            StatusText.Text = "Cancelled.";
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            Progress.IsActive = false;
-            RunBtn.IsEnabled = true;
-            _cts?.Dispose();
-            _cts = null;
-        }
+
+        // Append any newly added hops (they arrive one at a time during the trace).
+        for (int i = _renderedHopCount; i < hops.Count; i++)
+            AddHopRow(hops[i]);
+
+        if (hops.Count > 0) ResultsCard.Visibility = Visibility.Visible;
+        _renderedHopCount = hops.Count;
     }
 
-    private static readonly Microsoft.UI.Xaml.Media.FontFamily MonoFont = new("Cascadia Code, Consolas, Courier New");
-
-    private void AddHopRow(int hop, string address, string latency, bool reached)
+    private void AddHopRow(TracerouteViewModel.HopResult hop)
     {
         var row = new Grid { ColumnSpacing = 16 };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
@@ -107,27 +46,25 @@ public sealed partial class TraceroutePage : Page
 
         var hopNum = new TextBlock
         {
-            Text = $"{hop,2}",
+            Text = $"{hop.Hop,2}",
             FontFamily = MonoFont,
             FontSize = 13,
             Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
             IsTextSelectionEnabled = true,
         };
-
         var addrText = new TextBlock
         {
-            Text = address,
+            Text = hop.Address,
             FontFamily = MonoFont,
             FontSize = 13,
             IsTextSelectionEnabled = true,
-            Foreground = reached
+            Foreground = hop.Reached
                 ? new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x0F, 0x9D, 0x58))
                 : (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"],
         };
-
         var latText = new TextBlock
         {
-            Text = latency,
+            Text = hop.Latency,
             FontFamily = MonoFont,
             FontSize = 13,
             IsTextSelectionEnabled = true,
@@ -144,7 +81,7 @@ public sealed partial class TraceroutePage : Page
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
     {
-        _cts?.Cancel();
+        ViewModel.RunCancelCommand.Execute(null);
         if (Frame.CanGoBack) Frame.GoBack();
     }
 }

@@ -1,58 +1,25 @@
-using pcHealth.Helpers;
+using pcHealth.ViewModels;
 
 namespace pcHealth.Pages;
 
 public sealed partial class SystemUpdatePage : Page
 {
-    private CancellationTokenSource? _cts;
+    public SystemUpdateViewModel ViewModel { get; } = App.Services.GetRequiredService<SystemUpdateViewModel>();
 
     public SystemUpdatePage()
     {
         InitializeComponent();
-    }
-
-    private async void RunBtn_Click(object sender, RoutedEventArgs e)
-    {
-        RunBtn.IsEnabled = false;
-        Progress.IsActive = true;
-        OutputText.Text = "";
-        StatusText.Text = "Updating packages…";
-
-        _cts = new CancellationTokenSource();
-
-        try
+        ViewModel.PropertyChanged += (_, e) =>
         {
-            var Append = UiHelper.CreateAppendHandler(OutputText, OutputScroller, DispatcherQueue);
-
-            await ProcessRunner.RunAsync(
-                "winget.exe",
-                "upgrade --all --accept-source-agreements --accept-package-agreements",
-                Append, _cts.Token);
-
-            StatusText.Text = "Done.";
-        }
-        catch (OperationCanceledException)
-        {
-            OutputText.Text += "\n[Cancelled]";
-            StatusText.Text = "Cancelled.";
-        }
-        catch (Exception ex)
-        {
-            OutputText.Text += $"\n[Error] {ex.Message}";
-            StatusText.Text = "Error.";
-        }
-        finally
-        {
-            Progress.IsActive = false;
-            RunBtn.IsEnabled = true;
-            _cts?.Dispose();
-            _cts = null;
-        }
+            if (e.PropertyName == nameof(ViewModel.Output))
+                OutputScroller.DispatcherQueue.TryEnqueue(() =>
+                    OutputScroller.ChangeView(null, double.MaxValue, null, true));
+        };
     }
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
     {
-        _cts?.Cancel();
+        ViewModel.RunCancelCommand.Execute(null);
         if (Frame.CanGoBack) Frame.GoBack();
     }
 }

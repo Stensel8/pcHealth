@@ -1,27 +1,21 @@
+using NLog;
 using System.Diagnostics;
 
-namespace pcHealth;
+namespace pcHealth.Services;
 
-/// <summary>
-/// Launches CLI tools and system applications from the GUI.
-/// Because the app runs as Administrator, spawned processes inherit elevation.
-/// </summary>
-internal static class CliRunner
+internal sealed class CliRunner : ICliRunner
 {
-    private static string? _toolsDir;
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-    // Both 32-bit and 64-bit uninstall hives must be searched on 64-bit Windows.
+    private string? _toolsDir;
+
     private static readonly string[] UninstallPaths =
     {
         @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
         @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
     };
 
-    /// <summary>
-    /// Locates the CLI/tools directory by walking up from the executable
-    /// location. Works from bin/Debug|Release output and any ancestor folder.
-    /// </summary>
-    private static string GetToolsDir()
+    private string GetToolsDir()
     {
         if (_toolsDir is not null) return _toolsDir;
 
@@ -39,19 +33,14 @@ internal static class CliRunner
             "Make sure the app is run from within the pcHealth repository.");
     }
 
-    /// <summary>Runs a PowerShell 7 script in a new visible terminal window.
-    /// The window pauses after the script finishes so the user can read the output.</summary>
-    public static void RunScript(string scriptFileName)
+    public void RunScript(string scriptFileName)
     {
-        // Resolve and verify the path stays inside the trusted tools directory
-        // to prevent directory-traversal via a crafted scriptFileName.
         var toolsDir = Path.GetFullPath(GetToolsDir());
         var path = Path.GetFullPath(Path.Combine(toolsDir, scriptFileName));
         if (!path.StartsWith(toolsDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
             && !path.Equals(toolsDir, StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException("Script path escapes the tools directory.", nameof(scriptFileName));
 
-        // Escape single quotes so paths like C:\Users\O'Brien\... don't break PS syntax.
         var escaped = path.Replace("'", "''");
         var cmd = $"& '{escaped}'; Write-Host ''; Read-Host 'Press Enter to close'";
         var psi = new ProcessStartInfo { FileName = "pwsh.exe", UseShellExecute = true };
@@ -63,16 +52,10 @@ internal static class CliRunner
         Start(psi);
     }
 
-    /// <summary>Opens a URI (ms-settings:, https://, etc.) via the Windows shell.</summary>
-    public static void OpenUri(string uri) =>
+    public void OpenUri(string uri) =>
         Start(new ProcessStartInfo { FileName = uri, UseShellExecute = true });
 
-    /// <summary>
-    /// Launches an installed application. Resolves the full exe path via
-    /// Windows App Paths or the Uninstall registry InstallLocation so the
-    /// launch works even when the exe is not on PATH.
-    /// </summary>
-    public static void OpenApp(string exeName, string registryName = "")
+    public void OpenApp(string exeName, string registryName = "")
     {
         var path = GetAppPathsExe(exeName)
             ?? (!string.IsNullOrEmpty(registryName) ? GetInstallLocationExe(registryName, exeName) : null)
@@ -80,7 +63,7 @@ internal static class CliRunner
         Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
     }
 
-    private static string? GetAppPathsExe(string exeName)
+    private string? GetAppPathsExe(string exeName)
     {
         try
         {
@@ -90,17 +73,17 @@ internal static class CliRunner
         }
         catch (UnauthorizedAccessException ex)
         {
-            Debug.WriteLine($"[CliRunner] App Paths registry access denied for {exeName}: {ex.Message}");
+            Log.Debug(ex, "App Paths registry access denied for {ExeName}", exeName);
             return null;
         }
         catch (System.Security.SecurityException ex)
         {
-            Debug.WriteLine($"[CliRunner] App Paths registry security error for {exeName}: {ex.Message}");
+            Log.Debug(ex, "App Paths registry security error for {ExeName}", exeName);
             return null;
         }
     }
 
-    private static string? GetInstallLocationExe(string registryName, string exeName)
+    private string? GetInstallLocationExe(string registryName, string exeName)
     {
         try
         {
@@ -133,23 +116,17 @@ internal static class CliRunner
         }
         catch (UnauthorizedAccessException ex)
         {
-            Debug.WriteLine($"[CliRunner] Uninstall registry access denied searching for {registryName}: {ex.Message}");
+            Log.Debug(ex, "Uninstall registry access denied searching for {RegistryName}", registryName);
         }
         catch (System.Security.SecurityException ex)
         {
-            Debug.WriteLine($"[CliRunner] Uninstall registry security error searching for {registryName}: {ex.Message}");
+            Log.Debug(ex, "Uninstall registry security error searching for {RegistryName}", registryName);
         }
         return null;
     }
 
-    /// <summary>
-    /// Runs a winget command in a new PowerShell 7 window and pauses after
-    /// completion so the user can read the output before closing.
-    /// </summary>
-    public static Process RunWinget(string wingetArguments)
+    public Process RunWinget(string wingetArguments)
     {
-        // Reject PowerShell/shell metacharacters to prevent command injection.
-        // winget IDs and flags consist only of alphanumerics, dots, dashes, and spaces.
         if (wingetArguments.IndexOfAny([';', '|', '&', '`', '$', '"', '\n', '\r', '<', '>']) >= 0)
             throw new ArgumentException("Invalid characters in winget arguments.", nameof(wingetArguments));
 
@@ -161,19 +138,14 @@ internal static class CliRunner
         return Start(psi);
     }
 
-    /// <summary>
-    /// Checks whether a program is installed by searching the Windows Uninstall
-    /// registry keys for a DisplayName that contains <paramref name="registryName"/>.
-    /// This is faster and more reliable than invoking winget as a subprocess.
-    /// </summary>
-    public static bool IsInstalled(string registryName)
+    public bool IsInstalled(string registryName)
     {
         if (string.IsNullOrEmpty(registryName)) return false;
         return SearchUninstallKey(Microsoft.Win32.Registry.LocalMachine, registryName)
             || SearchUninstallKey(Microsoft.Win32.Registry.CurrentUser, registryName);
     }
 
-    private static bool SearchUninstallKey(Microsoft.Win32.RegistryKey hive, string name)
+    private bool SearchUninstallKey(Microsoft.Win32.RegistryKey hive, string name)
     {
         try
         {
@@ -193,23 +165,18 @@ internal static class CliRunner
         }
         catch (UnauthorizedAccessException ex)
         {
-            Debug.WriteLine($"[CliRunner] Uninstall registry access denied checking {name}: {ex.Message}");
+            Log.Debug(ex, "Uninstall registry access denied checking {Name}", name);
         }
         catch (System.Security.SecurityException ex)
         {
-            Debug.WriteLine($"[CliRunner] Uninstall registry security error checking {name}: {ex.Message}");
+            Log.Debug(ex, "Uninstall registry security error checking {Name}", name);
         }
         return false;
     }
 
-    // Process.Start with UseShellExecute=true can return null when the OS reuses
-    // an existing process window instead of spawning a new one. Throwing here means
-    // the caller's catch block can surface a meaningful error rather than silently
-    // doing nothing.
     private static Process Start(ProcessStartInfo info)
     {
         return Process.Start(info)
-            ?? throw new InvalidOperationException(
-                $"Failed to start process: {info.FileName}");
+            ?? throw new InvalidOperationException($"Failed to start process: {info.FileName}");
     }
 }

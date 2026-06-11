@@ -22,13 +22,13 @@
         </StackPanel>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Padding="28,0,28,12" Spacing="10">
-            <Button x:Name="StartBtn" Content="Start"
+            <Button Content="Start"
                     Style="{StaticResource AccentButtonStyle}"
-                    Click="StartBtn_Click"/>
-            <Button x:Name="StopBtn" Content="Stop"
-                    IsEnabled="False"
-                    Click="StopBtn_Click"/>
-            <TextBlock x:Name="StatsText" VerticalAlignment="Center"
+                    Command="{x:Bind ViewModel.StartCommand}"/>
+            <Button Content="Stop"
+                    Command="{x:Bind ViewModel.StopCommand}"/>
+            <TextBlock Text="{x:Bind ViewModel.Stats, Mode=OneWay}"
+                       VerticalAlignment="Center"
                        Style="{StaticResource CaptionTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </StackPanel>
@@ -37,11 +37,10 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1" CornerRadius="8" Margin="28,0,28,8">
             <ScrollViewer x:Name="OutputScroller" VerticalScrollBarVisibility="Auto" Padding="16">
-                <TextBlock x:Name="OutputText"
+                <TextBlock Text="{x:Bind ViewModel.Output, Mode=OneWay}"
                            FontFamily="Cascadia Code, Consolas, Courier New"
                            FontSize="12" IsTextSelectionEnabled="True"
                            TextWrapping="Wrap"
-                           Text="Press Start to begin continuous ping."
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </ScrollViewer>
         </Border>

@@ -1,66 +1,25 @@
-using pcHealth.Helpers;
+using pcHealth.ViewModels;
 
 namespace pcHealth.Pages;
 
 public sealed partial class WingetRepairPage : Page
 {
-    private CancellationTokenSource? _cts;
+    public WingetRepairViewModel ViewModel { get; } = App.Services.GetRequiredService<WingetRepairViewModel>();
 
     public WingetRepairPage()
     {
         InitializeComponent();
-    }
-
-    private async void RunBtn_Click(object sender, RoutedEventArgs e)
-    {
-        RunBtn.IsEnabled = false;
-        Progress.IsActive = true;
-        OutputText.Text = "";
-        StatusText.Text = "Repairing winget…";
-
-        _cts = new CancellationTokenSource();
-
-        try
+        ViewModel.PropertyChanged += (_, e) =>
         {
-            var Append = UiHelper.CreateAppendHandler(OutputText, OutputScroller, DispatcherQueue);
-
-            Append("[>>] Installing winget-install script from PSGallery…");
-            await ProcessRunner.RunAsync(
-                "pwsh.exe",
-                "-NoProfile -ExecutionPolicy Bypass -Command \"Install-Script -Name winget-install -Force -Scope CurrentUser\"",
-                Append, _cts.Token);
-
-            Append("\n[>>] Running winget-install…");
-            await ProcessRunner.RunAsync(
-                "pwsh.exe",
-                "-NoProfile -ExecutionPolicy Bypass -Command \"winget-install -Force\"",
-                Append, _cts.Token);
-
-            Append("\n[OK] Winget repair complete.");
-            StatusText.Text = "Done.";
-        }
-        catch (OperationCanceledException)
-        {
-            OutputText.Text += "\n[Cancelled]";
-            StatusText.Text = "Cancelled.";
-        }
-        catch (Exception ex)
-        {
-            OutputText.Text += $"\n[Error] {ex.Message}";
-            StatusText.Text = "Error.";
-        }
-        finally
-        {
-            Progress.IsActive = false;
-            RunBtn.IsEnabled = true;
-            _cts?.Dispose();
-            _cts = null;
-        }
+            if (e.PropertyName == nameof(ViewModel.Output))
+                OutputScroller.DispatcherQueue.TryEnqueue(() =>
+                    OutputScroller.ChangeView(null, double.MaxValue, null, true));
+        };
     }
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
     {
-        _cts?.Cancel();
+        ViewModel.RunCancelCommand.Execute(null);
         if (Frame.CanGoBack) Frame.GoBack();
     }
 }

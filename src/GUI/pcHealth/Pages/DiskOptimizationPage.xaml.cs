@@ -1,14 +1,12 @@
+using pcHealth.ViewModels;
+
 namespace pcHealth.Pages;
 
 public sealed partial class DiskOptimizationPage : Page
 {
-    public DiskOptimizationPage()
-    {
-        InitializeComponent();
-    }
+    public DiskOptimizationViewModel ViewModel { get; } = App.Services.GetRequiredService<DiskOptimizationViewModel>();
 
-    private void OpenBtn_Click(object sender, RoutedEventArgs e) =>
-        CliRunner.OpenApp("dfrgui.exe");
+    public DiskOptimizationPage() => InitializeComponent();
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
     {

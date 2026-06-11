@@ -52,10 +52,10 @@
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
-                            <Button x:Name="RestartBtn" Content="Restart Audio Services"
+                            <Button Content="Restart Audio Services"
                                     Style="{StaticResource AccentButtonStyle}"
-                                    Click="RestartBtn_Click"/>
-                            <ProgressRing x:Name="Progress" IsActive="False"
+                                    Command="{x:Bind ViewModel.RestartCommand}"/>
+                            <ProgressRing IsActive="{x:Bind ViewModel.IsRunning, Mode=OneWay}"
                                           Width="22" Height="22" VerticalAlignment="Center"/>
                         </StackPanel>
 

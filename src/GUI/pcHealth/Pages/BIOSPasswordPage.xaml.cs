@@ -1,17 +1,12 @@
+using pcHealth.ViewModels;
+
 namespace pcHealth.Pages;
 
 public sealed partial class BIOSPasswordPage : Page
 {
-    public BIOSPasswordPage()
-    {
-        InitializeComponent();
-    }
+    public BIOSPasswordViewModel ViewModel { get; } = App.Services.GetRequiredService<BIOSPasswordViewModel>();
 
-    private void BiosPwBtn_Click(object sender, RoutedEventArgs e) =>
-        CliRunner.OpenUri("https://bios-pw.org");
-
-    private void RepoBtn_Click(object sender, RoutedEventArgs e) =>
-        CliRunner.OpenUri("https://github.com/bacher09/pwgen-for-bios");
+    public BIOSPasswordPage() => InitializeComponent();
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
     {

@@ -1,126 +1,68 @@
-using System.Net.NetworkInformation;
 using pcHealth.Helpers;
+using pcHealth.ViewModels;
 
 namespace pcHealth.Pages;
 
 public sealed partial class NetworkPingPage : Page
 {
-    private const string Target = "8.8.8.8";
-    private const int Count = 4;
-
-    private CancellationTokenSource? _cts;
+    public NetworkPingViewModel ViewModel { get; } = App.Services.GetRequiredService<NetworkPingViewModel>();
 
     public NetworkPingPage()
     {
         InitializeComponent();
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    private async void RunBtn_Click(object sender, RoutedEventArgs e)
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        RunBtn.IsEnabled = false;
-        Progress.IsActive = true;
+        if (e.PropertyName == nameof(ViewModel.HasResults) && ViewModel.HasResults)
+            PopulateResults();
+        else if (e.PropertyName == nameof(ViewModel.IsRunning) && ViewModel.IsRunning)
+            ClearResults();
+    }
+
+    private void ClearResults()
+    {
         PingResultRows.Children.Clear();
         SummaryRows.Children.Clear();
         ResultsCard.Visibility = Visibility.Collapsed;
         SummaryCard.Visibility = Visibility.Collapsed;
+    }
 
-        _cts = new CancellationTokenSource();
+    private void PopulateResults()
+    {
+        PingResultRows.Children.Clear();
+        SummaryRows.Children.Clear();
 
-        try
+        foreach (var r in ViewModel.Results)
         {
-            // Run pings on a background thread so the UI stays responsive.
-            // The cancellation token is checked at the start of each iteration so the loop
-            // stops promptly when the user navigates away rather than waiting for all pings.
-            var results = await Task.Run(() =>
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+            row.Children.Add(new FontIcon
             {
-                var list = new List<(bool Success, string Address, long Latency, string Status)>();
-                using var ping = new Ping();
-                for (int i = 0; i < Count; i++)
-                {
-                    _cts.Token.ThrowIfCancellationRequested();
-                    try
-                    {
-                        var reply = ping.Send(Target, 4000);
-                        list.Add(reply.Status == IPStatus.Success
-                            ? (true, reply.Address.ToString(), reply.RoundtripTime, "Reply")
-                            : (false, Target, 0, reply.Status.ToString()));
-                    }
-                    catch (OperationCanceledException) { throw; }
-                    catch (Exception ex)
-                    {
-                        list.Add((false, Target, 0, ex.Message));
-                    }
-                }
-                return list;
-            }, _cts.Token);
-
-            ResultsCard.Visibility = Visibility.Visible;
-
-            var successLatencies = new List<long>();
-            for (int i = 0; i < results.Count; i++)
+                Glyph = r.Success ? "" : "",
+                FontSize = 14,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = r.Success
+                    ? new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x0F, 0x9D, 0x58))
+                    : (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"],
+            });
+            row.Children.Add(new TextBlock
             {
-                var (success, address, latency, status) = results[i];
-                var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
-
-                var statusIcon = new FontIcon
-                {
-                    Glyph = success ? "" : "",
-                    FontSize = 14,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Foreground = success
-                        ? new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x0F, 0x9D, 0x58))
-                        : (Brush)Application.Current.Resources["SystemFillColorCriticalBrush"],
-                };
-
-                var text = new TextBlock
-                {
-                    Text = success
-                        ? $"Reply from {address}: {latency} ms"
-                        : $"Timeout / {status}",
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-
-                row.Children.Add(statusIcon);
-                row.Children.Add(text);
-                PingResultRows.Children.Add(row);
-
-                if (success) successLatencies.Add(latency);
-            }
-
-            SummaryCard.Visibility = Visibility.Visible;
-            UiHelper.AddLabelValueRow(SummaryRows, "Packets sent", $"{Count}");
-            UiHelper.AddLabelValueRow(SummaryRows, "Packets received", $"{successLatencies.Count}");
-            UiHelper.AddLabelValueRow(SummaryRows, "Packet loss", $"{(Count - successLatencies.Count) * 100 / Count}%");
-
-            if (successLatencies.Count > 0)
-            {
-                UiHelper.AddLabelValueRow(SummaryRows, "Min latency", $"{successLatencies.Min()} ms");
-                UiHelper.AddLabelValueRow(SummaryRows, "Max latency", $"{successLatencies.Max()} ms");
-                UiHelper.AddLabelValueRow(SummaryRows, "Average latency", $"{successLatencies.Average():0.0} ms");
-            }
+                Text = r.Success ? $"Reply from {r.Address}: {r.Latency} ms" : $"Timeout / {r.Status}",
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            PingResultRows.Children.Add(row);
         }
-        catch (OperationCanceledException)
-        {
-            // User navigated away — discard results silently.
-        }
-        catch (Exception ex)
-        {
-            var errText = new TextBlock { Text = $"Error: {ex.Message}" };
-            PingResultRows.Children.Add(errText);
-            ResultsCard.Visibility = Visibility.Visible;
-        }
-        finally
-        {
-            Progress.IsActive = false;
-            RunBtn.IsEnabled = true;
-            _cts?.Dispose();
-            _cts = null;
-        }
+        ResultsCard.Visibility = Visibility.Visible;
+
+        foreach (var (label, value) in ViewModel.Summary)
+            UiHelper.AddLabelValueRow(SummaryRows, label, value);
+        SummaryCard.Visibility = Visibility.Visible;
     }
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
     {
-        _cts?.Cancel();
+        ViewModel.RunCancelCommand.Execute(null);
         if (Frame.CanGoBack) Frame.GoBack();
     }
 }

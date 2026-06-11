@@ -1,48 +1,23 @@
 using pcHealth.Helpers;
+using pcHealth.Services;
+using pcHealth.ViewModels;
 
 namespace pcHealth.Pages;
 
 public sealed partial class ProgramsPage : Page
 {
-    // All 7 program entries that mirror the CLI Programs Menu (options 1-7).
-    // Options 8 (Tools), 9 (Main Menu), and 10 (Exit) are handled by
-    // the NavigationView and are therefore not included here.
-    //
-    // The backing array is static (allocated once). The instance property
-    // is required because x:Bind only works with instance members.
-    private static readonly ProgramItem[] _programs = new[]
-    {
-        // \u2500\u2500 Hardware \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-        new ProgramItem { Name = "HWiNFO64",               Glyph = "\uE950", Note = "Hardware information and real-time monitoring", WingetId = "REALix.HWiNFO",                    ExeName = "HWiNFO64.exe",    RegistryName = "HWiNFO",          Category = "Hardware"    },
-        new ProgramItem { Name = "HWMonitor",              Glyph = "\uE950", Note = "Voltage, temperature, and fan speed monitor",   WingetId = "CPUID.HWMonitor",                  ExeName = "HWMonitor.exe",   RegistryName = "HWMonitor",       Category = "Hardware"    },
-        new ProgramItem { Name = "Prime95",                Glyph = "\uE9E9", Note = "CPU stress test and stability checker",          WingetId = "mersenne.prime95",                 ExeName = "prime95.exe",     RegistryName = "Prime95",         Category = "Hardware"    },
-        // \u2500\u2500 Disk \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-        new ProgramItem { Name = "CrystalDiskInfo",        Glyph = "\uEDA2", Note = "HDD/SSD S.M.A.R.T. health viewer",              WingetId = "CrystalDewWorld.CrystalDiskInfo",  ExeName = "DiskInfo64.exe",  RegistryName = "CrystalDiskInfo", Category = "Disk"        },
-        new ProgramItem { Name = "CrystalDiskMark",        Glyph = "\uEDA2", Note = "Disk read/write benchmark tool",                 WingetId = "CrystalDewWorld.CrystalDiskMark", ExeName = "DiskMark64.exe",  RegistryName = "CrystalDiskMark", Category = "Disk"        },
-        // \u2500\u2500 Security \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-        new ProgramItem { Name = "Malwarebytes AdwCleaner",Glyph = "\uE9F5", Note = "Removes adware, PUPs, and browser hijackers",   WingetId = "Malwarebytes.AdwCleaner",          ExeName = "AdwCleaner.exe",  RegistryName = "AdwCleaner",      Category = "Security"    },
-        // \u2500\u2500 Utilities \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-        new ProgramItem { Name = "Windows PowerToys",      Glyph = "\uE90F", Note = "Power-user utilities by Microsoft",              WingetId = "Microsoft.PowerToys",              ExeName = "PowerToys.exe",   RegistryName = "PowerToys",       Category = "Utilities"   },
-    };
+    public ProgramsViewModel ViewModel { get; } = App.Services.GetRequiredService<ProgramsViewModel>();
 
-    public System.Collections.ObjectModel.ObservableCollection<pcHealth.Models.ItemGroup<ProgramItem>> GroupedPrograms { get; } = new();
+    // AutoReinstall is a user preference checked at install-time; read it directly from settings.
+    private readonly IAppSettings _settings = App.Services.GetRequiredService<IAppSettings>();
 
     public ProgramsPage()
     {
         InitializeComponent();
-
-        var categoryOrder = new[] { "Hardware", "Disk", "Security", "Utilities" };
-        var groups = _programs
-            .GroupBy(p => p.Category)
-            .OrderBy(g => { int i = Array.IndexOf(categoryOrder, g.Key); return i < 0 ? 999 : i; });
-
-        foreach (var g in groups)
-            GroupedPrograms.Add(new pcHealth.Models.ItemGroup<ProgramItem>(g.Key, g));
-
         var cvs = new Microsoft.UI.Xaml.Data.CollectionViewSource
         {
             IsSourceGrouped = true,
-            Source = GroupedPrograms
+            Source = ViewModel.GroupedPrograms,
         };
         ProgramsList.ItemsSource = cvs.View;
     }
@@ -50,33 +25,7 @@ public sealed partial class ProgramsPage : Page
     protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        _ = CheckInstalledAsync(DispatcherQueue);
-    }
-
-    private static async Task CheckInstalledAsync(Microsoft.UI.Dispatching.DispatcherQueue dispatcher)
-    {
-        // Registry checks run in parallel on background threads.
-        // Results are marshalled back to the UI thread via DispatcherQueue
-        // because PropertyChanged must fire on the UI thread in WinUI 3.
-        var tasks = _programs
-            .Where(p => !string.IsNullOrEmpty(p.RegistryName))
-            .Select(p => Task.Run(() =>
-            {
-                try
-                {
-                    bool installed = CliRunner.IsInstalled(p.RegistryName);
-                    dispatcher.TryEnqueue(() => p.IsInstalled = installed);
-                }
-                catch (Exception ex)
-                {
-                    // Registry check failed for this entry; leave IsInstalled = false
-                    // so the UI shows "Install" rather than crashing the whole scan.
-                    System.Diagnostics.Debug.WriteLine(
-                        $"[ProgramsPage] IsInstalled check failed for {p.Name}: {ex.Message}");
-                }
-            }));
-
-        await Task.WhenAll(tasks);
+        ViewModel.CheckInstalledCommand.Execute(null);
     }
 
     private async void InstallBtn_Click(object sender, RoutedEventArgs e)
@@ -85,24 +34,10 @@ public sealed partial class ProgramsPage : Page
 
         if (item.IsInstalled)
         {
-            if (AppSettings.GetBool("AutoReinstall", fallback: false))
+            if (_settings.GetBool("AutoReinstall", fallback: false))
             {
-                // Skip confirmation — force reinstall immediately.
-                try
-                {
-                    if (!string.IsNullOrEmpty(item.WingetId))
-                    {
-                        using var p = CliRunner.RunWinget(
-                            $"install --id {item.WingetId} --force " +
-                            "--accept-source-agreements --accept-package-agreements");
-                        await p.WaitForExitAsync();
-                        _ = CheckInstalledAsync(DispatcherQueue);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _ = DialogHelper.ShowErrorAsync(XamlRoot, "Could not launch installer", ex.Message);
-                }
+                try { await ViewModel.ForceInstallAsync(item); }
+                catch (Exception ex) { _ = DialogHelper.ShowErrorAsync(XamlRoot, "Could not launch installer", ex.Message); }
                 return;
             }
 
@@ -121,45 +56,22 @@ public sealed partial class ProgramsPage : Page
 
             try
             {
-                if (result == ContentDialogResult.Primary && !string.IsNullOrEmpty(item.ExeName))
-                {
-                    CliRunner.OpenApp(item.ExeName, item.RegistryName);
-                }
-                else if (result == ContentDialogResult.Secondary && !string.IsNullOrEmpty(item.WingetId))
-                {
-                    using var p = CliRunner.RunWinget(
-                        $"upgrade --id {item.WingetId} " +
-                        "--accept-source-agreements --accept-package-agreements");
-                    await p.WaitForExitAsync();
-                    _ = CheckInstalledAsync(DispatcherQueue);
-                }
+                if (result == ContentDialogResult.Primary)
+                    await ViewModel.InstallOrOpenAsync(item);
+                else if (result == ContentDialogResult.Secondary)
+                    await ViewModel.UpdateAsync(item);
             }
             catch (Exception ex)
             {
-                _ = DialogHelper.ShowErrorAsync(XamlRoot, result == ContentDialogResult.Primary ? "Could not open program" : "Could not launch updater", ex.Message);
+                _ = DialogHelper.ShowErrorAsync(
+                    XamlRoot,
+                    result == ContentDialogResult.Primary ? "Could not open program" : "Could not launch updater",
+                    ex.Message);
             }
             return;
         }
 
-        try
-        {
-            if (!string.IsNullOrEmpty(item.WingetId))
-            {
-                using var p = CliRunner.RunWinget(
-                    $"install --id {item.WingetId} " +
-                    "--accept-source-agreements --accept-package-agreements");
-                await p.WaitForExitAsync();
-                _ = CheckInstalledAsync(DispatcherQueue);
-            }
-            else if (!string.IsNullOrEmpty(item.BrowserUrl))
-            {
-                CliRunner.OpenUri(item.BrowserUrl);
-            }
-        }
-        catch (Exception ex)
-        {
-            _ = DialogHelper.ShowErrorAsync(XamlRoot, "Could not launch installer", ex.Message);
-        }
+        try { await ViewModel.InstallOrOpenAsync(item); }
+        catch (Exception ex) { _ = DialogHelper.ShowErrorAsync(XamlRoot, "Could not launch installer", ex.Message); }
     }
-
 }
