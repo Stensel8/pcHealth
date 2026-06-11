@@ -1,41 +1,40 @@
-using System.Diagnostics;
+using NLog;
 using System.Text.Json;
 
-namespace pcHealth;
+namespace pcHealth.Services;
 
-// File-based settings for unpackaged WinUI 3 apps.
-// ApplicationData.Current is only available in packaged (MSIX) apps.
-internal static class AppSettings
+internal sealed class AppSettings : IAppSettings
 {
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
     private static readonly string FilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "pcHealth", "settings.json");
 
-    private static Dictionary<string, string> _cache = new();
-    private static bool _loaded;
+    private Dictionary<string, string> _cache = new();
+    private bool _loaded;
 
-    public static string Get(string key, string fallback = "")
+    public string Get(string key, string fallback = "")
     {
         EnsureLoaded();
         return _cache.TryGetValue(key, out var v) ? v : fallback;
     }
 
-    public static bool GetBool(string key, bool fallback = true)
+    public bool GetBool(string key, bool fallback = true)
     {
         var raw = Get(key);
         if (raw == "") return fallback;
-        // Accept "true"/"True"/"TRUE" and "1" as true; everything else is false.
         return raw.Equals("true", StringComparison.OrdinalIgnoreCase) || raw == "1";
     }
 
-    public static void Set(string key, string value)
+    public void Set(string key, string value)
     {
         EnsureLoaded();
         _cache[key] = value;
         Persist();
     }
 
-    private static void EnsureLoaded()
+    private void EnsureLoaded()
     {
         if (_loaded) return;
         _loaded = true;
@@ -47,15 +46,15 @@ internal static class AppSettings
         }
         catch (IOException ex)
         {
-            Debug.WriteLine($"[AppSettings] Load failed: {ex.Message}");
+            Log.Warn(ex, "Settings load failed");
         }
         catch (JsonException ex)
         {
-            Debug.WriteLine($"[AppSettings] JSON corrupt, using defaults: {ex.Message}");
+            Log.Warn(ex, "Settings JSON corrupt, using defaults");
         }
     }
 
-    private static void Persist()
+    private void Persist()
     {
         try
         {
@@ -65,7 +64,7 @@ internal static class AppSettings
         }
         catch (IOException ex)
         {
-            Debug.WriteLine($"[AppSettings] Save failed: {ex.Message}");
+            Log.Error(ex, "Settings save failed");
         }
     }
 }

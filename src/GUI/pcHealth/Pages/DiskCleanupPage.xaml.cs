@@ -1,14 +1,12 @@
+using pcHealth.ViewModels;
+
 namespace pcHealth.Pages;
 
 public sealed partial class DiskCleanupPage : Page
 {
-    public DiskCleanupPage()
-    {
-        InitializeComponent();
-    }
+    public DiskCleanupViewModel ViewModel { get; } = App.Services.GetRequiredService<DiskCleanupViewModel>();
 
-    private void OpenBtn_Click(object sender, RoutedEventArgs e) =>
-        CliRunner.OpenApp("cleanmgr.exe");
+    public DiskCleanupPage() => InitializeComponent();
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
     {

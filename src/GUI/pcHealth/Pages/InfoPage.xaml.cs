@@ -1,17 +1,16 @@
-using System.Reflection;
 using Microsoft.UI.Xaml.Media.Imaging;
+using pcHealth.ViewModels;
 
 namespace pcHealth.Pages;
 
 public sealed partial class InfoPage : Page
 {
+    public InfoViewModel ViewModel { get; } = App.Services.GetRequiredService<InfoViewModel>();
+
     public InfoPage()
     {
         InitializeComponent();
-
-        // Version is baked into the assembly at build time from the repo-root VERSION file.
-        var v = Assembly.GetExecutingAssembly().GetName().Version;
-        VersionText.Text = v is not null ? $"Version {v.Major}.{v.Minor}.{v.Build}" : "Version unknown";
+        VersionText.Text = ViewModel.Version;
 
         // WinUI 3 SvgImageSource doesn't support SVG <mask>, so use the pre-rendered PNG.
         var pngPath = Path.Combine(AppContext.BaseDirectory, "Assets", "pcHealth.png");

@@ -1,19 +1,10 @@
 using System.Diagnostics;
 
-namespace pcHealth;
+namespace pcHealth.Services;
 
-/// <summary>
-/// Runs a process and streams stdout/stderr lines to a callback.
-/// Used by tool pages that display process output in-app.
-/// </summary>
-internal static class ProcessRunner
+internal sealed class ProcessRunner : IProcessRunner
 {
-    /// <param name="timeout">
-    /// Optional wall-clock timeout. Pass <see cref="TimeSpan.Zero"/> (the default) for no timeout.
-    /// Operations like SFC, DISM /RestoreHealth, and winget upgrade can exceed 30+ minutes on
-    /// slow or unhealthy machines, so callers should opt in to a timeout only when appropriate.
-    /// </param>
-    public static async Task RunAsync(
+    public async Task RunAsync(
         string fileName,
         string arguments,
         Action<string> onLine,

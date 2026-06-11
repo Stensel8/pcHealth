@@ -27,10 +27,10 @@
                  Message="Incorrect use can render the system unbootable. Only proceed if you understand what you are doing. Best run from WinRE."/>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" Padding="28,0,28,12" Spacing="10">
-            <Button x:Name="RunBtn" Content="Repair Boot Record"
-                    Click="RunBtn_Click"/>
-            <ProgressRing x:Name="Progress" IsActive="False" Width="22" Height="22" VerticalAlignment="Center"/>
-            <TextBlock x:Name="StatusText" VerticalAlignment="Center"
+            <Button Content="Repair Boot Record" Click="RunBtn_Click"/>
+            <ProgressRing IsActive="{x:Bind ViewModel.IsRunning, Mode=OneWay}" Width="22" Height="22" VerticalAlignment="Center"/>
+            <TextBlock Text="{x:Bind ViewModel.Status, Mode=OneWay}"
+                       VerticalAlignment="Center"
                        Style="{StaticResource CaptionTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </StackPanel>
@@ -39,11 +39,10 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1" CornerRadius="8" Margin="28,0,28,8">
             <ScrollViewer x:Name="OutputScroller" VerticalScrollBarVisibility="Auto" Padding="16">
-                <TextBlock x:Name="OutputText"
+                <TextBlock Text="{x:Bind ViewModel.Output, Mode=OneWay}"
                            FontFamily="Cascadia Code, Consolas, Courier New"
                            FontSize="12" IsTextSelectionEnabled="True"
                            TextWrapping="Wrap"
-                           Text="Output will appear here."
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </ScrollViewer>
         </Border>

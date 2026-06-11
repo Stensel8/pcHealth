@@ -1,81 +1,45 @@
-using pcHealth.Helpers;
+using pcHealth.ViewModels;
 
 namespace pcHealth.Pages;
 
 public sealed partial class BootRepairPage : Page
 {
-    private CancellationTokenSource? _cts;
+    public BootRepairViewModel ViewModel { get; } = App.Services.GetRequiredService<BootRepairViewModel>();
 
     public BootRepairPage()
     {
         InitializeComponent();
+        ViewModel.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(ViewModel.Output))
+                OutputScroller.DispatcherQueue.TryEnqueue(() =>
+                    OutputScroller.ChangeView(null, double.MaxValue, null, true));
+        };
     }
 
+    // ContentDialog stays here: it requires XamlRoot which is a UI concern.
     private async void RunBtn_Click(object sender, RoutedEventArgs e)
     {
+        if (!ViewModel.RunCommand.CanExecute(null)) return;
+
         var confirm = new ContentDialog
         {
             Title = "Repair Boot Record",
             Content = "This will run bootrec /fixmbr, /fixboot, /scanos and /rebuildbcd.\n\n" +
-                      "This modifies boot-critical files. Incorrect use can make the system unbootable.\n\n" +
-                      "Type 'CONFIRM' to proceed.",
+                      "This modifies boot-critical files. Incorrect use can make the system unbootable.",
             PrimaryButtonText = "Proceed",
             CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
             XamlRoot = XamlRoot,
         };
-
         if (await confirm.ShowAsync() != ContentDialogResult.Primary) return;
 
-        RunBtn.IsEnabled = false;
-        Progress.IsActive = true;
-        OutputText.Text = "";
-        StatusText.Text = "Running boot repair…";
-
-        _cts = new CancellationTokenSource();
-
-        try
-        {
-            var Append = UiHelper.CreateAppendHandler(OutputText, OutputScroller, DispatcherQueue);
-
-            var bootrec = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "bootrec.exe");
-
-            Append("[>>] bootrec /fixmbr");
-            await ProcessRunner.RunAsync(bootrec, "/fixmbr", Append, _cts.Token);
-
-            Append("\n[>>] bootrec /fixboot");
-            await ProcessRunner.RunAsync(bootrec, "/fixboot", Append, _cts.Token);
-
-            Append("\n[>>] bootrec /scanos");
-            await ProcessRunner.RunAsync(bootrec, "/scanos", Append, _cts.Token);
-
-            Append("\n[>>] bootrec /rebuildbcd");
-            await ProcessRunner.RunAsync(bootrec, "/rebuildbcd", Append, _cts.Token);
-
-            Append("\n[OK] Boot repair complete. Reboot the system to verify.");
-            StatusText.Text = "Done — reboot required.";
-        }
-        catch (OperationCanceledException)
-        {
-            OutputText.Text += "\n[Cancelled]";
-            StatusText.Text = "Cancelled.";
-        }
-        catch (Exception ex)
-        {
-            OutputText.Text += $"\n[Error] {ex.Message}";
-            StatusText.Text = "Error.";
-        }
-        finally
-        {
-            Progress.IsActive = false;
-            RunBtn.IsEnabled = true;
-            _cts?.Dispose();
-            _cts = null;
-        }
+        await ViewModel.RunCommand.ExecuteAsync(null);
     }
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
     {
-        _cts?.Cancel();
+        ViewModel.RunCancelCommand.Execute(null);
         if (Frame.CanGoBack) Frame.GoBack();
     }
 }

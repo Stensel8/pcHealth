@@ -14,7 +14,7 @@ internal static class UiHelper
     /// <summary>
     /// Returns a thread-safe "append line" callback for a scrolling output TextBlock.
     /// Each call appends one line and scrolls the containing ScrollViewer to the bottom.
-    /// Safe to call from any thread — dispatches to the UI thread internally.
+    /// Safe to call from any thread. Dispatches to the UI thread internally.
     /// </summary>
     internal static Action<string> CreateAppendHandler(
         TextBlock output, ScrollViewer scroller, DispatcherQueue dispatcher)

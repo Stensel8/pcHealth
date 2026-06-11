@@ -1,48 +1,50 @@
+using NLog;
 using pcHealth.Pages;
+using pcHealth.Services;
 
 namespace pcHealth;
 
-
 public sealed partial class MainWindow : Window
 {
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
+    private readonly IAppSettings _settings;
+    private readonly IUpdateChecker _updateChecker;
+    private readonly ICliRunner _cliRunner;
+
     public MainWindow()
     {
+        _settings = App.Services.GetRequiredService<IAppSettings>();
+        _updateChecker = App.Services.GetRequiredService<IUpdateChecker>();
+        _cliRunner = App.Services.GetRequiredService<ICliRunner>();
+
         InitializeComponent();
 
-        // MicaBackdrop requires Windows 11. Fall back gracefully on older builds
-        // so the app still runs without crashing on unsupported hardware.
         try
         {
             SystemBackdrop = new MicaBackdrop();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[MainWindow] Mica backdrop unavailable: {ex.Message}");
+            Log.Debug(ex, "Mica backdrop unavailable");
         }
 
         AppWindow.Resize(new SizeInt32(1100, 720));
-
-        // Hand the title bar over to WinUI 3 so it automatically follows the
-        // system dark/light theme and blends with the Mica backdrop.
         ExtendsContentIntoTitleBar = true;
 
-        // Set the window icon (AppWindow.SetIcon = title bar corner icon;
-        // ApplicationIcon in csproj covers taskbar / File Explorer).
         var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "pcHealth.ico");
         if (File.Exists(iconPath))
             AppWindow.SetIcon(iconPath);
 
-        // Keep the NavigationView back button in sync with the frame's back stack.
         ContentFrame.Navigated += ContentFrame_Navigated;
     }
 
     private void NavView_Loaded(object sender, RoutedEventArgs e)
     {
-        // Open the Health page on first launch.
         if (NavView.MenuItems.Count > 0)
             NavView.SelectedItem = NavView.MenuItems[0];
 
-        if (AppSettings.GetBool("AutoCheckVersion", fallback: true))
+        if (_settings.GetBool("AutoCheckVersion", fallback: true))
             _ = CheckForUpdateAsync();
     }
 
@@ -50,13 +52,13 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            var tag = await UpdateChecker.GetLatestTagAsync();
-            if (tag is null || !UpdateChecker.IsNewer(tag)) return;
+            var tag = await _updateChecker.GetLatestTagAsync();
+            if (tag is null || !_updateChecker.IsNewer(tag)) return;
 
             var dialog = new ContentDialog
             {
                 Title = "Update available",
-                Content = $"Version {tag.TrimStart('v', 'V')} is available. You are on {UpdateChecker.GetCurrentVersion()}.",
+                Content = $"Version {tag.TrimStart('v', 'V')} is available. You are on {_updateChecker.GetCurrentVersion()}.",
                 PrimaryButtonText = "Open releases page",
                 CloseButtonText = "Later",
                 DefaultButton = ContentDialogButton.Primary,
@@ -64,12 +66,11 @@ public sealed partial class MainWindow : Window
             };
 
             if (await dialog.ShowAsync() == ContentDialogResult.Primary)
-                CliRunner.OpenUri("https://github.com/REALSDEALS/pcHealth/releases/latest");
+                _cliRunner.OpenUri("https://github.com/REALSDEALS/pcHealth/releases/latest");
         }
         catch (Exception ex)
         {
-            // Update check is best-effort; network errors or timeouts are expected on some setups.
-            System.Diagnostics.Debug.WriteLine($"[MainWindow] Update check failed: {ex.Message}");
+            Log.Debug(ex, "Update check failed");
         }
     }
 
@@ -90,14 +91,11 @@ public sealed partial class MainWindow : Window
             ContentFrame.GoBack();
     }
 
-    // Update back-button visibility whenever the frame navigates.
     private void ContentFrame_Navigated(object sender, NavigationEventArgs args)
     {
         NavView.IsBackEnabled = ContentFrame.CanGoBack;
     }
 
-    // Navigate the content frame to a named destination.
-    // Called both from SelectionChanged and from pages that push sub-pages.
     internal void NavigateTo(string? tag)
     {
         Type? target = tag switch
@@ -112,6 +110,6 @@ public sealed partial class MainWindow : Window
         };
 
         if (target is not null && ContentFrame.CurrentSourcePageType != target)
-            ContentFrame.Navigate(target);
+            ContentFrame.Navigate(target, null, new DrillInNavigationTransitionInfo());
     }
 }

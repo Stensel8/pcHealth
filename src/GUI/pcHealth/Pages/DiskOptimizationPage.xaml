@@ -36,7 +36,7 @@
                                    Text="Opens the Windows 'Optimize Drives' tool (dfrgui.exe). Defragments HDDs and sends TRIM commands to SSDs to maintain performance."/>
                         <Button Content="Open Optimize Drives"
                                 Style="{StaticResource AccentButtonStyle}"
-                                Click="OpenBtn_Click"/>
+                                Command="{x:Bind ViewModel.OpenCommand}"/>
                     </StackPanel>
                 </Border>
 

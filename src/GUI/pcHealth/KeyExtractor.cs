@@ -126,7 +126,7 @@ public static class KeyExtractor
             // before decoding so it does not corrupt the base-24 result.
             const string Chars = "BCDFGHJKMPQRTVWXY2346789";
             int isWin8Plus = (keyBytes[14] >> 3) & 1;
-            keyBytes[14] &= 0xF7; // Clear bit 3 — the N-insertion flag is not part of the encoded key.
+            keyBytes[14] &= 0xF7; // Clear bit 3 - the N-insertion flag is not part of the encoded key.
 
             // Base-24 decode: treat the 15-byte array as a base-256 number and
             // convert it digit-by-digit into a 25-character base-24 string.
@@ -169,7 +169,7 @@ public static class KeyExtractor
         }
         catch (ArgumentOutOfRangeException ex)
         {
-            // DigitalProductId blob shorter than expected — can occur on unusual Windows editions.
+            // DigitalProductId blob shorter than expected - can happen on unusual Windows editions.
             Debug.WriteLine($"[KeyExtractor] DigitalProductId blob malformed: {ex.Message}");
         }
         return null;
