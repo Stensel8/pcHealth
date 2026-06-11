@@ -49,7 +49,7 @@ The GUI uses WinUI 3 on .NET. Replace legacy APIs with their modern equivalents:
 | Deprecated / Avoid | Preferred | Why |
 |---|---|---|
 | `System.Management.ManagementObjectSearcher` | `Microsoft.Management.Infrastructure` (`CimSession`, `CimInstance`) | `System.Management` uses DCOM under the hood — slow, Windows-only, and discouraged in modern .NET. The CIM/MI library uses WSMan and is the Microsoft-recommended replacement. |
-| `global using System.Management` (already in `GlobalUsings.cs`) | Migrate query by query to `CimSession.QueryInstances()` | The global using pulls in the entire legacy namespace project-wide |
+| `global using System.Management` | Do not reintroduce — the codebase is fully migrated to `CimSession.QueryInstances()` | The global using pulls in the entire legacy namespace project-wide |
 | `Process.Start()` without `CancellationToken` support | Wrap with `async`/`await` and pass a `CancellationToken` where the call can hang | Fire-and-forget `Process.Start` cannot be cancelled or awaited cleanly |
 | `catch { }` (empty catch) | `catch (Exception ex) { /* log ex */ }` | Silent swallowing hides real failures; always log or surface |
 | `catch (Exception)` (bare) | Catch specific types: `IOException`, `UnauthorizedAccessException`, `COMException`, etc. | Overly broad catches mask bugs |
