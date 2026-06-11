@@ -103,15 +103,27 @@ public partial class BatteryReportViewModel : ObservableObject
 
     private static string DecodeBatteryStatus(ushort code) => code switch
     {
-        1 => "Discharging", 2 => "On AC power", 3 => "Fully charged",
-        4 => "Low", 5 => "Critical", 6 => "Charging",
-        7 => "Charging (High)", 8 => "Charging (Low)", 9 => "Charging (Critical)",
-        11 => "Partially charged", _ => $"Unknown ({code})",
+        1 => "Discharging",
+        2 => "On AC power",
+        3 => "Fully charged",
+        4 => "Low",
+        5 => "Critical",
+        6 => "Charging",
+        7 => "Charging (High)",
+        8 => "Charging (Low)",
+        9 => "Charging (Critical)",
+        11 => "Partially charged",
+        _ => $"Unknown ({code})",
     };
 
     private static string DecodeChemistry(ushort code) => code switch
     {
-        3 => "Lead Acid", 4 => "Nickel Cadmium", 5 => "Nickel Metal Hydride",
-        6 => "Lithium-ion", 7 => "Zinc Air", 8 => "Lithium Polymer", _ => "Unknown",
+        3 => "Lead Acid",
+        4 => "Nickel Cadmium",
+        5 => "Nickel Metal Hydride",
+        6 => "Lithium-ion",
+        7 => "Zinc Air",
+        8 => "Lithium Polymer",
+        _ => "Unknown",
     };
 }

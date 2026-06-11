@@ -1104,9 +1104,21 @@ public partial class HealthViewModel : ObservableObject
             int gen = model.Length == 4 ? (model[0] - '0') : int.Parse(model[..2]);
             int year = gen switch
             {
-                1 => 2010, 2 => 2011, 3 => 2012, 4 => 2013, 5 => 2015,
-                6 => 2015, 7 => 2017, 8 => 2018, 9 => 2019, 10 => 2020,
-                11 => 2021, 12 => 2022, 13 => 2023, 14 => 2023, 15 => 2024,
+                1 => 2010,
+                2 => 2011,
+                3 => 2012,
+                4 => 2013,
+                5 => 2015,
+                6 => 2015,
+                7 => 2017,
+                8 => 2018,
+                9 => 2019,
+                10 => 2020,
+                11 => 2021,
+                12 => 2022,
+                13 => 2023,
+                14 => 2023,
+                15 => 2024,
                 _ => -1
             };
             if (year > 0) return (year, $"Intel {gen}{Ordinal(gen)} gen");
@@ -1126,8 +1138,16 @@ public partial class HealthViewModel : ObservableObject
             int series = mr.Groups[1].Value[0] - '0';
             int year = series switch
             {
-                1 => 2017, 2 => 2018, 3 => 2019, 4 => 2020, 5 => 2021,
-                6 => 2022, 7 => 2023, 8 => 2024, 9 => 2024, _ => -1
+                1 => 2017,
+                2 => 2018,
+                3 => 2019,
+                4 => 2020,
+                5 => 2021,
+                6 => 2022,
+                7 => 2023,
+                8 => 2024,
+                9 => 2024,
+                _ => -1
             };
             if (year > 0) return (year, $"AMD Ryzen {series}000 series");
         }
