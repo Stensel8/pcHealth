@@ -52,7 +52,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NLog"                                        Version="5.*" />
+    <PackageReference Include="NLog"                                        Version="6.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection"    Version="10.*" />
     <PackageReference Include="CommunityToolkit.Mvvm"                       Version="8.*" />
     <PackageReference Include="Microsoft.WindowsAppSDK"    Version="2.2.0" />
