@@ -55,7 +55,7 @@
     <PackageReference Include="NLog"                                        Version="6.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection"    Version="10.*" />
     <PackageReference Include="CommunityToolkit.Mvvm"                       Version="8.*" />
-    <PackageReference Include="Microsoft.WindowsAppSDK"    Version="2.2.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK"    Version="2.3.1" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2270"
                       IncludeAssets="build" />
     <!-- CIM/MI library for OS info and OA3 key extraction (replaces legacy System.Management/DCOM) -->
