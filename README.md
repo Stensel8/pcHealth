@@ -21,12 +21,12 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 
 ## Supported Platforms
 
-| Platform | CLI | GUI | Recommended          | Hard minimum        |
-|----------|-----|-----|----------------------|---------------------|
-| Windows  | ✅  | ✅ | Build 26200 (25H2+)  | Build 19045 (22H2)  |
-| Linux    | ✅  | ❌ | Kernel 7.0+          | Kernel 6.0          |
+| Platform | CLI | GUI | Minimum                       |
+|----------|-----|-----|-------------------------------|
+| Windows  | ✅  | ✅  | Build 26200 (Windows 11 25H2) |
+| Linux    | ✅  | ❌  | Kernel 7.0                    |
 
-Running below the recommended version shows a warning but does not block startup. Running below the hard minimum exits immediately.
+pcHealth targets current systems only and exits immediately below the minimum. Everything in that range boots UEFI with GPT, which is why the repair tools are UEFI-only and no MBR/CSM paths remain.
 
 - Windows release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
 - Linux kernel releases: https://www.kernel.org/
@@ -37,7 +37,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 ## Getting Started
 
-**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Recommended: Windows build 26200+ / Linux kernel 7.0+. Hard minimum: Windows build 19045 / kernel 6.0.
+**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum: Windows build 26200 (11 25H2) or Linux kernel 7.0.
 
 ### Windows
 
@@ -61,7 +61,7 @@ sudo pwsh src/CLI/Start.ps1
 
 ### GUI
 
-On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface. Recommended: Windows build 26200 (25H2) or higher. Hard minimum: build 19045 (Windows 10 22H2).
+On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface. Minimum: build 26200 (Windows 11 25H2).
 
 A Linux GUI is not yet available - WinUI 3 is Windows-only. A cross-platform alternative is in the works.
 
@@ -123,6 +123,7 @@ Option numbers are assigned sequentially at runtime per platform - Windows-only 
 | Scan + Repair                 | Linux     | Package integrity vs. package database             |
 | Disk Optimization             | Linux     | fstrim on SSDs; Linux needs no defragmenting       |
 | Firmware Update               | Linux     | fwupd / LVFS - BIOS, dock, SSD firmware            |
+| Boot Repair                   | Linux     | systemd-boot / GRUB / Limine, UEFI - **care**      |
 | Disk Cleanup                  | Linux     | Package cache, journal logs, unused Flatpak runtimes, thumbnail cache |
 | Restart Audio                 | Linux     | Restarts PipeWire or PulseAudio user services      |
 | Reset Network Stack           | Linux     | Restarts NetworkManager, flushes DNS cache         |
@@ -133,7 +134,7 @@ Option numbers are assigned sequentially at runtime per platform - Windows-only 
 | Get Ninite                    | Windows   | Downloads Edge, Chrome, VLC, 7-Zip                 |
 | Windows License Key           | Windows   | OA3 + DigitalProductId registry decode             |
 | BIOS Password Recovery        | All       | Links to bios-pw.org - credits: @bacher09          |
-| Repair Boot Record            | Windows   | CHKDSK + SFC + BOOTREC - **use with caution**      |
+| Boot Repair                   | Windows   | CHKDSK + SFC + BCDBOOT, UEFI - **use with care**   |
 | Shutdown / Reboot / Log Off   | All       |                                                    |
 | Repair Winget                 | Windows   | via winget-install by @asheroto                    |
 | View System Logs              | Linux     | journalctl errors/warnings, failed units           |
