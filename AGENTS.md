@@ -85,6 +85,9 @@ foreach (var instance in session.QueryInstances(
 | `Write-Host` for data/pipeline output | `Write-Output` or `return` | `Write-Host` bypasses the pipeline; only use it for user-facing display text |
 | String concatenation for paths (`"$dir\$file"`) | `Join-Path $dir $file` | Handles both `\` and `/` correctly on Windows and Linux |
 | Bare `ls`, `cat`, `cp` aliases | `Get-ChildItem`, `Get-Content`, `Copy-Item` | Aliases are unreliable in strict or non-interactive environments |
+| `(& somecmd args).Trim()` | `Get-PcCommandOutput 'somecmd' @('args')` | A missing or silent command returns `$null`, and `.Trim()` on it throws — which aborts the whole tool, not just that field. On Linux this is routine: no systemd in containers and WSL, no `mokutil`/`lspci` on minimal installs |
+| `sudo <cmd>` inside a tool | Call the command directly | pcHealth already exits unless it is running as root on Linux. Re-elevating is a no-op where sudo exists and a hard failure where it does not. `sudo -u <user>` to *drop* privileges is still correct |
+| `$env:USER` / `$env:HOME` on Linux | `Get-PcDesktopUser` | Under `sudo pwsh` both describe root, not the person at the keyboard |
 
 ### Bash (CLI Linux — `src/CLI/start.sh`)
 

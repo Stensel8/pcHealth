@@ -106,7 +106,7 @@ Option numbers are assigned sequentially at runtime per platform - Windows-only 
 | Function                      | Platforms | Notes                                              |
 |-------------------------------|-----------|----------------------------------------------------|
 | System Information            | All       | OS, kernel, firmware, TPM, RAM                     |
-| Hardware Information          | All       | CPU, GPU, Storage (SMART), RAM, Chipset            |
+| Hardware Information          | All       | CPU, GPU, Storage (SMART), RAM, Chipset, sensors   |
 | Scan + Repair                 | Windows   | SFC + DISM combined                                |
 | Battery Report                | Windows   | Laptop only                                        |
 | Windows Update                | Windows   | Opens Windows Update settings                      |
@@ -117,7 +117,9 @@ Option numbers are assigned sequentially at runtime per platform - Windows-only 
 | Traceroute to Google          | All       | tracert / traceroute                               |
 | Reset Network Stack           | Windows   | DNS flush, Winsock reset, IPv4/IPv6 reset          |
 | Update all packages           | Windows   | winget                                             |
+| Update all packages           | Linux     | apt / dnf / pacman / zypper                        |
 | Topgrade                      | Linux     | Full system upgrade: packages, flatpak, VS Code extensions, helm, uv, and more |
+| Battery Report                | Linux     | Laptop only - health, cycles, draw from sysfs      |
 | Disk Cleanup                  | Linux     | Package cache, journal logs, unused Flatpak runtimes, thumbnail cache |
 | Restart Audio                 | Linux     | Restarts PipeWire or PulseAudio user services      |
 | Reset Network Stack           | Linux     | Restarts NetworkManager, flushes DNS cache         |
@@ -131,7 +133,7 @@ Option numbers are assigned sequentially at runtime per platform - Windows-only 
 | Repair Boot Record            | Windows   | CHKDSK + SFC + BOOTREC - **use with caution**      |
 | Shutdown / Reboot / Log Off   | All       |                                                    |
 | Repair Winget                 | Windows   | via winget-install by @asheroto                    |
-| View System Logs              | Linux     | journalctl errors/warnings                         |
+| View System Logs              | Linux     | journalctl errors/warnings, failed units           |
 
 </details>
 
@@ -153,13 +155,15 @@ Option numbers are assigned sequentially at runtime per platform - Windows-only 
 <details>
 <summary><strong>Programs Menu - Linux</strong></summary>
 
-| Key | Program       | Install method     |
-|-----|---------------|--------------------|
-| 1   | htop          | apt / dnf / pacman |
-| 2   | iotop         | apt / dnf / pacman |
-| 3   | smartmontools | apt / dnf / pacman |
-| 4   | stress-ng     | apt / dnf / pacman |
-| 5   | nmap          | apt / dnf / pacman |
+Installed packages are marked `[installed]` in the menu.
+
+| Key | Program       | Install method              |
+|-----|---------------|-----------------------------|
+| 1   | htop          | apt / dnf / pacman / zypper |
+| 2   | iotop         | apt / dnf / pacman / zypper |
+| 3   | smartmontools | apt / dnf / pacman / zypper |
+| 4   | stress-ng     | apt / dnf / pacman / zypper |
+| 5   | nmap          | apt / dnf / pacman / zypper |
 
 </details>
 
