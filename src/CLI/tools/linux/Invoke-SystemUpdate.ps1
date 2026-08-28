@@ -16,6 +16,10 @@ if (-not $pm) {
 }
 
 Write-Host "  Package manager: $($pm.Cmd)`n" -ForegroundColor DarkGray
+if ($pm.Atomic) {
+    Write-Host '  Image-based system: this stages a new deployment rather than' -ForegroundColor DarkGray
+    Write-Host "  patching the running one. It takes effect after a reboot.`n" -ForegroundColor DarkGray
+}
 
 if ($pm.Refresh) {
     Write-Host '[>>] Refreshing package index...' -ForegroundColor Yellow
@@ -60,7 +64,9 @@ Write-Host "`n[>>] Updating all packages...`n" -ForegroundColor Yellow
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`n[OK] Update complete.`n" -ForegroundColor Green
     # Kernel and glibc updates only take effect after a restart.
-    if (Get-Command needs-restarting -ErrorAction SilentlyContinue) {
+    if ($pm.Atomic) {
+        Write-Host "  [!] Reboot to boot into the new deployment.`n" -ForegroundColor Yellow
+    } elseif (Get-Command needs-restarting -ErrorAction SilentlyContinue) {
         & needs-restarting -r 2>&1 | Out-Null
         if ($LASTEXITCODE -ne 0) { Write-Host "  [!] A reboot is required to finish this update.`n" -ForegroundColor Yellow }
     } elseif (Test-Path '/var/run/reboot-required') {

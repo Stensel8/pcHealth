@@ -54,23 +54,88 @@ function Get-PcDesktopUser {
     }
 }
 
+# True on image-based systems: Fedora Silverblue/Bazzite/Kinoite, openSUSE
+# MicroOS and friends. /usr is read-only there, so a traditional package
+# manager cannot change the running system even when it is installed.
+function Test-PcImageBasedSystem {
+    if (-not $IsLinux) { return $false }
+    return (Test-Path '/run/ostree-booted') -or (Test-Path '/ostree')
+}
+
 # Detects the distro's package manager and the verbs pcHealth needs from it.
-# Returns $null when none of the supported managers is present.
+# Returns $null when the distro has no manager pcHealth knows.
 # Refresh is $null where the update verb already syncs the package index.
 # Verify names its own command: rpm and debsums do the checking, not the manager.
+#
+# Chosen by distro family, NOT by which binary happens to be on PATH. A
+# Distrobox export or Homebrew readily puts apt and pacman on a Fedora box, and
+# picking the first one found would run Debian commands against an rpm system.
 function Get-PcPackageManager {
-    $managers = [ordered]@{
+    $definitions = @{
         'apt'    = @{ Refresh = @('update');  List = @('list', '--upgradable'); Update = @('upgrade', '-y');  Install = @('install', '-y');      Verify = @('debsums', '-s')  }
         'dnf'    = @{ Refresh = $null;        List = @('check-update');         Update = @('upgrade', '-y');  Install = @('install', '-y');      Verify = @('rpm', '-Va')     }
         'pacman' = @{ Refresh = @('-Sy');     List = @('-Qu');                  Update = @('-Syu', '--noconfirm'); Install = @('-S', '--noconfirm'); Verify = @('pacman', '-Qkk') }
         'zypper' = @{ Refresh = @('refresh'); List = @('list-updates');         Update = @('update', '-y');   Install = @('install', '-y');      Verify = @('rpm', '-Va')     }
     }
-    foreach ($cmd in $managers.Keys) {
-        if (Get-Command $cmd -CommandType Application -ErrorAction SilentlyContinue) {
-            return [PSCustomObject]($managers[$cmd] + @{ Cmd = $cmd })
+
+    # Image-based systems come first. Bazzite ships dnf, and Distrobox exports put
+    # apt and pacman on PATH too, but none of them can change a read-only /usr --
+    # the system is updated as a whole image instead.
+    if (Test-PcImageBasedSystem) {
+        # Prefer rpm-ostree where it exists. Images are moving to bootc, which
+        # updates the whole image but has no package or cleanup verbs at all --
+        # those come back as $null so callers can say so rather than guess.
+        if (Get-Command rpm-ostree -CommandType Application -ErrorAction SilentlyContinue) {
+            return [PSCustomObject]@{
+                Cmd     = 'rpm-ostree'
+                Atomic  = $true
+                Refresh = $null
+                List    = @('upgrade', '--preview')
+                Update  = @('upgrade')
+                Install = @('install', '-y')
+                # -b and -m clear temp files and cached metadata only. Never -r or
+                # -p: those delete the rollback and pending deployments, which are
+                # the whole safety net on an image-based system.
+                Clean   = @('cleanup', '-bm')
+                Verify  = @('ostree', 'fsck')
+            }
         }
+        if (Get-Command bootc -CommandType Application -ErrorAction SilentlyContinue) {
+            return [PSCustomObject]@{
+                Cmd     = 'bootc'
+                Atomic  = $true
+                Refresh = $null
+                List    = @('upgrade', '--check')
+                Update  = @('upgrade')
+                Install = $null
+                Clean   = $null
+                Verify  = $null
+            }
+        }
+        return $null
     }
-    return $null
+
+    $info   = Get-LinuxDistroInfo
+    $family = "$($info['ID']) $($info['ID_LIKE'])"
+
+    $name = switch -Regex ($family) {
+        'debian|ubuntu|mint|pop|elementary|zorin|kali' { 'apt';    break }
+        'fedora|rhel|centos|almalinux|rocky'           { 'dnf';    break }
+        'arch|cachyos|manjaro|endeavouros|artix'       { 'pacman'; break }
+        'suse|sles'                                    { 'zypper'; break }
+        default                                        { $null }
+    }
+
+    # Unrecognised distro: fall back to whatever is actually installed.
+    if (-not $name) {
+        $name = $definitions.Keys | Sort-Object |
+            Where-Object { Get-Command $_ -CommandType Application -ErrorAction SilentlyContinue } |
+            Select-Object -First 1
+    }
+    if (-not $name -or -not (Get-Command $name -CommandType Application -ErrorAction SilentlyContinue)) {
+        return $null
+    }
+    return [PSCustomObject]($definitions[$name] + @{ Cmd = $name; Atomic = $false })
 }
 
 # Opens a URL in the user's browser.

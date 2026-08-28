@@ -246,7 +246,11 @@ function Show-LinuxProgramsMenu {
         Clear-PcHost
         Write-PcHeader 'Programs'
 
-        if ($pm) {
+        if ($pm -and $pm.Atomic) {
+            Write-Host "  Package manager: $($pm.Cmd)  (image-based)" -ForegroundColor DarkGray
+            Write-Host '  Installing here layers the package into the image and needs a' -ForegroundColor DarkGray
+            Write-Host "  reboot. Homebrew or a Distrobox container is usually better.`n" -ForegroundColor DarkGray
+        } elseif ($pm) {
             Write-Host "  Package manager: $($pm.Cmd)`n" -ForegroundColor DarkGray
         } else {
             Write-Host "  [!] No supported package manager found (apt/dnf/pacman/zypper).`n" -ForegroundColor Yellow
@@ -287,13 +291,17 @@ function Show-LinuxProgramsMenu {
         if (Get-Command $pkg.Bin -CommandType Application -ErrorAction SilentlyContinue) {
             Write-Host "[OK] $($pkg.Name) is already installed." -ForegroundColor Green
             Write-Host "     Update it via Tools > Update all packages.`n" -ForegroundColor DarkGray
-        } elseif (-not $pm) {
-            Write-Host "[!!] No supported package manager found. Install $($pkg.Name) manually.`n" -ForegroundColor Red
+        } elseif (-not $pm -or -not $pm.Install) {
+            Write-Host "[!!] This system has no package install command pcHealth can use." -ForegroundColor Red
+            Write-Host "     Install $($pkg.Name) with Homebrew or inside a Distrobox container.`n" -ForegroundColor Yellow
         } else {
             Write-Host "[>>] Installing $($pkg.Name) via $($pm.Cmd)...`n" -ForegroundColor Yellow
             & $pm.Cmd @($pm.Install) $pkg.Pkg
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "`n[OK] $($pkg.Name) installed." -ForegroundColor Green
+                if ($pm.Atomic) {
+                    Write-Host '     Layered into a new deployment -- reboot to use it.' -ForegroundColor Yellow
+                }
             } else {
                 Write-Host "`n[!!] Installation returned exit code $LASTEXITCODE." -ForegroundColor Red
             }

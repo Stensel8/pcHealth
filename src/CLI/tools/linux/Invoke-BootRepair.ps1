@@ -23,6 +23,20 @@ Write-Host '  WARNING: This operation modifies boot-critical files.' -Foreground
 Write-Host '  Incorrect use can render the system unbootable.' -ForegroundColor Yellow
 Write-Host "  Only proceed if you understand what you are doing.`n" -ForegroundColor Yellow
 
+# -- Image-based guard ---------------------------------------------------------
+# On ostree systems the bootloader entries are generated from the deployments
+# (/boot/loader/entries). Reinstalling GRUB or systemd-boot by hand here fights
+# whatever produced those entries; `bootc`/`rpm-ostree` own this, not pcHealth.
+if (Test-PcImageBasedSystem) {
+    Write-Host '[!!] This is an image-based system (ostree).' -ForegroundColor Red
+    Write-Host '     Its bootloader is managed by the deployment, not by hand.' -ForegroundColor Yellow
+    Write-Host '     Roll back to a working deployment instead:' -ForegroundColor Yellow
+    Write-Host '       rpm-ostree status      # list deployments' -ForegroundColor DarkGray
+    Write-Host '       rpm-ostree rollback    # boot the previous one' -ForegroundColor DarkGray
+    Write-Host ''
+    return
+}
+
 # -- Firmware guard ------------------------------------------------------------
 if (-not (Test-Path '/sys/firmware/efi')) {
     Write-Host '[!!] This system booted in legacy BIOS mode (no /sys/firmware/efi).' -ForegroundColor Red

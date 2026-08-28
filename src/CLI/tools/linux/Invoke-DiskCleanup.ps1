@@ -32,8 +32,17 @@ function Invoke-Cleanup {
 # ── Package cache ─────────────────────────────────────────────────────────────
 
 $archIds = @('arch', 'cachyos', 'garuda', 'manjaro', 'endeavouros', 'artix')
+$pm      = Get-PcPackageManager
 
-if ($distroId -in $archIds -or $distroLike -match 'arch') {
+if ($pm -and $pm.Atomic -and -not $pm.Clean) {
+    Write-Host "[--] $($pm.Cmd) manages the image as a whole and has no cache to clear.`n" -ForegroundColor DarkGray
+} elseif ($pm -and $pm.Atomic) {
+    # dnf autoremove/clean cannot touch a read-only /usr. The image-based
+    # equivalent frees cached metadata and temp files, leaving deployments alone.
+    Invoke-Cleanup 'Clearing rpm-ostree cache and temp files...' { & $pm.Cmd @($pm.Clean) }
+    Write-Host '[--] Deployments left untouched -- remove them deliberately with' -ForegroundColor DarkGray
+    Write-Host "     rpm-ostree cleanup -r (rollback) or -p (pending).`n" -ForegroundColor DarkGray
+} elseif ($distroId -in $archIds -or $distroLike -match 'arch') {
     if (Get-Command paccache -ErrorAction SilentlyContinue) {
         Invoke-Cleanup 'Clearing pacman cache (keeping last 2 versions)...' { paccache -rk2 }
     }

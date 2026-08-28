@@ -16,6 +16,14 @@ if (-not $pm) {
     return
 }
 
+if (-not $pm.Verify) {
+    Write-Host "[!!] $($pm.Cmd) has no package-verification command." -ForegroundColor Red
+    Write-Host '     On an image-based system the running image is already verified;' -ForegroundColor Yellow
+    Write-Host '     check deployment state with: bootc status' -ForegroundColor DarkGray
+    Write-Host ''
+    return
+}
+
 $verifyCmd = $pm.Verify[0]
 if (-not (Get-Command $verifyCmd -ErrorAction SilentlyContinue)) {
     Write-Host "[!!] $verifyCmd is not installed -- it does the checking, not $($pm.Cmd) itself." -ForegroundColor Red
