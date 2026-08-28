@@ -24,8 +24,8 @@ while ($true) {
     $choice = (Read-Host "  Choice").Trim().ToUpper()
 
     switch ($choice) {
-        '1' { Start-Process 'https://bios-pw.org' }
-        '2' { Start-Process 'https://github.com/bacher09/pwgen-for-bios' }
+        '1' { Open-PcUrl 'https://bios-pw.org' }
+        '2' { Open-PcUrl 'https://github.com/bacher09/pwgen-for-bios' }
         'B' { return }
         default { Write-Host "`n  Invalid choice.`n" -ForegroundColor Red }
     }
