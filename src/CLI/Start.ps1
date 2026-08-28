@@ -164,9 +164,9 @@ if (-not $smartctlOk) {
     $answer = Read-Host $prompt
     if ($answer -match '^[Yy]') {
         if ($onLinux) {
-            if     (Get-Command apt-get -ErrorAction SilentlyContinue) { sudo apt-get install -y smartmontools }
-            elseif (Get-Command dnf     -ErrorAction SilentlyContinue) { sudo dnf install -y smartmontools }
-            elseif (Get-Command pacman  -ErrorAction SilentlyContinue) { sudo pacman -S --noconfirm smartmontools }
+            if     (Get-Command apt-get -ErrorAction SilentlyContinue) { apt-get install -y smartmontools }
+            elseif (Get-Command dnf     -ErrorAction SilentlyContinue) { dnf install -y smartmontools }
+            elseif (Get-Command pacman  -ErrorAction SilentlyContinue) { pacman -S --noconfirm smartmontools }
             else { Write-Host '[!!] No supported package manager found. Install smartmontools manually.' -ForegroundColor Yellow }
         } elseif (Get-Command winget -ErrorAction SilentlyContinue) {
             winget install --source winget --id smartmontools.smartmontools -e --silent `

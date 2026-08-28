@@ -35,24 +35,24 @@ $archIds = @('arch', 'cachyos', 'garuda', 'manjaro', 'endeavouros', 'artix')
 
 if ($distroId -in $archIds -or $distroLike -match 'arch') {
     if (Get-Command paccache -ErrorAction SilentlyContinue) {
-        Invoke-Cleanup 'Clearing pacman cache (keeping last 2 versions)...' { sudo paccache -rk2 }
+        Invoke-Cleanup 'Clearing pacman cache (keeping last 2 versions)...' { paccache -rk2 }
     }
     # Only remove orphans when there is actually something to remove;
     # passing an empty list to pacman -Rns causes a non-zero exit and confuses users.
     $orphans = @(& pacman -Qdtq 2>$null)
     if ($orphans.Count -gt 0) {
-        Invoke-Cleanup 'Removing unneeded pacman dependencies...' { sudo pacman -Rns $orphans --noconfirm }
+        Invoke-Cleanup 'Removing unneeded pacman dependencies...' { pacman -Rns $orphans --noconfirm }
     } else {
         Write-Host "[--] No unneeded pacman dependencies found, skipping.`n" -ForegroundColor DarkGray
     }
 } elseif ($distroId -in @('ubuntu', 'debian', 'linuxmint', 'pop', 'elementary', 'zorin', 'kali') -or $distroLike -match 'debian|ubuntu') {
-    Invoke-Cleanup 'Removing unneeded apt packages...' { sudo apt autoremove -y }
-    Invoke-Cleanup 'Cleaning apt cache...'             { sudo apt autoclean }
+    Invoke-Cleanup 'Removing unneeded apt packages...' { apt autoremove -y }
+    Invoke-Cleanup 'Cleaning apt cache...'             { apt autoclean }
 } elseif ($distroId -in @('fedora', 'rhel', 'centos', 'almalinux', 'rocky') -or $distroLike -match 'fedora|rhel') {
-    Invoke-Cleanup 'Removing unneeded dnf packages...' { sudo dnf autoremove -y }
-    Invoke-Cleanup 'Cleaning dnf cache...'             { sudo dnf clean all }
+    Invoke-Cleanup 'Removing unneeded dnf packages...' { dnf autoremove -y }
+    Invoke-Cleanup 'Cleaning dnf cache...'             { dnf clean all }
 } elseif ($distroId -in @('opensuse-leap', 'opensuse-tumbleweed', 'sles') -or $distroLike -match 'suse') {
-    Invoke-Cleanup 'Cleaning zypper cache...' { sudo zypper clean --all }
+    Invoke-Cleanup 'Cleaning zypper cache...' { zypper clean --all }
 } else {
     Write-Host "[--] Package cache: distro not recognised, skipping.`n" -ForegroundColor DarkGray
 }
@@ -61,19 +61,19 @@ if ($distroId -in $archIds -or $distroLike -match 'arch') {
 
 if (Get-Command journalctl -ErrorAction SilentlyContinue) {
     Invoke-Cleanup 'Vacuuming journal logs (keeping last 7 days)...' {
-        sudo journalctl --vacuum-time=7d
+        journalctl --vacuum-time=7d
     }
 }
 
 # ── Flatpak unused runtimes ───────────────────────────────────────────────────
 
 if (Get-Command flatpak -ErrorAction SilentlyContinue) {
-    Invoke-Cleanup 'Removing unused Flatpak runtimes...' { sudo flatpak uninstall --unused -y }
+    Invoke-Cleanup 'Removing unused Flatpak runtimes...' { flatpak uninstall --unused -y }
 }
 
 # ── Thumbnail cache ───────────────────────────────────────────────────────────
 
-# Under sudo $env:HOME is root's, so resolve the desktop user's cache instead.
+# Under $env:HOME is root's, so resolve the desktop user's cache instead.
 $userHome = (Get-PcDesktopUser)?.Home
 $thumbDir = if ($userHome) { Join-Path $userHome '.cache/thumbnails' } else { $null }
 if ($thumbDir -and (Test-Path $thumbDir)) {

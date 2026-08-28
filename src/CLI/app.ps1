@@ -22,6 +22,13 @@ if ($IsLinux) {
         Write-Host "    https://www.kernel.org/" -ForegroundColor DarkGray
         Write-Host ""
     }
+    # Also checked in Start.ps1; repeated here so tools can rely on being root
+    # and call the package manager and systemctl directly, without sudo.
+    if ("$(& id -u 2>$null)".Trim() -ne '0') {
+        Write-Host '[!!] pcHealth must be run as root on Linux.' -ForegroundColor Red
+        Write-Host '     Run: sudo pwsh src/CLI/Start.ps1'       -ForegroundColor Yellow
+        exit 1
+    }
     $Global:PcPlatform      = 'Linux'
     $Global:PcPlatformLabel = 'Linux'
 } elseif ($IsWindows) {

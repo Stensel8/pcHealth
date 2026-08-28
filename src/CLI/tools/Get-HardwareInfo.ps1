@@ -30,11 +30,9 @@ if (-not $smartctl) {
     $answer = (Read-Host $prompt).Trim()
     if ($answer -match '^[Yy]') {
         if ($IsLinux) {
-            $pm = if (Get-Command apt-get -EA SilentlyContinue) { @('apt-get','install','-y','smartmontools') }
-                  elseif (Get-Command dnf  -EA SilentlyContinue) { @('dnf','install','-y','smartmontools')     }
-                  elseif (Get-Command pacman -EA SilentlyContinue) { @('pacman','-S','--noconfirm','smartmontools') }
-                  else { $null }
-            if ($pm) { & sudo $pm[0] $pm[1..($pm.Count-1)] } else { Write-Host '[!!] No supported package manager found. Install smartmontools manually.' -ForegroundColor Yellow }
+            $pm = Get-PcPackageManager
+            if ($pm) { & $pm.Cmd @($pm.Install) smartmontools }
+            else { Write-Host '[!!] No supported package manager found. Install smartmontools manually.' -ForegroundColor Yellow }
         } else {
             if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
                 Write-Host '[!!] winget not available. Install from: https://www.smartmontools.org/' -ForegroundColor Yellow
