@@ -28,7 +28,7 @@ function Invoke-Step {
 
 Write-Host "  Note: the network connection will drop briefly.`n" -ForegroundColor DarkGray
 
-$nmActive = (& systemctl is-active NetworkManager 2>$null).Trim() -eq 'active'
+$nmActive = (Get-PcCommandOutput 'systemctl' @('is-active', 'NetworkManager')) -eq 'active'
 
 if ($nmActive -or (Get-Command nmcli -ErrorAction SilentlyContinue)) {
     Invoke-Step 'Restarting NetworkManager...' { sudo systemctl restart NetworkManager }

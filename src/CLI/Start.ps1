@@ -12,7 +12,9 @@ $isPwsh7 = $PSVersionTable.PSVersion.Major -ge 7
 
 # -- Linux: kernel version check + root guard ---------------------------------
 if ($onLinux) {
-    $kernelStr   = (& uname -r 2>$null).Trim()
+    # Start.ps1 runs before Helpers.ps1 is loaded, so guard the null here:
+    # calling .Trim() on a missing command's output throws before the check below.
+    $kernelStr   = "$(& uname -r 2>$null)".Trim()
     if (-not $kernelStr) {
         Write-Host "[!!] Could not determine kernel version (uname -r returned nothing)." -ForegroundColor Red
         Read-Host 'Press Enter to exit'
@@ -31,7 +33,7 @@ if ($onLinux) {
         Write-Host ""
     }
 
-    $isRoot = ((& id -u 2>$null).Trim() -eq '0')
+    $isRoot = ("$(& id -u 2>$null)".Trim() -eq '0')
     if (-not $isRoot) {
         Write-Host '[!!] pcHealth must be run as root on Linux.' -ForegroundColor Red
         Write-Host '     Run: sudo pwsh src/CLI/Start.ps1'       -ForegroundColor Yellow
