@@ -18,6 +18,9 @@ Write-Host "  Distro: $($osRelease['PRETTY_NAME'])`n" -ForegroundColor DarkGray
 function Invoke-Cleanup {
     param([string]$Label, [scriptblock]$Action)
     Write-Host "[>>] $Label" -ForegroundColor Yellow
+    # Reset first: a step that runs no native command would otherwise be judged
+    # by whichever exit code was left behind by the previous one.
+    $global:LASTEXITCODE = 0
     & $Action 2>&1 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] Done.`n" -ForegroundColor Green
@@ -70,13 +73,15 @@ if (Get-Command flatpak -ErrorAction SilentlyContinue) {
 
 # ── Thumbnail cache ───────────────────────────────────────────────────────────
 
-$thumbDir = Join-Path $env:HOME '.cache/thumbnails'
-if (Test-Path $thumbDir) {
+# Under sudo $env:HOME is root's, so resolve the desktop user's cache instead.
+$userHome = (Get-PcDesktopUser)?.Home
+$thumbDir = if ($userHome) { Join-Path $userHome '.cache/thumbnails' } else { $null }
+if ($thumbDir -and (Test-Path $thumbDir)) {
     $sizeMB = [math]::Round(
         (Get-ChildItem $thumbDir -Recurse -File -ErrorAction SilentlyContinue |
             Measure-Object -Property Length -Sum).Sum / 1MB, 1)
     Invoke-Cleanup "Clearing thumbnail cache ($sizeMB MB)..." {
-        Get-ChildItem (Join-Path $env:HOME '.cache/thumbnails') -Recurse -File -ErrorAction SilentlyContinue |
+        Get-ChildItem $thumbDir -Recurse -File -ErrorAction SilentlyContinue |
             Remove-Item -Force -ErrorAction SilentlyContinue
     }
 }

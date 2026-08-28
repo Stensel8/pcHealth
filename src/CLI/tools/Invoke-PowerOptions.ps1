@@ -17,12 +17,16 @@ $choice = (Read-Host "  Choice").Trim().ToUpper()
 if ($IsLinux) {
     switch ($choice) {
         '1' {
-            $ok = (Read-Host "`n  Log off $env:USER? (y/n)").Trim().ToLower()
+            # Under sudo $env:USER is root; log off the human behind it instead.
+            $desktopUser = (Get-PcDesktopUser)?.Name
+            if (-not $desktopUser) {
+                Write-Host "`n  [!!] Could not determine the desktop user.`n" -ForegroundColor Red
+                return
+            }
+            $ok = (Read-Host "`n  Log off $desktopUser? (y/n)").Trim().ToLower()
             if ($ok -eq 'y') {
-                # loginctl terminates the current user session cleanly.
-                # Quote the username so loginctl receives it as a single token even
-                # if $env:USER contains spaces (uncommon but possible).
-                & loginctl terminate-user "$env:USER"
+                # loginctl terminates the user's session cleanly.
+                & loginctl terminate-user $desktopUser
             } else { Write-Host "`n  Cancelled.`n" -ForegroundColor DarkGray }
         }
         '2' {

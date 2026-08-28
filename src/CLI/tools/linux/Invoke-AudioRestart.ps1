@@ -2,37 +2,30 @@
 # ============================================================================
 # pcHealth -- Restart Audio (Linux)
 # Detects PipeWire or PulseAudio and restarts the relevant user services.
-# systemctl --user requires DBUS_SESSION_BUS_ADDRESS forwarded to work
-# when pcHealth is invoked via sudo.
+# The audio server lives in the user's session, not root's, so every call is
+# dropped to the desktop user with their session bus forwarded.
 # ============================================================================
 
 Write-Host "`n$('=' * 60)" -ForegroundColor Cyan
 Write-Host '  Restart Audio' -ForegroundColor Cyan
 Write-Host "$('=' * 60)`n" -ForegroundColor Cyan
 
-$user   = $env:SUDO_USER ?? $env:USER
-$userId = (& id -u "$user" 2>$null).Trim()
-$dbus   = $env:DBUS_SESSION_BUS_ADDRESS ?? "unix:path=/run/user/$userId/bus"
-
-# Valid DBUS transport prefixes per the D-Bus specification.
-$ValidDbusPattern = '^(unix|tcp|nonce-tcp|autolaunch):'
-
-# Validate the DBUS address has the expected format before embedding it in an
-# env key=value argument. A well-formed address starts with a known transport prefix.
-if ($dbus -notmatch $ValidDbusPattern) {
-    Write-Host "[!!] Unexpected DBUS_SESSION_BUS_ADDRESS format: $dbus" -ForegroundColor Red
-    Write-Host "     Aborting to avoid passing an untrusted value to env." -ForegroundColor Red
+$user = Get-PcDesktopUser
+if (-not $user) {
+    Write-Host "[!!] Could not determine the desktop user.`n" -ForegroundColor Red
     return
 }
 
-# Invoke a systemctl --user command as the target user, forwarding DBUS via the
-# environment rather than injecting it into a shell command string.
-# systemctl and its arguments are passed as individual tokens — no shell involved.
-function Invoke-UserServiceUnit {
-    param([string]$Label, [string]$Action, [string]$Unit)
-    Write-Host "[>>] $Label" -ForegroundColor Yellow
-    $out = & sudo -u "$user" env "DBUS_SESSION_BUS_ADDRESS=$dbus" `
-        systemctl --user $Action $Unit 2>&1
+# systemctl and its arguments are passed as individual tokens -- no shell involved.
+function Invoke-UserCommand {
+    param([string[]]$CommandLine)
+    return & sudo -u $user.Name env "DBUS_SESSION_BUS_ADDRESS=$($user.Dbus)" @CommandLine 2>&1
+}
+
+function Restart-UserUnit {
+    param([string]$Unit)
+    Write-Host "[>>] Restarting $Unit..." -ForegroundColor Yellow
+    $out = Invoke-UserCommand @('systemctl', '--user', 'restart', $Unit)
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] Done.`n" -ForegroundColor Green
     } else {
@@ -41,22 +34,21 @@ function Invoke-UserServiceUnit {
     }
 }
 
-$isPipeWire = (& sudo -u "$user" env "DBUS_SESSION_BUS_ADDRESS=$dbus" `
-    systemctl --user is-active pipewire 2>/dev/null).Trim() -eq 'active'
+# Exact match: `is-active` answers "inactive" too, which -match 'active' would accept.
+$pipeWireState = "$(Invoke-UserCommand @('systemctl', '--user', 'is-active', 'pipewire'))".Trim()
+$isPipeWire = $pipeWireState -eq 'active'
 $hasPulse   = [bool](Get-Command pulseaudio -ErrorAction SilentlyContinue)
 
 if ($isPipeWire) {
     Write-Host "  Detected: PipeWire`n" -ForegroundColor DarkGray
-    Invoke-UserServiceUnit -Label 'Restarting pipewire...'       -Action restart -Unit pipewire
-    Invoke-UserServiceUnit -Label 'Restarting pipewire-pulse...' -Action restart -Unit pipewire-pulse
-    Invoke-UserServiceUnit -Label 'Restarting wireplumber...'    -Action restart -Unit wireplumber
+    'pipewire', 'pipewire-pulse', 'wireplumber' | ForEach-Object { Restart-UserUnit $_ }
 } elseif ($hasPulse) {
     Write-Host "  Detected: PulseAudio`n" -ForegroundColor DarkGray
-    # Kill then start as two separate invocations to avoid a shell compound command.
-    Write-Host "[>>] Restarting PulseAudio..." -ForegroundColor Yellow
-    & sudo -u "$user" env "DBUS_SESSION_BUS_ADDRESS=$dbus" pulseaudio --kill 2>&1 | Out-Null
+    Write-Host '[>>] Restarting PulseAudio...' -ForegroundColor Yellow
+    # Kill then start as two invocations to avoid a shell compound command.
+    Invoke-UserCommand @('pulseaudio', '--kill') | Out-Null
     Start-Sleep -Milliseconds 500
-    $out = & sudo -u "$user" env "DBUS_SESSION_BUS_ADDRESS=$dbus" pulseaudio --start 2>&1
+    $out = Invoke-UserCommand @('pulseaudio', '--start')
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] Done.`n" -ForegroundColor Green
     } else {
