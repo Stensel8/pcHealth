@@ -166,6 +166,37 @@ if ($IsLinux) {
         Write-Warning "RAM information not available."
     }
 
+    # -- Sensors --------------------------------------------------------------
+    # Straight from the kernel's hwmon class -- the same source lm-sensors reads,
+    # so no package needs to be installed.
+    Write-SectionHeader 'Sensors (Temperatures)'
+    $hwmonRoot = '/sys/class/hwmon'
+    $readings  = @(
+        if (Test-Path $hwmonRoot) {
+            foreach ($chip in Get-ChildItem $hwmonRoot -ErrorAction SilentlyContinue) {
+                $chipName = try { (Get-Content (Join-Path $chip.FullName 'name') -Raw -ErrorAction Stop).Trim() }
+                            catch { $chip.Name }
+                foreach ($sensor in Get-ChildItem $chip.FullName -Filter 'temp*_input' -ErrorAction SilentlyContinue) {
+                    $milli = try { [double](Get-Content $sensor.FullName -Raw -ErrorAction Stop) } catch { continue }
+                    $labelFile = $sensor.FullName -replace '_input$', '_label'
+                    $label = if (Test-Path $labelFile) {
+                        (Get-Content $labelFile -Raw -ErrorAction SilentlyContinue).Trim()
+                    } else { $sensor.Name -replace '_input$', '' }
+                    [PSCustomObject]@{
+                        Chip       = $chipName
+                        Sensor     = $label
+                        'Temp (C)' = [Math]::Round($milli / 1000, 1)
+                    }
+                }
+            }
+        }
+    )
+    if ($readings) {
+        $readings | Sort-Object Chip, Sensor | Format-Table -AutoSize | Out-Host
+    } else {
+        Write-Warning "No temperature sensors exposed under $hwmonRoot."
+    }
+
 } else {
     # -- CPU (Windows) --------------------------------------------------------
     $cpuData = Get-CimInstance -ClassName Win32_Processor -ErrorAction SilentlyContinue

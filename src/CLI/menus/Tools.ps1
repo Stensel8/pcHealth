@@ -30,7 +30,9 @@ function Show-ToolsMenu {
         @{ Label = 'Repair Boot Record';           Script = 'Invoke-BootRepair.ps1';         Note = '(use with caution!)';   Platforms = @('Windows') }
         @{ Label = 'Shutdown / Reboot / Log Off';  Script = 'Invoke-PowerOptions.ps1';       Note = '';                      Platforms = @('Windows','Linux') }
         @{ Label = 'Repair Winget';                Script = 'Invoke-WingetRepair.ps1';       Note = '';                      Platforms = @('Windows') }
+        @{ Label = 'Update all packages';          Script = 'linux/Invoke-SystemUpdate.ps1';  Note = '(apt / dnf / pacman / zypper)';   Platforms = @('Linux') }
         @{ Label = 'Topgrade';                     Script = 'linux/Invoke-Topgrade.ps1';       Note = '(full system upgrade)';           Platforms = @('Linux') }
+        @{ Label = 'Battery Report';               Script = 'linux/Get-BatteryReport.ps1';     Note = '(laptop only)';                   Platforms = @('Linux') }
         @{ Label = 'Disk Cleanup';                 Script = 'linux/Invoke-DiskCleanup.ps1';   Note = '(cache, journal, flatpak)';       Platforms = @('Linux') }
         @{ Label = 'Restart Audio';                Script = 'linux/Invoke-AudioRestart.ps1';  Note = '(PipeWire / PulseAudio)';         Platforms = @('Linux') }
         @{ Label = 'Reset Network Stack';          Script = 'linux/Invoke-NetworkReset.ps1';  Note = '';                                Platforms = @('Linux') }
