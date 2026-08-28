@@ -59,15 +59,6 @@ function Get-WingetResult {
     return @{ Ok = $false; Message = "Unexpected exit code ($hex)."; SuggestRepair = $true }
 }
 
-# Detects the available package manager on Linux.
-function Get-LinuxPackageManager {
-    if (Get-Command apt     -ErrorAction SilentlyContinue) { return @{ Cmd = 'apt';     Args = @('install', '-y') } }
-    if (Get-Command dnf     -ErrorAction SilentlyContinue) { return @{ Cmd = 'dnf';     Args = @('install', '-y') } }
-    if (Get-Command pacman  -ErrorAction SilentlyContinue) { return @{ Cmd = 'pacman';  Args = @('-S', '--noconfirm') } }
-    if (Get-Command zypper  -ErrorAction SilentlyContinue) { return @{ Cmd = 'zypper';  Args = @('install', '-y') } }
-    return $null
-}
-
 function Show-ProgramsMenu {
     if ($Global:PcPlatform -eq 'Linux') {
         Show-LinuxProgramsMenu
@@ -234,15 +225,21 @@ function Show-WindowsProgramsMenu {
 }
 
 function Show-LinuxProgramsMenu {
-    $pm = Get-LinuxPackageManager
+    $pm = Get-PcPackageManager
 
+    # Bin is what the menu probes for the [installed] marker: one PATH lookup,
+    # instead of a different "is this package present" query per manager.
     $packages = [ordered]@{
-        '1' = @{ Name = 'htop';          Pkg = 'htop'          }
-        '2' = @{ Name = 'iotop';         Pkg = 'iotop'         }
-        '3' = @{ Name = 'smartmontools'; Pkg = 'smartmontools'  }
-        '4' = @{ Name = 'stress-ng';     Pkg = 'stress-ng'     }
-        '5' = @{ Name = 'nmap';          Pkg = 'nmap'          }
+        '1' = @{ Name = 'htop';          Pkg = 'htop';          Bin = 'htop';      Note = '(process viewer)'  }
+        '2' = @{ Name = 'iotop';         Pkg = 'iotop';         Bin = 'iotop';     Note = '(I/O monitor)'     }
+        '3' = @{ Name = 'smartmontools'; Pkg = 'smartmontools'; Bin = 'smartctl';  Note = '(disk SMART data)' }
+        '4' = @{ Name = 'stress-ng';     Pkg = 'stress-ng';     Bin = 'stress-ng'; Note = '(stress test)'     }
+        '5' = @{ Name = 'nmap';          Pkg = 'nmap';          Bin = 'nmap';      Note = '(network scanner)' }
     }
+
+    $navTools = $packages.Count + 1
+    $navMain  = $packages.Count + 2
+    $navExit  = $packages.Count + 3
 
     while ($true) {
         Set-PcTheme 'Programs'
@@ -255,50 +252,57 @@ function Show-LinuxProgramsMenu {
             Write-Host "  [!] No supported package manager found (apt/dnf/pacman/zypper).`n" -ForegroundColor Yellow
         }
 
-        Write-PcOption '1' 'htop'          '(process viewer)'
-        Write-PcOption '2' 'iotop'         '(I/O monitor)'
-        Write-PcOption '3' 'smartmontools' '(disk SMART data)'
-        Write-PcOption '4' 'stress-ng'     '(stress test)'
-        Write-PcOption '5' 'nmap'          '(network scanner)'
+        foreach ($key in $packages.Keys) {
+            $p    = $packages[$key]
+            $note = if (Get-Command $p.Bin -CommandType Application -ErrorAction SilentlyContinue) {
+                "$($p.Note)  [installed]"
+            } else { $p.Note }
+            Write-PcOption $key $p.Name $note
+        }
+
         Write-PcDivider
-        Write-PcOption '6' 'Tools Menu'
-        Write-PcOption '7' 'Back to Main Menu'
-        Write-PcOption '8' 'Exit'
+        Write-PcOption "$navTools" 'Tools Menu'
+        Write-PcOption "$navMain"  'Back to Main Menu'
+        Write-PcOption "$navExit"  'Exit'
         Write-PcDivider
 
         $choice = (Read-Host "`n  Choice").Trim()
 
         switch ($choice) {
-            '6' { return 'tools' }
-            '7' { return 'main'  }
-            '8' { return 'exit'  }
+            "$navTools" { return 'tools' }
+            "$navMain"  { return 'main'  }
+            "$navExit"  { return 'exit'  }
         }
 
-        if ($packages.Contains($choice)) {
-            $pkg = $packages[$choice]
-            Set-PcTheme 'Action'
-            Clear-PcHost
-
-            if (-not $pm) {
-                Write-Host "[!!] No supported package manager found. Install $($pkg.Name) manually.`n" -ForegroundColor Red
-            } else {
-                Write-Host "[>>] Installing $($pkg.Name) via $($pm.Cmd)...`n" -ForegroundColor Yellow
-                & sudo $pm.Cmd $pm.Args $pkg.Pkg
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Host "`n[OK] $($pkg.Name) installed." -ForegroundColor Green
-                } else {
-                    Write-Host "`n[!!] Installation returned exit code $LASTEXITCODE." -ForegroundColor Red
-                }
-            }
-
-            $nav = Read-PcNavChoice 'Back to Programs Menu'
-            switch ($nav) {
-                '2' { return 'main' }
-                '3' { return 'exit' }
-            }
-        } else {
+        if (-not $packages.Contains($choice)) {
             Write-Host "`n  Invalid choice." -ForegroundColor Red
             Start-Sleep -Milliseconds 800
+            continue
+        }
+
+        $pkg = $packages[$choice]
+        Set-PcTheme 'Action'
+        Clear-PcHost
+
+        if (Get-Command $pkg.Bin -CommandType Application -ErrorAction SilentlyContinue) {
+            Write-Host "[OK] $($pkg.Name) is already installed." -ForegroundColor Green
+            Write-Host "     Update it via Tools > Update all packages.`n" -ForegroundColor DarkGray
+        } elseif (-not $pm) {
+            Write-Host "[!!] No supported package manager found. Install $($pkg.Name) manually.`n" -ForegroundColor Red
+        } else {
+            Write-Host "[>>] Installing $($pkg.Name) via $($pm.Cmd)...`n" -ForegroundColor Yellow
+            & $pm.Cmd @($pm.Install) $pkg.Pkg
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "`n[OK] $($pkg.Name) installed." -ForegroundColor Green
+            } else {
+                Write-Host "`n[!!] Installation returned exit code $LASTEXITCODE." -ForegroundColor Red
+            }
+        }
+
+        $nav = Read-PcNavChoice 'Back to Programs Menu'
+        switch ($nav) {
+            '2' { return 'main' }
+            '3' { return 'exit' }
         }
     }
 }

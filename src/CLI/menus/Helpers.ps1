@@ -54,6 +54,24 @@ function Get-PcDesktopUser {
     }
 }
 
+# Detects the distro's package manager and the verbs pcHealth needs from it.
+# Returns $null when none of the supported managers is present.
+# Refresh is $null where the update verb already syncs the package index.
+function Get-PcPackageManager {
+    $managers = [ordered]@{
+        'apt'    = @{ Refresh = @('update');  List = @('list', '--upgradable'); Update = @('upgrade', '-y');  Install = @('install', '-y')      }
+        'dnf'    = @{ Refresh = $null;        List = @('check-update');         Update = @('upgrade', '-y');  Install = @('install', '-y')      }
+        'pacman' = @{ Refresh = @('-Sy');     List = @('-Qu');                  Update = @('-Syu', '--noconfirm'); Install = @('-S', '--noconfirm') }
+        'zypper' = @{ Refresh = @('refresh'); List = @('list-updates');         Update = @('update', '-y');   Install = @('install', '-y')      }
+    }
+    foreach ($cmd in $managers.Keys) {
+        if (Get-Command $cmd -CommandType Application -ErrorAction SilentlyContinue) {
+            return [PSCustomObject]($managers[$cmd] + @{ Cmd = $cmd })
+        }
+    }
+    return $null
+}
+
 # Opens a URL in the user's browser.
 # Start-Process cannot launch a URL on Linux -- it tries to exec it as a file --
 # so hand the address to xdg-open, and drop privileges so the browser lands in
@@ -180,8 +198,9 @@ function Write-PcHeader {
         } else { $null }
     } catch { $null }
     if (-not $fullName) {
-        $fullName = if ($IsLinux) { $env:SUDO_USER ?? $env:USER } else { $env:USERNAME }
+        $fullName = if ($IsLinux) { (Get-PcDesktopUser)?.Name } else { $env:USERNAME }
     }
+    if (-not $fullName) { $fullName = 'there' }
     $now = Get-Date -Format 'dddd, dd MMMM yyyy  HH:mm'
     Write-Host "  Hello, $fullName!  *  $now`n" -ForegroundColor DarkGray
 }
