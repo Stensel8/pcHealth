@@ -24,7 +24,8 @@ if ($IsLinux) {
     }
     # Also checked in Start.ps1; repeated here so tools can rely on being root
     # and call the package manager and systemctl directly, without sudo.
-    if ("$(& id -u 2>$null)".Trim() -ne '0') {
+    $uid = "$(& id -u 2>$null)".Trim()
+    if ($uid -ne '0') {
         Write-Host '[!!] pcHealth must be run as root on Linux.' -ForegroundColor Red
         Write-Host '     Run: sudo pwsh src/CLI/Start.ps1'       -ForegroundColor Yellow
         exit 1
