@@ -8,7 +8,8 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
-    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <!-- Matches the supported floor: Windows 11 25H2 (build 26200). -->
+    <TargetPlatformMinVersion>10.0.26100.0</TargetPlatformMinVersion>
     <RootNamespace>pcHealth</RootNamespace>
     <AssemblyName>pcHealth</AssemblyName>
     <ApplicationIcon>Assets\pcHealth.ico</ApplicationIcon>

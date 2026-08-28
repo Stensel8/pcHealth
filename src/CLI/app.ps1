@@ -8,19 +8,13 @@ $ErrorActionPreference = 'Stop'
 
 # -- Platform detection + version guards ---------------------------------------
 if ($IsLinux) {
-    # Also checked in start.sh; repeated here as safety net for direct invocation.
-    # Hard minimum: kernel 6.0. Recommended: 7.0.
+    # Also checked in Start.ps1; repeated here as safety net for direct invocation.
     $kernelVersion = (uname -r)
     $kernelMajor   = [int]($kernelVersion -split '[\.\-]')[0]
-    if ($kernelMajor -lt 6) {
+    if ($kernelMajor -lt 7) {
         Write-Host "[!!] pcHealth cannot run on kernel $kernelVersion." -ForegroundColor Red
-        Write-Host "     Minimum required: kernel 6.0." -ForegroundColor Red
+        Write-Host "     Minimum required: kernel 7.0." -ForegroundColor Red
         exit 1
-    } elseif ($kernelMajor -lt 7) {
-        Write-Host "[!] Your kernel ($kernelVersion) is below the recommended version (7.0)." -ForegroundColor Yellow
-        Write-Host "    Some features may not work correctly. Consider updating your kernel." -ForegroundColor Yellow
-        Write-Host "    https://www.kernel.org/" -ForegroundColor DarkGray
-        Write-Host ""
     }
     # Also checked in Start.ps1; repeated here so tools can rely on being root
     # and call the package manager and systemctl directly, without sudo.
@@ -34,19 +28,12 @@ if ($IsLinux) {
     $Global:PcPlatformLabel = 'Linux'
 } elseif ($IsWindows) {
     # Also checked in Start.ps1 before elevation; repeated here as safety net.
-    # Hard minimum: build 19045 (Win 10 22H2). Recommended: 26200 (Win 11 25H2).
     $build = [System.Environment]::OSVersion.Version.Build
-    if ($build -lt 19045) {
+    if ($build -lt 26200) {
         Write-Host "[!!] pcHealth cannot run on Windows build $build." -ForegroundColor Red
-        Write-Host "     Minimum required: build 19045 (Windows 10 version 22H2)." -ForegroundColor Red
+        Write-Host "     Minimum required: build 26200 (Windows 11 version 25H2)." -ForegroundColor Red
         Write-Host "     Please upgrade your system." -ForegroundColor Yellow
         exit 1
-    } elseif ($build -lt 26200) {
-        Write-Host "[!] Your Windows build ($build) is below the recommended version (26200 / Windows 11 25H2)." -ForegroundColor Yellow
-        Write-Host "    Some features may not work correctly. Consider updating Windows." -ForegroundColor Yellow
-        Write-Host "    https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information" -ForegroundColor DarkGray
-        Write-Host "    https://learn.microsoft.com/en-us/windows/release-health/release-information" -ForegroundColor DarkGray
-        Write-Host ""
     }
     $Global:PcPlatform      = 'Windows'
     $Global:PcPlatformLabel = 'Windows'

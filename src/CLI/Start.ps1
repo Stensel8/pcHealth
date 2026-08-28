@@ -21,16 +21,12 @@ if ($onLinux) {
         exit 1
     }
     $kernelMajor = [int]($kernelStr -split '[.-]')[0]
-    if ($kernelMajor -lt 6) {
+    if ($kernelMajor -lt 7) {
         Write-Host "[!!] pcHealth cannot run on kernel $kernelStr." -ForegroundColor Red
-        Write-Host "     Minimum required: kernel 6.0." -ForegroundColor Red
+        Write-Host "     Minimum required: kernel 7.0." -ForegroundColor Red
+        Write-Host "     https://www.kernel.org/" -ForegroundColor DarkGray
         Read-Host 'Press Enter to exit'
         exit 1
-    } elseif ($kernelMajor -lt 7) {
-        Write-Host "[!] Your kernel ($kernelStr) is below the recommended version (7.0)." -ForegroundColor Yellow
-        Write-Host "    Some features may not work correctly. Consider updating your kernel." -ForegroundColor Yellow
-        Write-Host "    https://www.kernel.org/" -ForegroundColor DarkGray
-        Write-Host ""
     }
 
     $isRoot = ("$(& id -u 2>$null)".Trim() -eq '0')
@@ -44,17 +40,12 @@ if ($onLinux) {
 # -- Windows: build check, elevate, relaunch in PS7 ---------------------------
 if (-not $onLinux) {
     $build = [System.Environment]::OSVersion.Version.Build
-    if ($build -lt 19045) {
+    if ($build -lt 26200) {
         Write-Host "[!!] pcHealth cannot run on Windows build $build." -ForegroundColor Red
-        Write-Host "     Minimum required: build 19045 (Windows 10 version 22H2)." -ForegroundColor Red
+        Write-Host "     Minimum required: build 26200 (Windows 11 version 25H2)." -ForegroundColor Red
+        Write-Host "     https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information" -ForegroundColor DarkGray
         Read-Host 'Press Enter to exit'
         exit 1
-    } elseif ($build -lt 26200) {
-        Write-Host "[!] Your Windows build ($build) is below the recommended version (26200 / Windows 11 25H2)." -ForegroundColor Yellow
-        Write-Host "    Some features may not work correctly. Consider updating Windows." -ForegroundColor Yellow
-        Write-Host "    https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information" -ForegroundColor DarkGray
-        Write-Host "    https://learn.microsoft.com/en-us/windows/release-health/release-information" -ForegroundColor DarkGray
-        Write-Host ""
     }
 
     $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
