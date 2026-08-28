@@ -120,6 +120,9 @@ Option numbers are assigned sequentially at runtime per platform - Windows-only 
 | Update all packages           | Linux     | apt / dnf / pacman / zypper                        |
 | Topgrade                      | Linux     | Full system upgrade: packages, flatpak, VS Code extensions, helm, uv, and more |
 | Battery Report                | Linux     | Laptop only - health, cycles, draw from sysfs      |
+| Scan + Repair                 | Linux     | Package integrity vs. package database             |
+| Disk Optimization             | Linux     | fstrim on SSDs; Linux needs no defragmenting       |
+| Firmware Update               | Linux     | fwupd / LVFS - BIOS, dock, SSD firmware            |
 | Disk Cleanup                  | Linux     | Package cache, journal logs, unused Flatpak runtimes, thumbnail cache |
 | Restart Audio                 | Linux     | Restarts PipeWire or PulseAudio user services      |
 | Reset Network Stack           | Linux     | Restarts NetworkManager, flushes DNS cache         |

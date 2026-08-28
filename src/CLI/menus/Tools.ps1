@@ -33,6 +33,9 @@ function Show-ToolsMenu {
         @{ Label = 'Update all packages';          Script = 'linux/Invoke-SystemUpdate.ps1';  Note = '(apt / dnf / pacman / zypper)';   Platforms = @('Linux') }
         @{ Label = 'Topgrade';                     Script = 'linux/Invoke-Topgrade.ps1';       Note = '(full system upgrade)';           Platforms = @('Linux') }
         @{ Label = 'Battery Report';               Script = 'linux/Get-BatteryReport.ps1';     Note = '(laptop only)';                   Platforms = @('Linux') }
+        @{ Label = 'Scan + Repair';                Script = 'linux/Invoke-ScanAndRepair.ps1';  Note = '(package integrity)';             Platforms = @('Linux') }
+        @{ Label = 'Disk Optimization';            Script = 'linux/Invoke-DiskOptimize.ps1';   Note = '(SSD trim)';                      Platforms = @('Linux') }
+        @{ Label = 'Firmware Update';              Script = 'linux/Invoke-FirmwareUpdate.ps1'; Note = '(fwupd / LVFS)';                  Platforms = @('Linux') }
         @{ Label = 'Disk Cleanup';                 Script = 'linux/Invoke-DiskCleanup.ps1';   Note = '(cache, journal, flatpak)';       Platforms = @('Linux') }
         @{ Label = 'Restart Audio';                Script = 'linux/Invoke-AudioRestart.ps1';  Note = '(PipeWire / PulseAudio)';         Platforms = @('Linux') }
         @{ Label = 'Reset Network Stack';          Script = 'linux/Invoke-NetworkReset.ps1';  Note = '';                                Platforms = @('Linux') }

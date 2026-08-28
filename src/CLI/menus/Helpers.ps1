@@ -57,12 +57,13 @@ function Get-PcDesktopUser {
 # Detects the distro's package manager and the verbs pcHealth needs from it.
 # Returns $null when none of the supported managers is present.
 # Refresh is $null where the update verb already syncs the package index.
+# Verify names its own command: rpm and debsums do the checking, not the manager.
 function Get-PcPackageManager {
     $managers = [ordered]@{
-        'apt'    = @{ Refresh = @('update');  List = @('list', '--upgradable'); Update = @('upgrade', '-y');  Install = @('install', '-y')      }
-        'dnf'    = @{ Refresh = $null;        List = @('check-update');         Update = @('upgrade', '-y');  Install = @('install', '-y')      }
-        'pacman' = @{ Refresh = @('-Sy');     List = @('-Qu');                  Update = @('-Syu', '--noconfirm'); Install = @('-S', '--noconfirm') }
-        'zypper' = @{ Refresh = @('refresh'); List = @('list-updates');         Update = @('update', '-y');   Install = @('install', '-y')      }
+        'apt'    = @{ Refresh = @('update');  List = @('list', '--upgradable'); Update = @('upgrade', '-y');  Install = @('install', '-y');      Verify = @('debsums', '-s')  }
+        'dnf'    = @{ Refresh = $null;        List = @('check-update');         Update = @('upgrade', '-y');  Install = @('install', '-y');      Verify = @('rpm', '-Va')     }
+        'pacman' = @{ Refresh = @('-Sy');     List = @('-Qu');                  Update = @('-Syu', '--noconfirm'); Install = @('-S', '--noconfirm'); Verify = @('pacman', '-Qkk') }
+        'zypper' = @{ Refresh = @('refresh'); List = @('list-updates');         Update = @('update', '-y');   Install = @('install', '-y');      Verify = @('rpm', '-Va')     }
     }
     foreach ($cmd in $managers.Keys) {
         if (Get-Command $cmd -CommandType Application -ErrorAction SilentlyContinue) {
