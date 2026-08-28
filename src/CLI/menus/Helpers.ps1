@@ -3,6 +3,89 @@
 # Display and navigation utilities used by all menu scripts.
 # ============================================================================
 
+# Runs a native command and returns its trimmed output, or $null when the
+# command is missing, fails, or prints nothing.
+# The bare `(& cmd ...).Trim()` idiom throws on $null and aborts the whole tool.
+# On Linux that is the common case, not the edge case: containers and WSL have
+# no systemd (timedatectl, systemctl), and mokutil, lspci or uptime may not be
+# installed at all.
+function Get-PcCommandOutput {
+    param(
+        [Parameter(Mandatory, Position = 0)][string]$Command,
+        [Parameter(Position = 1)][string[]]$Arguments = @()
+    )
+    if (-not (Get-Command $Command -CommandType Application -ErrorAction SilentlyContinue)) { return $null }
+    $out = try { & $Command @Arguments 2>$null } catch { $null }
+    if (-not $out) { return $null }
+    $text = ($out -join "`n").Trim()
+    if ($text) { return $text } else { return $null }
+}
+
+# Resolves the human user behind the session. Under `sudo pwsh` the process
+# environment describes root, so tools that touch the desktop session -- audio,
+# topgrade, the thumbnail cache, log off -- must not use $env:USER or $env:HOME.
+# Returns $null on Windows and when no user can be determined.
+function Get-PcDesktopUser {
+    if (-not $IsLinux) { return $null }
+
+    $name = $env:SUDO_USER
+    if (-not $name) { $name = $env:USER }
+    # sudo -i clears both; ask the kernel who owns the login session instead.
+    if (-not $name) { $name = Get-PcCommandOutput 'id' @('-un') }
+    if (-not $name) { return $null }
+
+    $uid = Get-PcCommandOutput 'id' @('-u', $name)
+    # Field 6 of the passwd entry is the home directory.
+    $passwd  = Get-PcCommandOutput 'getent' @('passwd', $name)
+    $homeDir = if ($passwd) { ($passwd -split ':')[5] } else { $null }
+    if (-not $homeDir) { $homeDir = if ($name -eq 'root') { '/root' } else { "/home/$name" } }
+
+    # Session bus of the user's login session; needed by `systemctl --user`.
+    # The inherited address is passed on to `env` as key=value, so reject anything
+    # that is not a D-Bus transport and derive the standard path instead.
+    $dbus = $env:DBUS_SESSION_BUS_ADDRESS
+    if ($dbus -notmatch '^(unix|tcp|nonce-tcp|autolaunch):') { $dbus = "unix:path=/run/user/$uid/bus" }
+
+    [PSCustomObject]@{
+        Name = $name
+        Uid  = $uid
+        Home = $homeDir
+        Dbus = $dbus
+    }
+}
+
+# Opens a URL in the user's browser.
+# Start-Process cannot launch a URL on Linux -- it tries to exec it as a file --
+# so hand the address to xdg-open, and drop privileges so the browser lands in
+# the desktop session rather than root's.
+function Open-PcUrl {
+    param([Parameter(Mandatory)][string]$Url)
+    try {
+        if (-not $IsLinux) {
+            Start-Process $Url -ErrorAction Stop
+            return
+        }
+        $opener = @('xdg-open', 'gio', 'sensible-browser') |
+            Where-Object { Get-Command $_ -CommandType Application -ErrorAction SilentlyContinue } |
+            Select-Object -First 1
+        if (-not $opener) {
+            Write-Host "`n  Open this address manually: $Url" -ForegroundColor Yellow
+            return
+        }
+        $openArgs = if ($opener -eq 'gio') { @('open', $Url) } else { @($Url) }
+
+        $user = Get-PcDesktopUser
+        if ($user -and $user.Name -ne 'root') {
+            & sudo -u $user.Name env "DBUS_SESSION_BUS_ADDRESS=$($user.Dbus)" $opener @openArgs 2>&1 | Out-Null
+        } else {
+            & $opener @openArgs 2>&1 | Out-Null
+        }
+    } catch {
+        Write-Host "`n  [!!] Could not open browser: $_" -ForegroundColor Red
+        Write-Host "      Open this address manually: $Url" -ForegroundColor Yellow
+    }
+}
+
 # Write to both the console and a persistent log file under C:\pcHealth\Logs\ (Windows)
 # or ~/pcHealth/Logs/ (Linux).
 function Write-PcLog {
