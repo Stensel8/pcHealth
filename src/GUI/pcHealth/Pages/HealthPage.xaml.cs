@@ -446,7 +446,12 @@ public sealed partial class HealthPage : Page
                                         : "Idle  (plugged in, not charging)";
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // Ticks every 3s, so log at Debug: a removed or sleeping battery
+            // would otherwise fill the log with the same entry.
+            NLog.LogManager.GetCurrentClassLogger().Debug(ex, "Live battery reading failed");
+        }
     }
 
     private CheckStatus PopulateSecurityCard(StackPanel panel, SecurityInfo data, Expander expander)
