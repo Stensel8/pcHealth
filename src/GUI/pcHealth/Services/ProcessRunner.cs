@@ -1,10 +1,11 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace pcHealth.Services;
 
-internal sealed class ProcessRunner : IProcessRunner
+internal sealed partial class ProcessRunner : IProcessRunner
 {
-    public async Task RunAsync(
+    public async Task<int> RunAsync(
         string fileName,
         string arguments,
         Action<string> onLine,
@@ -22,8 +23,8 @@ internal sealed class ProcessRunner : IProcessRunner
         };
 
         using var proc = new Process { StartInfo = psi };
-        proc.OutputDataReceived += (_, e) => { if (e.Data is not null) onLine(e.Data); };
-        proc.ErrorDataReceived += (_, e) => { if (e.Data is not null) onLine(e.Data); };
+        proc.OutputDataReceived += (_, e) => { if (e.Data is not null) onLine(StripAnsi(e.Data)); };
+        proc.ErrorDataReceived += (_, e) => { if (e.Data is not null) onLine(StripAnsi(e.Data)); };
 
         proc.Start();
         proc.BeginOutputReadLine();
@@ -51,5 +52,14 @@ internal sealed class ProcessRunner : IProcessRunner
         {
             timeoutCts?.Dispose();
         }
+
+        return proc.ExitCode;
     }
+
+    // pwsh and third-party scripts colour their output; a TextBlock renders the
+    // escapes literally. Stripped here so every page benefits.
+    [GeneratedRegex(@"\x1B(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07\x1B]*(?:\x07|\x1B\\))")]
+    private static partial Regex AnsiPattern();
+
+    private static string StripAnsi(string line) => AnsiPattern().Replace(line, string.Empty);
 }

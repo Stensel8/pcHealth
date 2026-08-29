@@ -2,7 +2,8 @@ namespace pcHealth.Services;
 
 public interface IProcessRunner
 {
-    Task RunAsync(
+    /// <summary>Runs a process and returns its exit code.</summary>
+    Task<int> RunAsync(
         string fileName,
         string arguments,
         Action<string> onLine,
