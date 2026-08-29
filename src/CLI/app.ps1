@@ -70,6 +70,10 @@ $Global:PcVersion = if (Test-Path $versionFile) {
 
 # Order matters: Helpers must load before Main/Tools/Programs.
 . (Join-Path -Path $PSScriptRoot -ChildPath 'menus' -AdditionalChildPath 'Helpers.ps1')
+
+# Resolved once here: the Tools menu hides package- and boot-related tools on
+# image-based systems, where they cannot work.
+$Global:PcImageBased = Test-PcImageBasedSystem
 . (Join-Path -Path $PSScriptRoot -ChildPath 'menus' -AdditionalChildPath 'Main.ps1')
 . (Join-Path -Path $PSScriptRoot -ChildPath 'menus' -AdditionalChildPath 'Tools.ps1')
 . (Join-Path -Path $PSScriptRoot -ChildPath 'menus' -AdditionalChildPath 'Programs.ps1')

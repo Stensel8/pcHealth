@@ -31,7 +31,9 @@ if (-not $smartctl) {
     if ($answer -match '^[Yy]') {
         if ($IsLinux) {
             $pm = Get-PcPackageManager
-            if ($pm) { & $pm.Cmd @($pm.Install) smartmontools }
+            if ($Global:PcImageBased) {
+                Write-Host '[!!] Image-based system -- install smartmontools with Homebrew or Distrobox.' -ForegroundColor Yellow
+            } elseif ($pm) { & $pm.Cmd @($pm.Install) smartmontools }
             else { Write-Host '[!!] No supported package manager found. Install smartmontools manually.' -ForegroundColor Yellow }
         } else {
             if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {

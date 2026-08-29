@@ -246,10 +246,9 @@ function Show-LinuxProgramsMenu {
         Clear-PcHost
         Write-PcHeader 'Programs'
 
-        if ($pm -and $pm.Atomic) {
-            Write-Host "  Package manager: $($pm.Cmd)  (image-based)" -ForegroundColor DarkGray
-            Write-Host '  Installing here layers the package into the image and needs a' -ForegroundColor DarkGray
-            Write-Host "  reboot. Homebrew or a Distrobox container is usually better.`n" -ForegroundColor DarkGray
+        if ($Global:PcImageBased) {
+            Write-Host '  Image-based system: pcHealth does not install packages here.' -ForegroundColor DarkGray
+            Write-Host "  Use Homebrew or a Distrobox container instead.`n" -ForegroundColor DarkGray
         } elseif ($pm) {
             Write-Host "  Package manager: $($pm.Cmd)`n" -ForegroundColor DarkGray
         } else {
@@ -291,17 +290,14 @@ function Show-LinuxProgramsMenu {
         if (Get-Command $pkg.Bin -CommandType Application -ErrorAction SilentlyContinue) {
             Write-Host "[OK] $($pkg.Name) is already installed." -ForegroundColor Green
             Write-Host "     Update it via Tools > Update all packages.`n" -ForegroundColor DarkGray
-        } elseif (-not $pm -or -not $pm.Install) {
-            Write-Host "[!!] This system has no package install command pcHealth can use." -ForegroundColor Red
+        } elseif ($Global:PcImageBased -or -not $pm) {
+            Write-Host '[!!] pcHealth does not install packages on an image-based system.' -ForegroundColor Red
             Write-Host "     Install $($pkg.Name) with Homebrew or inside a Distrobox container.`n" -ForegroundColor Yellow
         } else {
             Write-Host "[>>] Installing $($pkg.Name) via $($pm.Cmd)...`n" -ForegroundColor Yellow
             & $pm.Cmd @($pm.Install) $pkg.Pkg
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "`n[OK] $($pkg.Name) installed." -ForegroundColor Green
-                if ($pm.Atomic) {
-                    Write-Host '     Layered into a new deployment -- reboot to use it.' -ForegroundColor Yellow
-                }
             } else {
                 Write-Host "`n[!!] Installation returned exit code $LASTEXITCODE." -ForegroundColor Red
             }

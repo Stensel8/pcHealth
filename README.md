@@ -28,6 +28,8 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 
 pcHealth targets current systems only and exits immediately below the minimum. Everything in that range boots UEFI with GPT, which is why the repair tools are UEFI-only and no MBR/CSM paths remain.
 
+On image-based systems (Fedora Silverblue, Bazzite, Kinoite, openSUSE MicroOS) the tools that manage packages or boot files are hidden rather than reimplemented: `/usr` is read-only and the bootloader belongs to the deployment, so `bootc` and `rpm-ostree` own that work. The other 14 Linux tools -- all the diagnostics -- run normally.
+
 - Windows release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
 - Linux kernel releases: https://www.kernel.org/
 

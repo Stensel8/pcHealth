@@ -55,8 +55,9 @@ function Get-PcDesktopUser {
 }
 
 # True on image-based systems: Fedora Silverblue/Bazzite/Kinoite, openSUSE
-# MicroOS and friends. /usr is read-only there, so a traditional package
-# manager cannot change the running system even when it is installed.
+# MicroOS and friends. /usr is read-only and the bootloader belongs to the
+# deployment, so tools that manage packages or boot files are hidden there
+# rather than taught a second dialect that would need chasing as bootc evolves.
 function Test-PcImageBasedSystem {
     if (-not $IsLinux) { return $false }
     return (Test-Path '/run/ostree-booted') -or (Test-Path '/ostree')
@@ -76,43 +77,6 @@ function Get-PcPackageManager {
         'dnf'    = @{ Refresh = $null;        List = @('check-update');         Update = @('upgrade', '-y');  Install = @('install', '-y');      Verify = @('rpm', '-Va')     }
         'pacman' = @{ Refresh = @('-Sy');     List = @('-Qu');                  Update = @('-Syu', '--noconfirm'); Install = @('-S', '--noconfirm'); Verify = @('pacman', '-Qkk') }
         'zypper' = @{ Refresh = @('refresh'); List = @('list-updates');         Update = @('update', '-y');   Install = @('install', '-y');      Verify = @('rpm', '-Va')     }
-    }
-
-    # Image-based systems come first. Bazzite ships dnf, and Distrobox exports put
-    # apt and pacman on PATH too, but none of them can change a read-only /usr --
-    # the system is updated as a whole image instead.
-    if (Test-PcImageBasedSystem) {
-        # Prefer rpm-ostree where it exists. Images are moving to bootc, which
-        # updates the whole image but has no package or cleanup verbs at all --
-        # those come back as $null so callers can say so rather than guess.
-        if (Get-Command rpm-ostree -CommandType Application -ErrorAction SilentlyContinue) {
-            return [PSCustomObject]@{
-                Cmd     = 'rpm-ostree'
-                Atomic  = $true
-                Refresh = $null
-                List    = @('upgrade', '--preview')
-                Update  = @('upgrade')
-                Install = @('install', '-y')
-                # -b and -m clear temp files and cached metadata only. Never -r or
-                # -p: those delete the rollback and pending deployments, which are
-                # the whole safety net on an image-based system.
-                Clean   = @('cleanup', '-bm')
-                Verify  = @('ostree', 'fsck')
-            }
-        }
-        if (Get-Command bootc -CommandType Application -ErrorAction SilentlyContinue) {
-            return [PSCustomObject]@{
-                Cmd     = 'bootc'
-                Atomic  = $true
-                Refresh = $null
-                List    = @('upgrade', '--check')
-                Update  = @('upgrade')
-                Install = $null
-                Clean   = $null
-                Verify  = $null
-            }
-        }
-        return $null
     }
 
     $info   = Get-LinuxDistroInfo
@@ -135,7 +99,7 @@ function Get-PcPackageManager {
     if (-not $name -or -not (Get-Command $name -CommandType Application -ErrorAction SilentlyContinue)) {
         return $null
     }
-    return [PSCustomObject]($definitions[$name] + @{ Cmd = $name; Atomic = $false })
+    return [PSCustomObject]($definitions[$name] + @{ Cmd = $name })
 }
 
 # Opens a URL in the user's browser.
