@@ -99,20 +99,33 @@ if (-not $windir) {
     Write-Warning "Windows partition not found -- cannot rebuild the boot files."
 } else {
     # The EFI System Partition normally has no drive letter; mountvol /S assigns
-    # one so bcdboot can write to it.
-    & mountvol.exe S: /S
-    if (Test-Path 'S:\') {
-        # /f UEFI, not /f ALL: ALL also writes BIOS boot files, which nothing in
-        # the supported range boots from.
-        & bcdboot.exe $windir /s S: /f UEFI
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "[OK] EFI boot files rewritten.`n" -ForegroundColor Green
-        } else {
-            Write-Warning "bcdboot exited with code $LASTEXITCODE."
-        }
-        & mountvol.exe S: /D
+    # one so bcdboot can write to it. Pick a letter that is genuinely free --
+    # hardcoding S: and testing Test-Path afterwards would silently target
+    # whatever was already mounted there and then dismount the user's drive.
+    $espLetter = 68..90 | ForEach-Object { [char]$_ } |
+        Where-Object { -not (Test-Path "${_}:\") } | Select-Object -First 1
+
+    if (-not $espLetter) {
+        Write-Warning "No free drive letter available to mount the EFI System Partition."
     } else {
-        Write-Warning "Could not mount the EFI System Partition. Manual intervention may be required."
+        & mountvol.exe "${espLetter}:" /S
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Could not mount the EFI System Partition (mountvol exit $LASTEXITCODE)."
+        } else {
+            try {
+                # /f UEFI, not /f ALL: ALL also writes BIOS boot files, which
+                # nothing in the supported range boots from.
+                & bcdboot.exe $windir /s "${espLetter}:" /f UEFI
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "[OK] EFI boot files rewritten.`n" -ForegroundColor Green
+                } else {
+                    Write-Warning "bcdboot exited with code $LASTEXITCODE."
+                }
+            } finally {
+                # Always release the ESP, even if bcdboot threw.
+                & mountvol.exe "${espLetter}:" /D
+            }
+        }
     }
 }
 
