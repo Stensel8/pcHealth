@@ -28,18 +28,18 @@ function Invoke-Step {
 
 Write-Host "  Note: the network connection will drop briefly.`n" -ForegroundColor DarkGray
 
-$nmActive = (& systemctl is-active NetworkManager 2>$null).Trim() -eq 'active'
+$nmActive = (Get-PcCommandOutput 'systemctl' @('is-active', 'NetworkManager')) -eq 'active'
 
 if ($nmActive -or (Get-Command nmcli -ErrorAction SilentlyContinue)) {
-    Invoke-Step 'Restarting NetworkManager...' { sudo systemctl restart NetworkManager }
+    Invoke-Step 'Restarting NetworkManager...' { systemctl restart NetworkManager }
 } else {
-    Invoke-Step 'Restarting systemd-networkd...' { sudo systemctl restart systemd-networkd }
+    Invoke-Step 'Restarting systemd-networkd...' { systemctl restart systemd-networkd }
 }
 
 if (Get-Command resolvectl -ErrorAction SilentlyContinue) {
-    Invoke-Step 'Flushing DNS cache...' { sudo resolvectl flush-caches }
+    Invoke-Step 'Flushing DNS cache...' { resolvectl flush-caches }
 } elseif (Get-Command systemd-resolve -ErrorAction SilentlyContinue) {
-    Invoke-Step 'Flushing DNS cache...' { sudo systemd-resolve --flush-caches }
+    Invoke-Step 'Flushing DNS cache...' { systemd-resolve --flush-caches }
 }
 
 Write-Host "  Network reset complete.`n" -ForegroundColor Green

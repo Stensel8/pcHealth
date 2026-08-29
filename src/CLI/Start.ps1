@@ -12,26 +12,24 @@ $isPwsh7 = $PSVersionTable.PSVersion.Major -ge 7
 
 # -- Linux: kernel version check + root guard ---------------------------------
 if ($onLinux) {
-    $kernelStr   = (& uname -r 2>$null).Trim()
+    # Start.ps1 runs before Helpers.ps1 is loaded, so guard the null here:
+    # calling .Trim() on a missing command's output throws before the check below.
+    $kernelStr   = "$(& uname -r 2>$null)".Trim()
     if (-not $kernelStr) {
         Write-Host "[!!] Could not determine kernel version (uname -r returned nothing)." -ForegroundColor Red
         Read-Host 'Press Enter to exit'
         exit 1
     }
     $kernelMajor = [int]($kernelStr -split '[.-]')[0]
-    if ($kernelMajor -lt 6) {
+    if ($kernelMajor -lt 7) {
         Write-Host "[!!] pcHealth cannot run on kernel $kernelStr." -ForegroundColor Red
-        Write-Host "     Minimum required: kernel 6.0." -ForegroundColor Red
+        Write-Host "     Minimum required: kernel 7.0." -ForegroundColor Red
+        Write-Host "     https://www.kernel.org/" -ForegroundColor DarkGray
         Read-Host 'Press Enter to exit'
         exit 1
-    } elseif ($kernelMajor -lt 7) {
-        Write-Host "[!] Your kernel ($kernelStr) is below the recommended version (7.0)." -ForegroundColor Yellow
-        Write-Host "    Some features may not work correctly. Consider updating your kernel." -ForegroundColor Yellow
-        Write-Host "    https://www.kernel.org/" -ForegroundColor DarkGray
-        Write-Host ""
     }
 
-    $isRoot = ((& id -u 2>$null).Trim() -eq '0')
+    $isRoot = ("$(& id -u 2>$null)".Trim() -eq '0')
     if (-not $isRoot) {
         Write-Host '[!!] pcHealth must be run as root on Linux.' -ForegroundColor Red
         Write-Host '     Run: sudo pwsh src/CLI/Start.ps1'       -ForegroundColor Yellow
@@ -42,17 +40,12 @@ if ($onLinux) {
 # -- Windows: build check, elevate, relaunch in PS7 ---------------------------
 if (-not $onLinux) {
     $build = [System.Environment]::OSVersion.Version.Build
-    if ($build -lt 19045) {
+    if ($build -lt 26200) {
         Write-Host "[!!] pcHealth cannot run on Windows build $build." -ForegroundColor Red
-        Write-Host "     Minimum required: build 19045 (Windows 10 version 22H2)." -ForegroundColor Red
+        Write-Host "     Minimum required: build 26200 (Windows 11 version 25H2)." -ForegroundColor Red
+        Write-Host "     https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information" -ForegroundColor DarkGray
         Read-Host 'Press Enter to exit'
         exit 1
-    } elseif ($build -lt 26200) {
-        Write-Host "[!] Your Windows build ($build) is below the recommended version (26200 / Windows 11 25H2)." -ForegroundColor Yellow
-        Write-Host "    Some features may not work correctly. Consider updating Windows." -ForegroundColor Yellow
-        Write-Host "    https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information" -ForegroundColor DarkGray
-        Write-Host "    https://learn.microsoft.com/en-us/windows/release-health/release-information" -ForegroundColor DarkGray
-        Write-Host ""
     }
 
     $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
@@ -162,9 +155,9 @@ if (-not $smartctlOk) {
     $answer = Read-Host $prompt
     if ($answer -match '^[Yy]') {
         if ($onLinux) {
-            if     (Get-Command apt-get -ErrorAction SilentlyContinue) { sudo apt-get install -y smartmontools }
-            elseif (Get-Command dnf     -ErrorAction SilentlyContinue) { sudo dnf install -y smartmontools }
-            elseif (Get-Command pacman  -ErrorAction SilentlyContinue) { sudo pacman -S --noconfirm smartmontools }
+            if     (Get-Command apt-get -ErrorAction SilentlyContinue) { apt-get install -y smartmontools }
+            elseif (Get-Command dnf     -ErrorAction SilentlyContinue) { dnf install -y smartmontools }
+            elseif (Get-Command pacman  -ErrorAction SilentlyContinue) { pacman -S --noconfirm smartmontools }
             else { Write-Host '[!!] No supported package manager found. Install smartmontools manually.' -ForegroundColor Yellow }
         } elseif (Get-Command winget -ErrorAction SilentlyContinue) {
             winget install --source winget --id smartmontools.smartmontools -e --silent `

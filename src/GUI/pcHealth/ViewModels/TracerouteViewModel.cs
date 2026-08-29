@@ -40,7 +40,12 @@ public partial class TracerouteViewModel : ObservableObject
                 targetAddress = addresses.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork)
                     ?? addresses.FirstOrDefault();
             }
-            catch { }
+            catch (Exception ex) when (ex is SocketException or ArgumentException)
+            {
+                // Not fatal: the trace still runs, it just cannot mark the final hop.
+                // ArgumentException covers a malformed target the user typed.
+                Log.Debug(ex, "Could not resolve {Target}", Target);
+            }
 
             await Task.Run(async () =>
             {

@@ -30,16 +30,27 @@ public partial class BootRepairViewModel : ObservableObject
         {
             var bootrec = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "bootrec.exe");
 
-            Append("[>>] bootrec /fixmbr");
-            await _runner.RunAsync(bootrec, "/fixmbr", Append, ct);
-            Append("\n[>>] bootrec /fixboot");
-            await _runner.RunAsync(bootrec, "/fixboot", Append, ct);
-            Append("\n[>>] bootrec /scanos");
-            await _runner.RunAsync(bootrec, "/scanos", Append, ct);
-            Append("\n[>>] bootrec /rebuildbcd");
-            await _runner.RunAsync(bootrec, "/rebuildbcd", Append, ct);
-            Append("\n[OK] Boot repair complete. Reboot the system to verify.");
-            Status = "Done. Reboot required.";
+            var failed = new List<string>();
+            foreach (var step in new[] { "/fixmbr", "/fixboot", "/scanos", "/rebuildbcd" })
+            {
+                Append($"\n[>>] bootrec {step}");
+                if (await _runner.RunAsync(bootrec, step, Append, ct) != 0)
+                    failed.Add(step);
+            }
+
+            if (failed.Count == 0)
+            {
+                Append("\n[OK] Boot repair complete. Reboot the system to verify.");
+                Status = "Done. Reboot required.";
+            }
+            else
+            {
+                // /fixboot returns "Access is denied" on every EFI system, so a
+                // failure here is expected on modern hardware rather than alarming.
+                Append($"\n[!!] These steps failed: {string.Join(", ", failed)}.");
+                Append("     On a UEFI/GPT system that is normal for /fixmbr and /fixboot.");
+                Status = "Completed with errors.";
+            }
         }
         catch (OperationCanceledException)
         {

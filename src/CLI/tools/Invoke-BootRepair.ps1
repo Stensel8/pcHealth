@@ -1,8 +1,14 @@
 ﻿#Requires -Version 7.0
 # ============================================================================
-# pcHealth -- Boot Record Repair
-# Attempts to repair the boot record via CHKDSK, SFC, BOOTREC and BCDBOOT.
+# pcHealth -- Boot Repair (UEFI)
+# Repairs the EFI boot files via CHKDSK, SFC and BCDBOOT.
 # Best run from a recovery environment (WinRE/CMD) with Administrator rights.
+#
+# UEFI only. Windows 11 requires UEFI + GPT and pcHealth's minimum is build
+# 26200, so every supported system boots UEFI. The old bootrec /fixmbr and
+# /fixboot steps wrote MBR-era boot code that nothing on a GPT disk reads --
+# /fixboot in fact returns "Access is denied" on EFI systems, which is why the
+# real repair was always the bcdboot fallback underneath it.
 # ============================================================================
 
 if (Get-Command Set-PcTheme -ErrorAction SilentlyContinue) {
@@ -11,11 +17,27 @@ if (Get-Command Set-PcTheme -ErrorAction SilentlyContinue) {
 }
 
 Write-Host "`n$('=' * 60)" -ForegroundColor Red
-Write-Host "  Boot Record Repair" -ForegroundColor Red
+Write-Host "  Boot Repair  (UEFI)" -ForegroundColor Red
 Write-Host "$('=' * 60)`n" -ForegroundColor Red
 Write-Host "  WARNING: This operation modifies boot-critical files." -ForegroundColor Yellow
 Write-Host "  Incorrect use can render the system unbootable." -ForegroundColor Yellow
 Write-Host "  Only proceed if you understand what you are doing.`n" -ForegroundColor Yellow
+
+# PEFirmwareType: 1 = legacy BIOS, 2 = UEFI. Refuse rather than guess -- the
+# repair below writes EFI boot files, which do nothing on a BIOS/MBR install.
+$firmwareType = try {
+    (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control' -Name PEFirmwareType -ErrorAction Stop).PEFirmwareType
+} catch {
+    Write-Debug "PEFirmwareType registry property not found: $_"
+    $null
+}
+if ($firmwareType -ne 2) {
+    Write-Host "[!!] This system does not report UEFI firmware (PEFirmwareType = $firmwareType)." -ForegroundColor Red
+    Write-Host "     pcHealth only repairs UEFI boot files. A legacy BIOS/MBR install" -ForegroundColor Yellow
+    Write-Host "     needs recovery media and manual repair." -ForegroundColor Yellow
+    Write-Host ''
+    return
+}
 
 $confirm1 = (Read-Host "  Type 'yes' to continue or anything else to cancel").Trim().ToLower()
 if ($confirm1 -ne 'yes') {
@@ -72,22 +94,39 @@ if ($win) {
 } else { Write-Warning "Skipping SFC — Windows partition not found." }
 Write-Host "[OK] SFC done.`n" -ForegroundColor Green
 
-Write-Host "[>>] Step 3/3 -- BOOTREC..." -ForegroundColor Yellow
-& bootrec.exe /fixmbr
-$fixboot = & bootrec.exe /fixboot 2>&1
-& bootrec.exe /scanos
-& bootrec.exe /rebuildbcd
+Write-Host "[>>] Step 3/3 -- Rewriting EFI boot files (bcdboot)..." -ForegroundColor Yellow
+if (-not $windir) {
+    Write-Warning "Windows partition not found -- cannot rebuild the boot files."
+} else {
+    # The EFI System Partition normally has no drive letter; mountvol /S assigns
+    # one so bcdboot can write to it. Pick a letter that is genuinely free --
+    # hardcoding S: and testing Test-Path afterwards would silently target
+    # whatever was already mounted there and then dismount the user's drive.
+    $espLetter = 68..90 | ForEach-Object { [char]$_ } |
+        Where-Object { -not (Test-Path "${_}:\") } | Select-Object -First 1
 
-if ($fixboot -match 'Access is denied') {
-    Write-Warning "/fixboot access denied -- attempting bcdboot fallback (EFI)..."
-    & mountvol.exe S: /S
-    if (Test-Path 'S:\') {
-        & bcdboot.exe $windir /s S: /f ALL
-        Write-Host "[OK] bcdboot completed." -ForegroundColor Green
+    if (-not $espLetter) {
+        Write-Warning "No free drive letter available to mount the EFI System Partition."
     } else {
-        Write-Warning "Could not mount EFI partition. Manual intervention may be required."
+        & mountvol.exe "${espLetter}:" /S
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Could not mount the EFI System Partition (mountvol exit $LASTEXITCODE)."
+        } else {
+            try {
+                # /f UEFI, not /f ALL: ALL also writes BIOS boot files, which
+                # nothing in the supported range boots from.
+                & bcdboot.exe $windir /s "${espLetter}:" /f UEFI
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "[OK] EFI boot files rewritten.`n" -ForegroundColor Green
+                } else {
+                    Write-Warning "bcdboot exited with code $LASTEXITCODE."
+                }
+            } finally {
+                # Always release the ESP, even if bcdboot threw.
+                & mountvol.exe "${espLetter}:" /D
+            }
+        }
     }
 }
-Write-Host "[OK] BOOTREC done.`n" -ForegroundColor Green
 
 Write-Host "All steps completed. Reboot the system to verify.`n" -ForegroundColor Green

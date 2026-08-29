@@ -17,6 +17,7 @@ Write-Host "  [1]  Errors from today"
 Write-Host "  [2]  Last 100 error/warning entries"
 Write-Host "  [3]  Boot messages (current boot)"
 Write-Host "  [4]  Kernel messages (dmesg)"
+Write-Host "  [5]  Failed services"
 Write-Host "  [B]  Back`n"
 
 $choice = (Read-Host "  Choice").Trim().ToUpper()
@@ -37,6 +38,16 @@ switch ($choice) {
     '4' {
         Write-Host "`n[>>] Kernel messages...`n" -ForegroundColor Yellow
         & dmesg --level=err,warn 2>$null | tail -n 50
+    }
+    '5' {
+        Write-Host "`n[>>] Failed systemd units...`n" -ForegroundColor Yellow
+        $failed = Get-PcCommandOutput 'systemctl' @('--failed', '--no-legend', '--no-pager')
+        if ($failed) {
+            Write-Host $failed
+            Write-Host "`n  Inspect one with: journalctl -u <unit> -b" -ForegroundColor DarkGray
+        } else {
+            Write-Host '  No failed units.' -ForegroundColor Green
+        }
     }
     'B' { return }
     default { Write-Host "`n  Invalid choice.`n" -ForegroundColor Red }

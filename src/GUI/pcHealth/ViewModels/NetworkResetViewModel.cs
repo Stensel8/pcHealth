@@ -47,14 +47,24 @@ public partial class NetworkResetViewModel : ObservableObject
                 Append("[>>] Resetting Winsock catalog…");
             });
 
-            await _runner.RunAsync("netsh.exe", "winsock reset catalog", Append);
-            Append("[OK] Winsock reset.");
+            int winsock = await _runner.RunAsync("netsh.exe", "winsock reset catalog", Append);
+            Append(winsock == 0 ? "[OK] Winsock reset." : $"[!!] Winsock reset failed (exit {winsock}).");
+
             Append("[>>] Resetting IPv4 stack…");
-            await _runner.RunAsync("netsh.exe", "int ipv4 reset", Append);
+            int v4 = await _runner.RunAsync("netsh.exe", "int ipv4 reset", Append);
             Append("[>>] Resetting IPv6 stack…");
-            await _runner.RunAsync("netsh.exe", "int ipv6 reset", Append);
-            Append("\n[OK] Network stack reset complete. Reboot to apply all changes.");
-            Status = "Done. Reboot recommended.";
+            int v6 = await _runner.RunAsync("netsh.exe", "int ipv6 reset", Append);
+
+            if (winsock == 0 && v4 == 0 && v6 == 0)
+            {
+                Append("\n[OK] Network stack reset complete. Reboot to apply all changes.");
+                Status = "Done. Reboot recommended.";
+            }
+            else
+            {
+                Append($"\n[!!] Some steps failed (winsock {winsock}, IPv4 {v4}, IPv6 {v6}). Run as Administrator.");
+                Status = "Completed with errors.";
+            }
         }
         catch (Exception ex)
         {

@@ -4,12 +4,12 @@
 
 The table below lists each supported platform, its recommended and hard minimum OS version, and its current support status within this project.
 
-| Platform | Recommended   | Hard minimum        | Status                 |
-|----------|---------------|---------------------|------------------------|
-| Windows  | Build 26200+  | Build 19045 (22H2)  | ✅ Actively maintained |
-| Linux    | Kernel 7.0+   | Kernel 6.0          | ✅ Actively maintained |
+| Platform | Minimum                       | Status                 |
+|----------|-------------------------------|------------------------|
+| Windows  | Build 26200 (Windows 11 25H2) | ✅ Actively maintained |
+| Linux    | Kernel 7.0                    | ✅ Actively maintained |
 
-Running below the recommended version shows a warning at startup but does not block the application. Running below the hard minimum exits immediately.
+Running below the minimum exits immediately; there is no warn-and-continue tier. Older releases are out of scope rather than best-effort: Windows 10 22H2 reached end of life in October 2025, and supporting pre-UEFI systems would mean carrying MBR/CSM repair paths that cannot be tested on any supported target.
 
 - Windows release info: https://learn.microsoft.com/en-us/windows/release-health/release-information
 - Windows 11 release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
@@ -39,4 +39,4 @@ We aim to respond within **7 days** and will coordinate a fix and disclosure tim
 
 ## Scope
 
-These scripts run with administrator privileges and interact with the OS directly (SFC, DISM, network stack, boot record). Please treat any issues that could lead to privilege escalation, data loss, or unintended system modification as security-relevant.
+These scripts run with administrator privileges and interact with the OS directly (SFC, DISM, network stack, UEFI boot files). Please treat any issues that could lead to privilege escalation, data loss, or unintended system modification as security-relevant.

@@ -5,10 +5,10 @@
 
 if ($IsLinux) {
     $hostname  = [System.Net.Dns]::GetHostName()
-    $kernel    = (& uname -r 2>$null).Trim()
-    $arch      = (& uname -m 2>$null).Trim()
-    $uptime    = (& 'uptime' -p 2>$null).Trim()
-    $user      = $env:USER ?? $env:USERNAME
+    $kernel    = (Get-PcCommandOutput 'uname'  @('-r')) ?? 'N/A'
+    $arch      = (Get-PcCommandOutput 'uname'  @('-m')) ?? 'N/A'
+    $uptime    = (Get-PcCommandOutput 'uptime' @('-p')) ?? 'N/A'
+    $user      = (Get-PcDesktopUser)?.Name     ?? 'N/A'
 
     $osName = (Get-LinuxDistroInfo)['PRETTY_NAME']
 
@@ -43,8 +43,8 @@ if ($IsLinux) {
 
     # Secure Boot
     $secureBoot = 'N/A'
-    if (Get-Command mokutil -ErrorAction SilentlyContinue) {
-        $mokOut = (& mokutil --sb-state 2>$null).Trim()
+    $mokOut = Get-PcCommandOutput 'mokutil' @('--sb-state')
+    if ($mokOut) {
         $secureBoot = if ($mokOut -match 'enabled') { 'Enabled' } elseif ($mokOut -match 'disabled') { 'Disabled' } else { $mokOut }
     } elseif (Test-Path '/sys/firmware/efi/efivars') {
         $sbVar = Get-ChildItem '/sys/firmware/efi/efivars' -Filter 'SecureBoot-*' -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -60,8 +60,7 @@ if ($IsLinux) {
     }
 
     # Last boot timestamp
-    $lastBoot = (& uptime -s 2>$null).Trim()
-    if (-not $lastBoot) { $lastBoot = 'N/A' }
+    $lastBoot = (Get-PcCommandOutput 'uptime' @('-s')) ?? 'N/A'
 
     # Desktop environment / Wayland or X11
     $de      = $env:XDG_CURRENT_DESKTOP ?? $env:DESKTOP_SESSION ?? 'Unknown'
@@ -82,8 +81,9 @@ if ($IsLinux) {
     }
 
     # Timezone
-    $timezone = (& timedatectl show --property=Timezone --value 2>$null).Trim()
-    if (-not $timezone) { $timezone = $env:TZ ?? (& date '+%Z' 2>$null).Trim() ?? 'N/A' }
+    # timedatectl is unavailable without systemd (containers, WSL, OpenRC distros).
+    $timezone = Get-PcCommandOutput 'timedatectl' @('show', '--property=Timezone', '--value')
+    if (-not $timezone) { $timezone = $env:TZ ?? (Get-PcCommandOutput 'date' @('+%Z')) ?? 'N/A' }
 
     [PSCustomObject]@{
         'Computer Name'  = $hostname

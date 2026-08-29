@@ -29,17 +29,39 @@ public partial class WingetRepairViewModel : ObservableObject
         try
         {
             Append("[>>] Installing winget-install script from PSGallery…");
-            await _runner.RunAsync("pwsh.exe",
+            int installExit = await _runner.RunAsync("pwsh.exe",
                 "-NoProfile -ExecutionPolicy Bypass -Command \"Install-Script -Name winget-install -Force -Scope CurrentUser\"",
                 Append, ct);
 
+            if (installExit != 0)
+            {
+                Append($"\n[!!] Could not install the script from PSGallery (exit {installExit}).");
+                Status = "Failed.";
+                return;
+            }
+
+            // Install-Script drops winget-install.ps1 into the CurrentUser scripts
+            // folder, which is not on PATH for this process -- calling it by bare
+            // name fails with "not recognized". Resolve the real path first, the
+            // same way the CLI tool does.
             Append("\n[>>] Running winget-install…");
-            await _runner.RunAsync("pwsh.exe",
-                "-NoProfile -ExecutionPolicy Bypass -Command \"winget-install -Force\"",
+            const string runScript =
+                "$p = (Get-InstalledScript winget-install -ErrorAction SilentlyContinue).InstalledLocation; " +
+                "if ($p) { & (Join-Path $p 'winget-install.ps1') -Force } else { winget-install -Force }";
+            int runExit = await _runner.RunAsync("pwsh.exe",
+                $"-NoProfile -ExecutionPolicy Bypass -Command \"{runScript}\"",
                 Append, ct);
 
-            Append("\n[OK] Winget repair complete.");
-            Status = "Done.";
+            if (runExit == 0)
+            {
+                Append("\n[OK] Winget repair complete.");
+                Status = "Done.";
+            }
+            else
+            {
+                Append($"\n[!!] winget-install exited with code {runExit}.");
+                Status = "Failed.";
+            }
         }
         catch (OperationCanceledException)
         {
