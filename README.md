@@ -11,10 +11,6 @@ Check the health of your Windows or Linux installation, drivers, updates, batter
 
 ## Overview
 
-![Health tab](Health-tab.avif)
-![Tools tab](Tools-tab.avif)
-![Programs tab](Programs-tab.avif)
-
 pcHealth is a cross-platform toolkit for IT technicians and power users. It runs on **Windows and Linux** using a single PowerShell 7 codebase. The goal is to offer the same functionality everywhere: tools are shown or hidden based on the detected OS, and platform-specific actions (like updating packages) automatically use the right method for the current system.
 
 ---
@@ -64,6 +60,9 @@ sudo pwsh src/CLI/Start.ps1
 ### GUI
 
 On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface. Minimum: build 26200 (Windows 11 25H2).
+![Health tab](Health-tab.avif)
+![Tools tab](Tools-tab.avif)
+![Programs tab](Programs-tab.avif)
 
 A Linux GUI is not yet available - WinUI 3 is Windows-only. A cross-platform alternative is in the works.
 
