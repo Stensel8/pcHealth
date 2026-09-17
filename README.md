@@ -17,16 +17,28 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 
 ## Supported Platforms
 
-| Platform | CLI | GUI | Minimum                       |
-|----------|-----|-----|-------------------------------|
-| Windows  | ✅  | ✅  | Build 26200 (Windows 11 25H2) |
-| Linux    | ✅  | ❌  | Kernel 7.0                    |
+| Platform | CLI | GUI | Minimum                        |
+|----------|-----|-----|--------------------------------|
+| Windows  | ✅  | ✅  | CLI: build 14393 (Windows 10 1607) · GUI: build 19045 (Windows 10 22H2) |
+| Linux    | ✅  | ❌  | Kernel 7.0                     |
 
-pcHealth targets current systems only and exits immediately below the minimum. Everything in that range boots UEFI with GPT, which is why the repair tools are UEFI-only and no MBR/CSM paths remain.
+### Windows support tiers
+
+The CLI runs on anything PowerShell 7 itself runs on; the GUI cannot go below what WinUI 3 supports. Rather than one hard cut-off, pcHealth tells you which tier you are on and keeps going where it can:
+
+| Tier        | Build   | Windows        | CLI                                   | GUI |
+|-------------|---------|----------------|---------------------------------------|-----|
+| Recommended | ≥ 26200 | 11 25H2        | ✅ tested                             | ✅ tested |
+| Supported   | ≥ 19045 | 10 22H2, 11    | ✅ note on start                      | ✅ note on start |
+| Legacy      | ≥ 14393 | 10 1607 – 21H2 | ⚠️ runs, warns, untested              | ❌ WinUI 3 will not render |
+| Blocked     | < 14393 | older          | ❌ PowerShell 7 does not run here     | ❌ |
+
+On the legacy tier tools keep working where the OS allows it: winget ships with Windows 10 1809 and later, so on older builds the tools that need it say so instead of failing, and `Repair Winget` can add it. Boot Repair stays UEFI-only at every tier — a BIOS/MBR install is detected and refused rather than half-repaired.
 
 On image-based systems (Fedora Silverblue, Bazzite, Kinoite, openSUSE MicroOS) the tools that manage packages or boot files are hidden rather than reimplemented: `/usr` is read-only and the bootloader belongs to the deployment, so `bootc` and `rpm-ostree` own that work. The other 14 Linux tools -- all the diagnostics -- run normally.
 
-- Windows release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
+- Windows 11 release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
+- Windows 10 release info: https://learn.microsoft.com/en-us/windows/release-health/release-information
 - Linux kernel releases: https://www.kernel.org/
 
 See [SECURITY.md](SECURITY.md) for version and end-of-life details.
@@ -35,7 +47,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 ## Getting Started
 
-**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum: Windows build 26200 (11 25H2) or Linux kernel 7.0.
+**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum: Windows build 14393 (10 1607) or Linux kernel 7.0. Build 26200 (11 25H2) is what releases are tested on.
 
 ### Windows
 
@@ -59,7 +71,7 @@ sudo pwsh src/CLI/Start.ps1
 
 ### GUI
 
-On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface. Minimum: build 26200 (Windows 11 25H2).
+On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface. Minimum: build 19045 (Windows 10 22H2) — below that WinUI 3 does not render, and the launcher points you at the CLI instead. Recommended: build 26200 (Windows 11 25H2).
 ![Health tab](Health-tab.avif)
 ![Tools tab](Tools-tab.avif)
 ![Programs tab](Programs-tab.avif)

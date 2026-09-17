@@ -1,5 +1,16 @@
 # Changelog.md - pcHealth
 
+## 17-09-2026 - @Stensel8
+
+Windows — tiered support replaces the single hard cut-off, so older hardware is usable again.
+
+- **CLI floor lowered from build 26200 to 14393** (Windows 10 1607). That is PowerShell 7's own minimum, so it is the lowest build on which the CLI can physically start. `Start.ps1` now reports the tier instead of exiting: recommended (>= 26200), supported (>= 19045), legacy (>= 14393, warns and continues), blocked (below that).
+- **GUI floor lowered from build 26200 to 19045** (Windows 10 22H2) — WinUI 3 does not render below 22H2, so this is its technical floor. `TargetPlatformMinVersion` was still pinned at 10.0.26100.0, which contradicted the launcher's existing 19045 check; it is now 10.0.19041.0 (the nearest real SDK version). Below 19045 the launcher points users at the CLI rather than just refusing.
+- Title bar customization is now applied only where `AppWindowTitleBar.IsCustomizationSupported()` is true (Windows 11), so Windows 10 keeps the system caption instead of relying on version-dependent fallback behaviour.
+- Added `Test-PcWinget` helper: winget ships with Windows 10 1809 and later, so tools that need it (`Invoke-SystemUpdate`, `Invoke-HPUpdate`, the Programs menu) now report it as missing and point at "Repair Winget" instead of throwing and taking the menu down.
+- Boot Repair is unchanged and still UEFI-only: a BIOS/MBR install is detected and refused, which is what keeps the lower floor safe on pre-UEFI hardware.
+- Updated `README.md` and `SECURITY.md` with the tier table.
+
 ## 02-05-2026 - @Stensel8
 
 Linux — Topgrade integration replaces distro-specific package update script.

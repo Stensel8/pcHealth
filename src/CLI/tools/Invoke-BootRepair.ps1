@@ -4,11 +4,12 @@
 # Repairs the EFI boot files via CHKDSK, SFC and BCDBOOT.
 # Best run from a recovery environment (WinRE/CMD) with Administrator rights.
 #
-# UEFI only. Windows 11 requires UEFI + GPT and pcHealth's minimum is build
-# 26200, so every supported system boots UEFI. The old bootrec /fixmbr and
-# /fixboot steps wrote MBR-era boot code that nothing on a GPT disk reads --
-# /fixboot in fact returns "Access is denied" on EFI systems, which is why the
-# real repair was always the bcdboot fallback underneath it.
+# UEFI only, and it stays that way now that the legacy tier lets older Windows
+# 10 builds in: a BIOS/MBR install is detected and refused below rather than
+# half-repaired. The old bootrec /fixmbr and /fixboot steps wrote MBR-era boot
+# code that nothing on a GPT disk reads -- /fixboot in fact returns "Access is
+# denied" on EFI systems, which is why the real repair was always the bcdboot
+# fallback underneath it.
 # ============================================================================
 
 if (Get-Command Set-PcTheme -ErrorAction SilentlyContinue) {
