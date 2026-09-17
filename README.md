@@ -42,6 +42,32 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 ---
 
+## Project layout
+
+The two platforms have separate stacks, because neither one can cross over:
+WinUI 3 does not run on Linux, and PowerShell 7 is not installed on a Linux
+machine until someone installs it -- a poor first step for a tool you reach for
+*because* something is broken.
+
+| Path | Stack | Covers |
+|------|-------|--------|
+| `src/Windows/CLI/` | PowerShell 7 | Windows terminal tools |
+| `src/Windows/GUI/` | C# / WinUI 3 | Windows desktop app |
+| `src/Linux/` | Python 3.11+ / GTK4 + libadwaita | Linux terminal menu and desktop app |
+| `assets/tools.json` | -- | Shared tool catalogue both stacks read, so the menus cannot drift apart |
+
+Each side owns its platform completely: no `$IsLinux` branches in the
+PowerShell, no Windows paths in the Python. Every tool the PowerShell CLI used
+to run on Linux is now a Python tool -- all 18 of them, same names, same
+behaviour, and the originals remain in this repository's git history.
+
+Adding a tool to Linux means three things: an entry in `assets/tools.json`, a
+function in `src/Linux/pchealth/tools/`, and a line in that package's registry.
+CI fails if the catalogue lists a tool the registry cannot run. See
+[src/Linux/README.md](src/Linux/README.md).
+
+---
+
 ## Getting Started
 
 **Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum: Windows build 19045 (10 22H2) or Linux kernel 6.0. Build 26200 (11 25H2) is what releases are tested on.
@@ -57,14 +83,18 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 ### Linux
 
-**Requirements:** PowerShell 7 must be installed first (the launcher is a `.ps1` file — there is no bash wrapper). Install it via your package manager, e.g. `sudo pacman -S powershell` on Arch/CachyOS or see [aka.ms/powershell](https://aka.ms/powershell) for other distros.
+**Requirements:** Python 3.11+, which every supported distro already ships. Nothing else for the terminal app; the desktop app additionally needs PyGObject, GTK 4 and libadwaita.
 
 1. Download or clone this repository.
-2. Run `Start.ps1` elevated:
+2. Run it from `src/Linux`:
 
 ```bash
-sudo pwsh src/Windows/CLI/Start.ps1
+cd src/Linux
+python3 -m pchealth          # terminal menu
+python3 -m pchealth.gui.app  # desktop app
 ```
+
+Tools elevate one at a time through `pkexec`, so neither front-end needs to run as root. See [src/Linux/README.md](src/Linux/README.md).
 
 ### GUI
 
@@ -73,7 +103,7 @@ On Windows, pcHealth includes a native desktop application built with **WinUI 3*
 ![Tools tab](Tools-tab.avif)
 ![Programs tab](Programs-tab.avif)
 
-A Linux GUI is not yet available - WinUI 3 is Windows-only. A cross-platform alternative is in the works.
+A Linux GUI is available separately -- WinUI 3 is Windows-only, so the Linux desktop app is built with GTK4 and libadwaita. See [Project layout](#project-layout).
 
 **Build dependencies:**
 
@@ -185,10 +215,11 @@ Installed packages are marked `[installed]` in the menu.
 
 ## Contributing
 
-Contributions are welcome. Follow the existing naming conventions: `Verb-Noun.ps1` for tools, consistent `Write-PcOption` / `Set-PcTheme` calls for UI.
+Contributions are welcome. Follow the conventions of the stack you are in.
 
-- New tool scripts go in `src/Windows/CLI/tools/` and must be registered in `src/Windows/CLI/menus/Tools.ps1` with appropriate `Platforms` tags.
-- Linux-only tools go in `src/Windows/CLI/tools/linux/`.
+- A new tool starts as an entry in `assets/tools.json`, the catalogue both sides read.
+- **Windows:** `Verb-Noun.ps1` in `src/Windows/CLI/tools/`, registered in `src/Windows/CLI/menus/Tools.ps1`, using `Write-PcOption` / `Set-PcTheme` for UI.
+- **Linux:** a function in `src/Linux/pchealth/tools/`, registered in that package's `REGISTRY`. Emit through the `ToolContext` so the tool works in both the terminal and the GTK app.
 - Open an issue before starting larger changes to avoid duplicate work.
 
 See [SECURITY.md](SECURITY.md) for responsible disclosure of vulnerabilities.
@@ -216,3 +247,16 @@ This repository consolidates and replaces several earlier pcHealth-related proje
 - [pcHealthPlus-VS](https://github.com/REALSDEALS/pcHealthPlus-VS) - Visual Studio variant (deprecated; migrated)
 - [pcHealth-GUI](https://github.com/iRepairzone-NL/pcHealth_GUI) - Python GUI variant (deprecated; migrated)
 - [Win_Scan](https://github.com/REALSDEALS/Win_Scan) - standalone Windows scanning utility (deprecated; migrated)
+
+Where that functionality lives today:
+
+| Predecessor | Now in |
+|-------------|--------|
+| pcHealth (batch) | `src/Windows/CLI/` -- the menu-driven toolkit, rewritten in PowerShell 7 |
+| pcHealthPlus, pcHealthPlus-VS | `src/Windows/CLI/tools/` -- the individual repair and reporting tools |
+| pcHealth-GUI (Python) | `src/Linux/pchealth/gui/` -- the Python GUI lineage continues on Linux with GTK4 |
+| Win_Scan | `src/Windows/CLI/tools/Invoke-ScanAndRepair.ps1` -- SFC and DISM in one pass |
+
+Nothing from those projects has been dropped on the way in. Where a tool was
+replaced by a better one, the replacement covers the same job -- and the
+history of every migration is in this repository's git log.

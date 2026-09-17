@@ -1,5 +1,18 @@
 # Changelog.md - pcHealth
 
+## 17-09-2026 (2) - @Stensel8
+
+Split the codebase into a Windows stack and a Linux stack.
+
+- `src/CLI` and `src/GUI` moved to `src/Windows/CLI` and `src/Windows/GUI`. Windows keeps PowerShell 7 plus WinUI 3.
+- **New: `src/Linux/`** -- the Linux app in Python 3.11+, with a terminal menu and a GTK4 / libadwaita desktop app. All 18 Linux tools ported: system and hardware info, battery, journal logs, ping, traceroute, network reset, audio restart, disk cleanup and trim, scan + repair, package updates, topgrade, firmware and boot repair.
+- Reason for Python: PowerShell 7 is not installed on a Linux machine until someone installs it, which is a poor first step for a tool you reach for because something is already broken. Python 3 ships with every distro pcHealth targets.
+- **New: `assets/tools.json`** -- one tool catalogue that both stacks read, so the menus cannot drift apart. CI fails if the catalogue lists a tool the Python registry cannot run.
+- Neither Linux front-end runs as root. Privilege is raised per action through `pkexec` (falling back to `sudo`), because a root process cannot reach the user's Wayland session and a root-owned toolkit is a bad idea regardless.
+- The PowerShell CLI is now Windows-only: `tools/linux/` and every `$IsLinux` branch are gone, along with the helpers that only served them (`Get-PcDesktopUser`, `Get-PcPackageManager`, `Get-LinuxDistroInfo`, `Test-PcImageBasedSystem`, `Get-PcCommandOutput`). The originals stay in git history.
+- Fixed: the `VERSION` lookup in `app.ps1` still pointed two directories up after the move, which resolved to `src/` instead of the repo root.
+- CI gained a `python-lint` job (ruff, ruff format, mypy) and a catalogue/registry consistency check.
+
 ## 17-09-2026 - @Stensel8
 
 Support floors lowered so older devices are usable again — Windows 10 22H2 and Linux kernel 6.0.
