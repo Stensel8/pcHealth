@@ -80,7 +80,6 @@
 "linux":
   - changed-files:
       - any-glob-to-any-file:
-          - "src/Windows/CLI/tools/linux/**"
           - "src/Linux/**"
 
 # ── Language labels ───────────────────────────────────────────────────────────

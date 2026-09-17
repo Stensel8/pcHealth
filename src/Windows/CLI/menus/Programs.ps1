@@ -1,6 +1,6 @@
 ﻿# ============================================================================
-# pcHealth -- Shared -- Programs Menu
-# Windows: installs via winget. Linux: installs via the distro package manager.
+# pcHealth -- Windows -- Programs Menu
+# Installs the diagnostic programs a technician wants, via winget.
 # ============================================================================
 
 # Translates a winget exit code into a human-readable message.
@@ -59,14 +59,6 @@ function Get-WingetResult {
     return @{ Ok = $false; Message = "Unexpected exit code ($hex)."; SuggestRepair = $true }
 }
 
-function Show-ProgramsMenu {
-    if ($Global:PcPlatform -eq 'Linux') {
-        Show-LinuxProgramsMenu
-    } else {
-        Show-WindowsProgramsMenu
-    }
-}
-
 function Get-InstalledApp {
     $regPaths = @(
         'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
@@ -91,7 +83,7 @@ function Resolve-AppExePath {
     return $null
 }
 
-function Show-WindowsProgramsMenu {
+function Show-ProgramsMenu {
     $packages = [ordered]@{
         '1' = @{ Name = 'HWiNFO64';                Id = 'REALix.HWiNFO';                   ExeName = 'HWiNFO64.exe';   RegistryName = 'HWiNFO'         }
         '2' = @{ Name = 'HWMonitor';               Id = 'CPUID.HWMonitor';                 ExeName = 'HWMonitor.exe';  RegistryName = 'HWMonitor'       }
@@ -229,93 +221,6 @@ function Show-WindowsProgramsMenu {
         } else {
             Write-Host "`n  Invalid choice." -ForegroundColor Red
             Start-Sleep -Milliseconds 800
-        }
-    }
-}
-
-function Show-LinuxProgramsMenu {
-    $pm = Get-PcPackageManager
-
-    # Bin is what the menu probes for the [installed] marker: one PATH lookup,
-    # instead of a different "is this package present" query per manager.
-    $packages = [ordered]@{
-        '1' = @{ Name = 'htop';          Pkg = 'htop';          Bin = 'htop';      Note = '(process viewer)'  }
-        '2' = @{ Name = 'iotop';         Pkg = 'iotop';         Bin = 'iotop';     Note = '(I/O monitor)'     }
-        '3' = @{ Name = 'smartmontools'; Pkg = 'smartmontools'; Bin = 'smartctl';  Note = '(disk SMART data)' }
-        '4' = @{ Name = 'stress-ng';     Pkg = 'stress-ng';     Bin = 'stress-ng'; Note = '(stress test)'     }
-        '5' = @{ Name = 'nmap';          Pkg = 'nmap';          Bin = 'nmap';      Note = '(network scanner)' }
-    }
-
-    $navTools = $packages.Count + 1
-    $navMain  = $packages.Count + 2
-    $navExit  = $packages.Count + 3
-
-    while ($true) {
-        Set-PcTheme 'Programs'
-        Clear-PcHost
-        Write-PcHeader 'Programs'
-
-        if ($Global:PcImageBased) {
-            Write-Host '  Image-based system: pcHealth does not install packages here.' -ForegroundColor DarkGray
-            Write-Host "  Use Homebrew or a Distrobox container instead.`n" -ForegroundColor DarkGray
-        } elseif ($pm) {
-            Write-Host "  Package manager: $($pm.Cmd)`n" -ForegroundColor DarkGray
-        } else {
-            Write-Host "  [!] No supported package manager found (apt/dnf/pacman/zypper).`n" -ForegroundColor Yellow
-        }
-
-        foreach ($key in $packages.Keys) {
-            $p    = $packages[$key]
-            $note = if (Get-Command $p.Bin -CommandType Application -ErrorAction SilentlyContinue) {
-                "$($p.Note)  [installed]"
-            } else { $p.Note }
-            Write-PcOption $key $p.Name $note
-        }
-
-        Write-PcDivider
-        Write-PcOption "$navTools" 'Tools Menu'
-        Write-PcOption "$navMain"  'Back to Main Menu'
-        Write-PcOption "$navExit"  'Exit'
-        Write-PcDivider
-
-        $choice = (Read-Host "`n  Choice").Trim()
-
-        switch ($choice) {
-            "$navTools" { return 'tools' }
-            "$navMain"  { return 'main'  }
-            "$navExit"  { return 'exit'  }
-        }
-
-        if (-not $packages.Contains($choice)) {
-            Write-Host "`n  Invalid choice." -ForegroundColor Red
-            Start-Sleep -Milliseconds 800
-            continue
-        }
-
-        $pkg = $packages[$choice]
-        Set-PcTheme 'Action'
-        Clear-PcHost
-
-        if (Get-Command $pkg.Bin -CommandType Application -ErrorAction SilentlyContinue) {
-            Write-Host "[OK] $($pkg.Name) is already installed." -ForegroundColor Green
-            Write-Host "     Update it via Tools > Update all packages.`n" -ForegroundColor DarkGray
-        } elseif ($Global:PcImageBased -or -not $pm) {
-            Write-Host '[!!] pcHealth does not install packages on an image-based system.' -ForegroundColor Red
-            Write-Host "     Install $($pkg.Name) with Homebrew or inside a Distrobox container.`n" -ForegroundColor Yellow
-        } else {
-            Write-Host "[>>] Installing $($pkg.Name) via $($pm.Cmd)...`n" -ForegroundColor Yellow
-            & $pm.Cmd @($pm.Install) $pkg.Pkg
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "`n[OK] $($pkg.Name) installed." -ForegroundColor Green
-            } else {
-                Write-Host "`n[!!] Installation returned exit code $LASTEXITCODE." -ForegroundColor Red
-            }
-        }
-
-        $nav = Read-PcNavChoice 'Back to Programs Menu'
-        switch ($nav) {
-            '2' { return 'main' }
-            '3' { return 'exit' }
         }
     }
 }

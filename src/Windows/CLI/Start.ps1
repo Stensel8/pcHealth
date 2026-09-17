@@ -1,95 +1,72 @@
 ﻿#Requires -Version 5.1
 # ============================================================================
-# pcHealth -- CLI Launcher
-# PS5.1-compatible bootstrap: enforces PS7, admin/root, and optional deps.
-# On Windows: runs under PS5 → installs PS7 if needed → relaunches in PS7.
-# On Linux:   pwsh (PS7) is assumed pre-installed; checks root + kernel.
+# pcHealth -- Windows CLI Launcher
+# PS5.1-compatible bootstrap: enforces PS7, admin rights and optional deps.
+# Runs under PS5 → installs PS7 if needed → relaunches in PS7.
+# On Linux, use src/Linux instead: python3 -m pchealth
 # ============================================================================
 
 $ErrorActionPreference = 'Stop'
-$onLinux = ($PSVersionTable.PSEdition -eq 'Core') -and [bool]$IsLinux
 $isPwsh7 = $PSVersionTable.PSVersion.Major -ge 7
 
-# -- Linux: kernel version check + root guard ---------------------------------
-if ($onLinux) {
-    # Start.ps1 runs before Helpers.ps1 is loaded, so guard the null here:
-    # calling .Trim() on a missing command's output throws before the check below.
-    $kernelStr   = "$(& uname -r 2>$null)".Trim()
-    if (-not $kernelStr) {
-        Write-Host "[!!] Could not determine kernel version (uname -r returned nothing)." -ForegroundColor Red
-        Read-Host 'Press Enter to exit'
-        exit 1
-    }
-    $kernelMajor = [int]($kernelStr -split '[.-]')[0]
-    if ($kernelMajor -lt 6) {
-        Write-Host "[!!] pcHealth cannot run on kernel $kernelStr." -ForegroundColor Red
-        Write-Host "     Minimum required: kernel 6.0." -ForegroundColor Red
-        Write-Host "     https://www.kernel.org/" -ForegroundColor DarkGray
-        Read-Host 'Press Enter to exit'
-        exit 1
-    }
-
-    $isRoot = ("$(& id -u 2>$null)".Trim() -eq '0')
-    if (-not $isRoot) {
-        Write-Host '[!!] pcHealth must be run as root on Linux.' -ForegroundColor Red
-        Write-Host '     Run: sudo pwsh src/Windows/CLI/Start.ps1'       -ForegroundColor Yellow
-        exit 1
-    }
+# $IsLinux / $IsMacOS are PS6+ variables; on PS 5.1 they are $null (falsy).
+if ($IsLinux -or $IsMacOS) {
+    Write-Host '[!!] This is the Windows CLI.' -ForegroundColor Red
+    Write-Host '     On Linux, use src/Linux instead: python3 -m pchealth' -ForegroundColor Yellow
+    exit 1
 }
 
-# -- Windows: build check, elevate, relaunch in PS7 ---------------------------
-if (-not $onLinux) {
-    # Windows support floors -- see README.md and SECURITY.md.
-    #   >= 26200  recommended : the build every release is tested on
-    #   >= 19045  supported   : Windows 10 22H2 and Windows 11
-    #   <  19045  blocked     : WinUI 3 does not render below 22H2, so the GUI
-    #                           cannot follow the CLI down and the two floors
-    #                           are kept identical rather than drifting apart
-    $recommendedBuild = 26200   # Windows 11 25H2
-    $hardMinimumBuild = 19045   # Windows 10 22H2
-    $build = [System.Environment]::OSVersion.Version.Build
+# -- Build check, elevate, relaunch in PS7 ------------------------------------
+# Windows support floors -- see README.md and SECURITY.md.
+#   >= 26200  recommended : the build every release is tested on
+#   >= 19045  supported   : Windows 10 22H2 and Windows 11
+#   <  19045  blocked     : WinUI 3 does not render below 22H2, so the GUI
+#                           cannot follow the CLI down and the two floors
+#                           are kept identical rather than drifting apart
+$recommendedBuild = 26200   # Windows 11 25H2
+$hardMinimumBuild = 19045   # Windows 10 22H2
+$build = [System.Environment]::OSVersion.Version.Build
 
-    if ($build -lt $hardMinimumBuild) {
-        Write-Host "[!!] pcHealth cannot run on Windows build $build." -ForegroundColor Red
-        Write-Host "     Minimum required: build $hardMinimumBuild (Windows 10 version 22H2)." -ForegroundColor Red
-        Write-Host "     https://learn.microsoft.com/en-us/windows/release-health/release-information" -ForegroundColor DarkGray
-        Read-Host 'Press Enter to exit'
-        exit 1
-    } elseif ($build -lt $recommendedBuild) {
-        Write-Host ''
-        Write-Host "[!] Windows build $build is supported; $recommendedBuild (11 25H2) is recommended." -ForegroundColor Yellow
-        Write-Host "    https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information" -ForegroundColor DarkGray
+if ($build -lt $hardMinimumBuild) {
+    Write-Host "[!!] pcHealth cannot run on Windows build $build." -ForegroundColor Red
+    Write-Host "     Minimum required: build $hardMinimumBuild (Windows 10 version 22H2)." -ForegroundColor Red
+    Write-Host "     https://learn.microsoft.com/en-us/windows/release-health/release-information" -ForegroundColor DarkGray
+    Read-Host 'Press Enter to exit'
+    exit 1
+} elseif ($build -lt $recommendedBuild) {
+    Write-Host ''
+    Write-Host "[!] Windows build $build is supported; $recommendedBuild (11 25H2) is recommended." -ForegroundColor Yellow
+    Write-Host "    https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information" -ForegroundColor DarkGray
+}
+
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator
+)
+if (-not $isAdmin) {
+    $shell    = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell' }
+    $shellCmd = Get-Command $shell -ErrorAction SilentlyContinue
+    if (-not $shellCmd) { Write-Host "[!!] Shell '$shell' not found." -ForegroundColor Red; exit 1 }
+    Start-Process -FilePath $shellCmd.Source `
+                  -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$PSCommandPath`"" `
+                  -Verb RunAs
+    exit
+}
+
+# Relaunch in PS7 if elevation landed in PS5 (pattern from WinDeploy)
+if (-not $isPwsh7) {
+    $pwshExe = "$env:ProgramFiles\PowerShell\7\pwsh.exe"
+    if (-not (Test-Path $pwshExe)) {
+        $pwshCmd = Get-Command pwsh -ErrorAction SilentlyContinue
+        $pwshExe = if ($pwshCmd) { $pwshCmd.Source } else { $null }
     }
-
-    $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
-        [Security.Principal.WindowsBuiltInRole]::Administrator
-    )
-    if (-not $isAdmin) {
-        $shell    = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell' }
-        $shellCmd = Get-Command $shell -ErrorAction SilentlyContinue
-        if (-not $shellCmd) { Write-Host "[!!] Shell '$shell' not found." -ForegroundColor Red; exit 1 }
-        Start-Process -FilePath $shellCmd.Source `
+    if ($pwshExe) {
+        Write-Host '[pcHealth] Relaunching in PowerShell 7...' -ForegroundColor Yellow
+        Start-Process -FilePath $pwshExe `
                       -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$PSCommandPath`"" `
-                      -Verb RunAs
+                      -Wait -NoNewWindow
         exit
     }
-
-    # Relaunch in PS7 if elevation landed in PS5 (pattern from WinDeploy)
-    if (-not $isPwsh7) {
-        $pwshExe = "$env:ProgramFiles\PowerShell\7\pwsh.exe"
-        if (-not (Test-Path $pwshExe)) {
-            $pwshCmd = Get-Command pwsh -ErrorAction SilentlyContinue
-            $pwshExe = if ($pwshCmd) { $pwshCmd.Source } else { $null }
-        }
-        if ($pwshExe) {
-            Write-Host '[pcHealth] Relaunching in PowerShell 7...' -ForegroundColor Yellow
-            Start-Process -FilePath $pwshExe `
-                          -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$PSCommandPath`"" `
-                          -Wait -NoNewWindow
-            exit
-        }
-        # Fall through — pwsh not found yet; installer below will handle it.
-    }
+    # Fall through — pwsh not found yet; installer below will handle it.
 }
 
 # -- Dependency check ----------------------------------------------------------
@@ -108,21 +85,16 @@ function Write-DepStatus($label, $ok, [bool]$Optional = $false) {
     }
 }
 
-# On Linux, pwsh is already running — trivially satisfied.
-$pwshOk = $onLinux -or [bool](Get-Command pwsh -ErrorAction SilentlyContinue)
+$pwshOk = [bool](Get-Command pwsh -ErrorAction SilentlyContinue)
 
-$smartctlOk = if ($onLinux) {
-    [bool](Get-Command smartctl -ErrorAction SilentlyContinue)
-} else {
-    (Test-Path (Join-Path $env:ProgramFiles 'smartmontools\bin\smartctl.exe')) -or
-    [bool](Get-Command smartctl -ErrorAction SilentlyContinue)
-}
+$smartctlOk = (Test-Path (Join-Path $env:ProgramFiles 'smartmontools\bin\smartctl.exe')) -or
+              [bool](Get-Command smartctl -ErrorAction SilentlyContinue)
 
-if (-not $onLinux) { Write-DepStatus 'PowerShell 7'  $pwshOk }
+Write-DepStatus 'PowerShell 7' $pwshOk
 Write-DepStatus -label 'smartmontools' -ok $smartctlOk -Optional $true
 
-# -- Install PowerShell 7 (Windows only) --------------------------------------
-if (-not $onLinux -and -not $pwshOk) {
+# -- Install PowerShell 7 -----------------------------------------------------
+if (-not $pwshOk) {
     Write-Host ''
     Write-Host '[pcHealth] PowerShell 7 is required to run this application.' -ForegroundColor Yellow
 
@@ -164,15 +136,9 @@ if (-not $smartctlOk) {
     Write-Host '[pcHealth] smartmontools is recommended for full SMART disk health data.' -ForegroundColor Yellow
     Write-Host '           Without it, life %, temperature and power-on hours are unavailable.' -ForegroundColor DarkGray
 
-    $prompt = if ($onLinux) { '           Install now? [Y/N]' } else { '           Install now via winget? [Y/N]' }
-    $answer = Read-Host $prompt
+    $answer = Read-Host '           Install now via winget? [Y/N]'
     if ($answer -match '^[Yy]') {
-        if ($onLinux) {
-            if     (Get-Command apt-get -ErrorAction SilentlyContinue) { apt-get install -y smartmontools }
-            elseif (Get-Command dnf     -ErrorAction SilentlyContinue) { dnf install -y smartmontools }
-            elseif (Get-Command pacman  -ErrorAction SilentlyContinue) { pacman -S --noconfirm smartmontools }
-            else { Write-Host '[!!] No supported package manager found. Install smartmontools manually.' -ForegroundColor Yellow }
-        } elseif (Get-Command winget -ErrorAction SilentlyContinue) {
+        if (Get-Command winget -ErrorAction SilentlyContinue) {
             winget install --source winget --id smartmontools.smartmontools -e --silent `
                 --accept-package-agreements --accept-source-agreements
             $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
