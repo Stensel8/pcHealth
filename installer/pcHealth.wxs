@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  pcHealth MSI installer (WiX v6).
+  pcHealth MSI installer (WiX v5).
 
   Wraps the self-contained publish output, so the target machine needs neither
   the .NET Desktop Runtime nor the Windows App SDK runtime installed first.

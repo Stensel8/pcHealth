@@ -124,11 +124,12 @@ jobs:
   # Compiles installer/pcHealth.wxs against a stub payload so a
   # broken installer is caught on push instead of at release
   # time, when a failed build means a release without its MSI.
-  # WiX v4+ builds MSIs on Linux, so this needs no Windows runner.
+  # Windows runner: WiX warns that it supports Windows only and
+  # that everything after that point is undefined.
   # ----------------------------------------------------------
   installer-build:
     name: Installer authoring (WiX)
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: read
     steps:
@@ -139,28 +140,41 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # Pinned to v5 deliberately. WiX v6 and v7 require accepting the Open
+      # Source Maintenance Fee EULA before they will build anything, which is
+      # a licensing decision for the project owner, not a CI default. v5 is
+      # the last release under the plain open-source licence and builds the
+      # same MSI from the same authoring.
       - name: Install WiX
-        run: dotnet tool install --global wix
+        shell: pwsh
+        run: dotnet tool install --global wix --version 5.0.2
 
       # A stub stands in for the publish output: this job checks the
       # authoring, not the app. The real payload is built by
-      # development/tools/Build-Release.ps1 on a Windows runner.
+      # development/tools/Build-Release.ps1.
       - name: Create stub payload
+        shell: pwsh
         run: |
-          mkdir -p stub-publish
-          printf 'stub' > stub-publish/pcHealth.exe
-          printf 'stub' > stub-publish/Microsoft.WindowsAppRuntime.Bootstrap.dll
+          $null = New-Item stub-publish -ItemType Directory -Force
+          Set-Content stub-publish/pcHealth.exe 'stub'
+          Set-Content stub-publish/Microsoft.WindowsAppRuntime.Bootstrap.dll 'stub'
 
       - name: Build MSI from authoring
+        shell: pwsh
         run: |
-          wix build installer/pcHealth.wxs \
-            -arch x64 \
-            -d "Version=$(cat VERSION)" \
-            -d "PublishDir=$(pwd)/stub-publish" \
-            -out "$(pwd)/pcHealth-authoring-check.msi"
+          $version = (Get-Content VERSION -Raw).Trim()
+          wix build installer/pcHealth.wxs `
+            -arch x64 `
+            -d "Version=$version" `
+            -d "PublishDir=$((Resolve-Path stub-publish).Path)" `
+            -out (Join-Path $PWD 'pcHealth-authoring-check.msi')
 
       - name: Confirm the MSI was produced
-        run: test -s pcHealth-authoring-check.msi && echo "MSI authoring builds"
+        shell: pwsh
+        run: |
+          $msi = Get-Item pcHealth-authoring-check.msi -ErrorAction SilentlyContinue
+          if (-not $msi -or $msi.Length -eq 0) { throw 'wix produced no MSI' }
+          "MSI authoring builds ($([Math]::Round($msi.Length / 1KB)) KB)"
 
   # ----------------------------------------------------------
   # PR TITLE CHECK

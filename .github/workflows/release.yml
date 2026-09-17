@@ -40,9 +40,11 @@ jobs:
 
       # The MSI is built by WiX; -RequireMsi below turns a missing toolset
       # into a failed release rather than a release without its installer.
+      # Pinned to v5: v6 and v7 gate every build behind the Open Source
+      # Maintenance Fee EULA. See the installer-build job in ci-cd.yml.
       - name: Install WiX
         shell: pwsh
-        run: dotnet tool install --global wix
+        run: dotnet tool install --global wix --version 5.0.2
 
       - name: Build release (x64)
         shell: pwsh

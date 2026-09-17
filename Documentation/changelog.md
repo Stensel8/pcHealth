@@ -10,6 +10,7 @@ Self-contained builds and an MSI installer.
 - `Build-Release.ps1` switched from `dotnet build --no-self-contained` to `dotnet publish --self-contained`, and gained `-SingleFile` (opt-in; the Windows App SDK's native binaries cannot all be merged into the exe) and `-RequireMsi` (used by CI so a release can never silently ship without its installer).
 - Trimming is explicitly disabled: WinUI 3 resolves XAML types by reflection, so a trimmed build fails at runtime rather than at build time.
 - CI gained an `installer-build` job that compiles the WiX authoring against a stub payload on every push, so a broken installer surfaces then rather than during a release.
+- **WiX is pinned to v5.0.2.** v6 and v7 refuse to build anything until you accept the [Open Source Maintenance Fee](https://wixtoolset.org/osmf/) EULA, which is a licensing decision for the project owner rather than a CI default. v5 is the last release under the plain open-source licence and builds the same MSI from the same authoring.
 
 ## 17-09-2026 (2) - @Stensel8
 

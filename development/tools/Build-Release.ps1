@@ -11,7 +11,9 @@
 #
 # Build prerequisites on THIS machine:
 #   - .NET 10 SDK            winget install Microsoft.DotNet.SDK.10
-#   - WiX v6 (for the MSI)   dotnet tool install --global wix
+#   - WiX v5 (for the MSI)   dotnet tool install --global wix --version 5.0.2
+#     v6 and v7 refuse to build until you accept the Open Source Maintenance
+#     Fee EULA (https://wixtoolset.org/osmf/); v5 is the last plain one.
 #
 # Usage:
 #   pwsh -File development/tools/Build-Release.ps1
