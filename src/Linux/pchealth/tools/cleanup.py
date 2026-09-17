@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .. import system
-from .base import ToolContext
+from .base import ProgressFilter, ToolContext
 
 FS_ERROR_PATTERNS = (
     "EXT4-fs error",
@@ -19,7 +19,9 @@ MAX_FINDINGS_SHOWN = 20
 
 def _step(ctx: ToolContext, label: str, argv: list[str]) -> None:
     ctx.line(f"[>>] {label}", "info")
-    rc = system.stream_root(argv, lambda line: ctx.line(f"  {line}", "muted"))
+    progress = ProgressFilter(lambda line: ctx.line(f"  {line}", "muted"))
+    rc = system.stream_root(argv, progress)
+    progress.flush()
     if rc == 0:
         ctx.line("[OK] Done.", "ok")
     else:

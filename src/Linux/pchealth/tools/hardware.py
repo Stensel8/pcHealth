@@ -2,19 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
-from typing import Any
 
-from .. import system
+from .. import smart, system
 from .base import ToolContext
 
 GPU_PATTERN = re.compile(
     r"^[\w:.]+\s+(?:VGA compatible controller|Display controller|3D controller):\s*(.+)$"
 )
-# SSD wear-levelling attributes, in the order vendors actually use them.
-SSD_LIFE_ATTRIBUTES = (231, 202, 177)
 
 
 def _lscpu() -> dict[str, str]:
@@ -40,22 +36,6 @@ def _meminfo() -> dict[str, int]:
 
 def _gb(kib: int) -> str:
     return f"{kib / 1048576:.2f}"
-
-
-def _smart_json(argv: list[str]) -> dict[str, Any] | None:
-    """smartctl exits non-zero for a disk with warnings, so ignore the code.
-
-    Its JSON is still complete in that case -- that is the whole point of
-    asking for JSON rather than parsing the human-readable report.
-    """
-    result = system.run_root(argv)
-    if not result.stdout.strip():
-        return None
-    try:
-        parsed = json.loads(result.stdout)
-    except json.JSONDecodeError:
-        return None
-    return parsed if isinstance(parsed, dict) else None
 
 
 def _cpu_section(ctx: ToolContext) -> None:
@@ -109,7 +89,7 @@ def _gpu_section(ctx: ToolContext) -> None:
 def _storage_section(ctx: ToolContext) -> None:
     ctx.heading("Storage")
 
-    if not system.has("smartctl"):
+    if not smart.available():
         listing = system.output(["lsblk", "-d", "-o", "NAME,SIZE,TYPE,MODEL"])
         if listing:
             for line in listing.splitlines():
@@ -120,60 +100,27 @@ def _storage_section(ctx: ToolContext) -> None:
             ctx.line("Storage section skipped -- neither smartctl nor lsblk available.", "warn")
         return
 
-    scan = _smart_json(["smartctl", "--scan", "--json"])
-    devices = scan.get("devices", []) if scan else []
-    if not devices:
-        ctx.line("smartctl scan found no devices.", "warn")
+    found = smart.devices()
+    if not found:
+        ctx.line("smartctl found no devices with usable SMART data.", "warn")
         return
 
-    rows: list[tuple[str, str]] = []
-    for device in devices:
-        name = device.get("name")
-        kind = device.get("type", "")
-        if not name:
-            continue
-        argv = ["smartctl", "-a", name, "--json"]
-        if kind and kind != "auto":
-            argv += ["-d", kind]
-        data = _smart_json(argv)
-        if not data or not data.get("model_name"):
-            continue
-
-        is_nvme = kind == "nvme"
-        rotation = data.get("rotation_rate", 0) or 0
-        media = "SSD" if is_nvme or rotation == 0 else "HDD"
-
-        life = "N/A"
-        if is_nvme:
-            used = data.get("nvme_smart_health_information_log", {}).get("percentage_used")
-            if used is not None:
-                life = f"{max(0, 100 - int(used))}%"
-        elif media == "SSD":
-            table = data.get("ata_smart_attributes", {}).get("table", [])
-            attribute = next((a for a in table if a.get("id") in SSD_LIFE_ATTRIBUTES), None)
-            if attribute:
-                life = f"{attribute.get('value')}%"
-
-        capacity = data.get("capacity", {}).get("bytes")
-        temperature = data.get("temperature", {}).get("current")
-        hours = data.get("power_on_time", {}).get("hours")
-        passed = data.get("smart_status", {}).get("passed")
-        health = "Healthy" if passed is True else "FAILING" if passed is False else "Unknown"
-
-        rows.append(
+    ctx.rows(
+        [
             (
-                str(data["model_name"]),
-                f"{media}  {round(capacity / 1024**3) if capacity else 'N/A'} GB  "
-                f"{temperature if temperature is not None else 'N/A'} C  "
-                f"{hours if hours is not None else 'N/A'} h  "
-                f"life {life}  {health}",
+                device.model,
+                f"{device.media}  {device.capacity_gb} GB  "
+                f"{device.temperature_c if device.temperature_c is not None else 'N/A'} C  "
+                f"{device.power_on_hours if device.power_on_hours is not None else 'N/A'} h  "
+                f"life {device.life_left_pct}%"
+                if device.life_left_pct is not None
+                else f"{device.media}  {device.capacity_gb} GB",
             )
-        )
-
-    if rows:
-        ctx.rows(rows)
-    else:
-        ctx.line("No usable SMART data.", "warn")
+            for device in found
+        ]
+    )
+    ctx.line()
+    ctx.rows([(device.model, device.health_text) for device in found], "muted")
 
 
 def _memory_section(ctx: ToolContext) -> None:

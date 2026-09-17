@@ -1,5 +1,17 @@
 # Changelog.md - pcHealth
 
+## 18-09-2026 (2) - @Stensel8
+
+Health report for Linux, and two fixes the screencast turned up.
+
+- **New: a Health page**, the Linux counterpart of the WinUI 3 Health tab. Seven sections -- Overview, Processor, Graphics, Memory, Storage, Battery and Security/Services -- each check carrying a status so both front-ends can colour it. It reads the same `assets/hardware-db.json` the Windows app uses, for CPU and GPU release years.
+- What it checks differs from Windows because the systems differ: no Defender or BitLocker, but CPU mitigations, the active LSM (SELinux/AppArmor), the firewall, failed systemd units and boot time.
+- **Fixed: a firmware refresh flooded the output with 300+ lines** of `Downloading…: 41.4%`. fwupd, apt and dnf redraw a progress line with carriage returns; through a pipe those become separate lines. `ProgressFilter` now keeps one progress line per second plus the last one, so movement is still visible but the four lines that say something are not buried.
+- **Fixed: output colours were read from the theme once at startup**, so switching light/dark mid-session left them wrong. The tags now repaint on `notify::dark`.
+- `smart.py` extracted: Hardware Information and the Health report read SMART through one module instead of each parsing smartctl's JSON their own way.
+
+Note: the `Adwaita-WARNING` about `gtk-application-prefer-dark-theme` comes from the desktop's own GTK configuration, not from pcHealth, and is harmless.
+
 ## 18-09-2026 - @Stensel8
 
 Linux GUI rebuilt to match the WinUI 3 app.

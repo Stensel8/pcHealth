@@ -19,7 +19,7 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw, GLib, Gtk, Pango  # noqa: E402
 
-from .. import catalog, system  # noqa: E402
+from .. import catalog, health, system  # noqa: E402
 from ..tools import REGISTRY, Cancelled, ToolContext  # noqa: E402
 from ..version import get_version  # noqa: E402
 from . import dialogs  # noqa: E402
@@ -37,6 +37,24 @@ _CATEGORY_ICONS = {
     "Hardware": "computer-symbolic",
     "System": "system-shutdown-symbolic",
 }
+
+# Health statuses map onto libadwaita's own semantic classes, so they follow
+# the theme instead of carrying hardcoded colours around.
+_STATUS_CLASS = {
+    health.Status.GOOD: "success",
+    health.Status.WARNING: "warning",
+    health.Status.BAD: "error",
+    health.Status.UNKNOWN: "dim-label",
+    health.Status.INFO: "dim-label",
+}
+_STATUS_ICON = {
+    health.Status.GOOD: "emblem-ok-symbolic",
+    health.Status.WARNING: "dialog-warning-symbolic",
+    health.Status.BAD: "dialog-error-symbolic",
+    health.Status.UNKNOWN: "dialog-question-symbolic",
+    health.Status.INFO: "dialog-information-symbolic",
+}
+
 
 # Output colours, close to the terminal palette so both front-ends read alike.
 _PALETTE = {
@@ -75,10 +93,21 @@ class OutputView(Gtk.ScrolledWindow):
         self._buffer = self._view.get_buffer()
         self.set_child(self._view)
 
-        dark = Adw.StyleManager.get_default().get_dark()
-        for name, colour in _PALETTE["dark" if dark else "light"].items():
+        style = Adw.StyleManager.get_default()
+        for name in _PALETTE["light"]:
             weight = Pango.Weight.BOLD if name == "head" else Pango.Weight.NORMAL
-            self._buffer.create_tag(name, foreground=colour, weight=weight)
+            self._buffer.create_tag(name, weight=weight)
+        self._recolour(style)
+        # Light/dark can change while the window is open, and tags hold a fixed
+        # colour -- so repaint them rather than reading the theme once.
+        style.connect("notify::dark", lambda manager, _param: self._recolour(manager))
+
+    def _recolour(self, style: Adw.StyleManager) -> None:
+        table = self._buffer.get_tag_table()
+        for name, colour in _PALETTE["dark" if style.get_dark() else "light"].items():
+            tag = table.lookup(name)
+            if tag is not None:
+                tag.set_property("foreground", colour)
 
     def clear(self) -> None:
         self._buffer.set_text("")
@@ -205,9 +234,40 @@ def _tools_page(open_tool: Callable[[catalog.Tool], None]) -> Adw.NavigationPage
     return Adw.NavigationPage(title="Tools", child=page)
 
 
+def _health_page() -> Adw.NavigationPage:
+    """The same report the terminal prints, as rows with a status icon."""
+    page = Adw.PreferencesPage()
+    sections = health.collect()
+
+    summary = health.overall(sections)
+    banner = Adw.PreferencesGroup(title="Overall")
+    banner.add(
+        Adw.ActionRow(
+            title=summary.value.capitalize(),
+            subtitle=f"{len(sections)} areas checked",
+            css_classes=[_STATUS_CLASS[summary]],
+        )
+    )
+    page.add(banner)
+
+    for section in sections:
+        group = Adw.PreferencesGroup(title=section.title)
+        for check in section.checks:
+            row = Adw.ActionRow(title=check.label, subtitle=check.value)
+            if check.detail:
+                row.set_tooltip_text(check.detail)
+            icon = Gtk.Image.new_from_icon_name(_STATUS_ICON[check.status])
+            icon.add_css_class(_STATUS_CLASS[check.status])
+            row.add_suffix(icon)
+            group.add(row)
+        page.add(group)
+
+    return Adw.NavigationPage(title="Health", child=page)
+
+
 def _about_page() -> Adw.NavigationPage:
     status = Adw.StatusPage(
-        icon_name="utilities-system-monitor-symbolic",
+        icon_name="help-about-symbolic",
         title="pcHealth",
         description=(
             f"Version {get_version()}\n\n"
@@ -232,6 +292,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         self._content = Adw.NavigationView()
         self._pages = {
+            "health": _health_page,
             "tools": lambda: _tools_page(self._open_tool),
             "about": _about_page,
         }
@@ -241,6 +302,7 @@ class MainWindow(Adw.ApplicationWindow):
             selection_mode=Gtk.SelectionMode.SINGLE,
         )
         for key, label, icon in (
+            ("health", "Health", "utilities-system-monitor-symbolic"),
             ("tools", "Tools", "applications-utilities-symbolic"),
             ("about", "About", "help-about-symbolic"),
         ):

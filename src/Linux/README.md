@@ -62,15 +62,27 @@ control, and a root-owned toolkit is a bad idea on its own.
 pchealth/
   system.py      process, privilege and platform helpers -- every other
                  module goes through here to touch the system
+  smart.py       SMART data, shared by Hardware Information and Health
+  health.py      the health report: sections of checks, each with a status
   catalog.py     reads the shared tool catalogue
   tools/         one module per area; a tool is a function over a ToolContext
   cli/           terminal menus and theming
   gui/           GTK4 / libadwaita front-end
 ```
 
-A tool never talks to the terminal or to GTK. It emits styled lines and asks
-questions through the `ToolContext` it is handed, which is why the same tool
-runs in both front-ends.
+A tool never talks to the terminal or to GTK, and it never renders a menu of
+its own. It emits styled lines and *declares* the choices it needs:
+
+```python
+choice = ctx.choose("What should happen?", [
+    Choice("restart", "Restart", "Restarts the system immediately.", destructive=True),
+    Choice("shutdown", "Shut Down", "Powers the system off immediately.", destructive=True),
+])
+```
+
+The terminal renders that as a numbered list, the GUI as one button per
+option. The moment a tool prints `[1] ... [2] ...` itself, it has decided it
+lives in a terminal and the GUI is stuck showing a text box for it.
 
 ## Development
 

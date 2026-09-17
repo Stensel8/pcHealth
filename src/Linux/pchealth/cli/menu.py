@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from .. import catalog, system
+from .. import catalog, health, system
 from ..tools import REGISTRY, Cancelled, Choice, ToolContext
 from ..version import get_version
 from . import programs, theme
@@ -64,6 +64,37 @@ def _run_tool(tool: catalog.Tool) -> None:
         theme.write(f"[!!] Tool error: {exc}", "error")
 
 
+_STATUS_STYLE = {
+    health.Status.GOOD: "ok",
+    health.Status.WARNING: "warn",
+    health.Status.BAD: "error",
+    health.Status.UNKNOWN: "muted",
+    health.Status.INFO: "info",
+}
+
+
+def _health_screen() -> str:
+    theme.header("Health", "Reading system state...")
+
+    sections = health.collect()
+    overall = health.overall(sections)
+    theme.write(f"  Overall: {overall.value.upper()}", _STATUS_STYLE[overall])
+
+    for section in sections:
+        theme.write()
+        theme.write(f"  {section.title}", "head")
+        width = max((len(check.label) for check in section.checks), default=0)
+        for check in section.checks:
+            row = f"    {check.label.ljust(width)}   {check.value}"
+            theme.write(row, _STATUS_STYLE[check.status])
+            if check.detail:
+                theme.write(f"    {' ' * width}   {check.detail}", "muted")
+
+    theme.write()
+    nav = input("  [1] Back to Main Menu  [2] Exit: ").strip()
+    return "exit" if nav == "2" else "main"
+
+
 def _tools_menu() -> str:
     tools = catalog.active()
 
@@ -118,27 +149,30 @@ def _main_menu() -> str:
         theme.write("  Run `sudo pchealth` to be asked once instead.", "muted")
         theme.write()
 
-    theme.option("1", "Tools")
-    theme.option("2", "Programs")
+    theme.option("1", "Health")
+    theme.option("2", "Tools")
+    theme.option("3", "Programs")
     theme.write()
-    theme.option("3", "Go to repository")
-    theme.option("4", "Check for pre-releases")
+    theme.option("4", "Go to repository")
+    theme.option("5", "Check for pre-releases")
     theme.write()
-    theme.option("5", "Exit")
+    theme.option("6", "Exit")
     theme.write()
 
     choice = input("  Choice: ").strip()
     if choice == "1":
-        return "tools"
+        return "health"
     if choice == "2":
-        return "programs"
+        return "tools"
     if choice == "3":
+        return "programs"
+    if choice == "4":
         system.open_url(REPO_URL)
         return "main"
-    if choice == "4":
+    if choice == "5":
         system.open_url(RELEASES_URL)
         return "main"
-    if choice == "5":
+    if choice == "6":
         return "exit"
 
     theme.write("Invalid choice.", "error")
@@ -149,7 +183,9 @@ def run() -> int:
     target = "main"
     while True:
         try:
-            if target == "tools":
+            if target == "health":
+                target = _health_screen()
+            elif target == "tools":
                 target = _tools_menu()
             elif target == "programs":
                 target = programs.show()

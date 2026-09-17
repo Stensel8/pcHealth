@@ -10,6 +10,8 @@ terminal, and the GUI is stuck rendering a text box for it.
 
 from __future__ import annotations
 
+import re
+import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
@@ -79,3 +81,46 @@ class ToolContext:
 # A tool is just a function over a context. The return value is unused: what
 # the user sees is what the tool emitted.
 ToolFunc = Callable[[ToolContext], None]
+
+
+# "Downloading…: 41.4%", "Installing: 7%", "  Progress: 100.0 %"
+_PROGRESS = re.compile(r"^\s*\S.*?[:\s]\s*\d{1,3}(?:[.,]\d+)?\s*%\s*$")
+
+
+class ProgressFilter:
+    """Thins out percentage lines so a long download does not flood the output.
+
+    fwupdmgr, apt and dnf redraw a progress line with carriage returns. Through
+    a pipe there are no carriage returns, only hundreds of separate lines --
+    one firmware refresh produced over 300 of them, which buried the four lines
+    that actually said something.
+
+    Progress is kept, not dropped: one line per interval, plus whichever line
+    came last, so the reader still sees movement and the final state.
+    """
+
+    def __init__(self, emit: Callable[[str], None], interval: float = 1.0) -> None:
+        self._emit = emit
+        self._interval = interval
+        self._last_emitted = 0.0
+        self._held: str | None = None
+
+    def __call__(self, line: str) -> None:
+        if not _PROGRESS.match(line):
+            self.flush()
+            self._emit(line)
+            return
+
+        now = time.monotonic()
+        if now - self._last_emitted >= self._interval:
+            self._last_emitted = now
+            self._held = None
+            self._emit(line)
+        else:
+            self._held = line
+
+    def flush(self) -> None:
+        """Emit the last progress line that was held back, if any."""
+        if self._held is not None:
+            self._emit(self._held)
+            self._held = None

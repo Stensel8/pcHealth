@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 from .. import system
-from .base import ToolContext
+from .base import ProgressFilter, ToolContext
 
 PREVIEW_LINES = 15
 
@@ -80,9 +80,9 @@ def system_update(ctx: ToolContext) -> None:
 
     ctx.line()
     ctx.line("[>>] Updating all packages...", "info")
-    rc = system.stream_root(
-        [manager.cmd, *manager.update], lambda line: ctx.line(f"  {line}", "muted")
-    )
+    progress = ProgressFilter(lambda line: ctx.line(f"  {line}", "muted"))
+    rc = system.stream_root([manager.cmd, *manager.update], progress)
+    progress.flush()
     ctx.line()
     if rc != 0:
         ctx.line(f"[!!] Update exited with code {rc}.", "error")

@@ -7,7 +7,7 @@ BIOS, dock, SSD and peripheral firmware for most vendors.
 from __future__ import annotations
 
 from .. import system
-from .base import ToolContext
+from .base import ProgressFilter, ToolContext
 
 _INSTALL_HINTS = (
     "  Debian / Ubuntu:  apt install fwupd",
@@ -43,8 +43,10 @@ def firmware_update(ctx: ToolContext) -> None:
     # --force refreshes even when the cached metadata is still considered fresh.
     refresh = system.run_root(["fwupdmgr", "refresh", "--force"])
     refresh_text = refresh.stdout + refresh.stderr
+    progress = ProgressFilter(lambda line: ctx.line(f"  {line}", "muted"))
     for line in refresh_text.splitlines():
-        ctx.line(f"  {line}", "muted")
+        progress(line)
+    progress.flush()
     # Without fresh metadata the verdict below reflects whatever was cached,
     # which may be months old -- say so rather than reporting "up to date".
     stale = any(marker in refresh_text for marker in _REFRESH_FAILED)
@@ -85,7 +87,9 @@ def firmware_update(ctx: ToolContext) -> None:
 
     ctx.line()
     ctx.line("[>>] Installing firmware updates...", "info")
-    rc = system.stream_root(["fwupdmgr", "update"], lambda line: ctx.line(f"  {line}", "muted"))
+    progress = ProgressFilter(lambda line: ctx.line(f"  {line}", "muted"))
+    rc = system.stream_root(["fwupdmgr", "update"], progress)
+    progress.flush()
     ctx.line()
     if rc == 0:
         ctx.line("[OK] Firmware update complete.", "ok")
