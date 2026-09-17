@@ -3,20 +3,24 @@
 from __future__ import annotations
 
 from .. import system
-from .base import ToolContext
+from .base import Choice, ToolContext
 
 
 def power_options(ctx: ToolContext) -> None:
     ctx.heading("Power Options")
-    ctx.line("  [1]  Log Off")
-    ctx.line("  [2]  Restart")
-    ctx.line("  [3]  Shutdown")
-    ctx.line("  [B]  Cancel")
-    ctx.line()
 
-    choice = ctx.ask("Choice").strip().upper()
+    choice = ctx.choose(
+        "What should happen?",
+        [
+            Choice("logoff", "Log Off", "Ends the desktop session.", destructive=True),
+            Choice("restart", "Restart", "Restarts the system immediately.", destructive=True),
+            Choice("shutdown", "Shut Down", "Powers the system off immediately.", destructive=True),
+        ],
+    )
 
-    if choice == "1":
+    if choice is None:
+        ctx.cancelled()
+    elif choice == "logoff":
         # Under sudo the environment describes root; log off the human instead.
         user = system.desktop_user()
         if not user:
@@ -28,17 +32,13 @@ def power_options(ctx: ToolContext) -> None:
         # loginctl ends the session cleanly, unlike killing the processes.
         rc = system.run_root(["loginctl", "terminate-user", user.name]).returncode
         ctx.command_output(rc, ok="[OK] Session ended.")
-    elif choice == "2":
+    elif choice == "restart":
         if not ctx.confirm("Restart the system?"):
             ctx.line("Cancelled.", "muted")
             return
         system.run_root(["shutdown", "-r", "now"])
-    elif choice == "3":
+    elif choice == "shutdown":
         if not ctx.confirm("Shut down the system?"):
             ctx.line("Cancelled.", "muted")
             return
         system.run_root(["shutdown", "-h", "now"])
-    elif choice == "B":
-        ctx.line("Cancelled.", "muted")
-    else:
-        ctx.line("Invalid choice.", "error")

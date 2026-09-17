@@ -6,7 +6,7 @@ import os
 import socket
 
 from .. import system
-from .base import ToolContext
+from .base import Choice, ToolContext
 
 _SECURE_BOOT_NOTE = (
     "[*] Secure Boot shows the UEFI firmware state only. Actual enforcement "
@@ -157,21 +157,22 @@ def bios_password(ctx: ToolContext) -> None:
     ctx.line("recovery codes for locked BIOS passwords.")
     ctx.line("Credits for this tool go to: @bacher09", "muted")
     ctx.line()
-    ctx.line("  [1]  Visit bios-pw.org  (recovery tool)")
-    ctx.line("  [2]  Visit repository  (learn more about how it works)")
-    ctx.line("  [B]  Back")
-    ctx.line()
 
-    choice = ctx.ask("Choice").strip().upper()
     urls = {
-        "1": "https://bios-pw.org",
-        "2": "https://github.com/bacher09/pwgen-for-bios",
+        "site": "https://bios-pw.org",
+        "repo": "https://github.com/bacher09/pwgen-for-bios",
     }
-    if choice == "B":
+    choice = ctx.choose(
+        "Which page should open?",
+        [
+            Choice("site", "bios-pw.org", "The recovery tool itself"),
+            Choice("repo", "pwgen-for-bios on GitHub", "How the codes are generated"),
+        ],
+    )
+    if choice is None:
+        ctx.cancelled()
         return
-    url = urls.get(choice)
-    if not url:
-        ctx.line("Invalid choice.", "error")
-        return
+
+    url = urls[choice]
     if not system.open_url(url):
         ctx.line(f"Could not open a browser. Visit: {url}", "warn")

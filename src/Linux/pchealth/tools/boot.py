@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .. import system
-from .base import ToolContext
+from .base import Choice, ToolContext
 
 ESP_CANDIDATES = ("/efi", "/boot/efi", "/boot")
 
@@ -171,20 +171,14 @@ def boot_repair(ctx: ToolContext) -> None:
         ctx.line("Install your bootloader's package first, then run this tool again.", "warn")
         return
 
-    ctx.line("Detected bootloaders:", "info")
-    for index, loader in enumerate(loaders, start=1):
-        ctx.line(f"  [{index}]  {loader.name}  ({loader.state})")
-    ctx.line("  [B]  Cancel")
-    ctx.line()
-
-    choice = ctx.ask("Which bootloader should be repaired?").strip().upper()
-    if choice == "B":
-        ctx.line("Cancelled.", "muted")
+    choice = ctx.choose(
+        "Which bootloader should be repaired?",
+        [Choice(loader.name, loader.name, loader.state, destructive=True) for loader in loaders],
+    )
+    if choice is None:
+        ctx.cancelled()
         return
-    if not choice.isdigit() or not 1 <= int(choice) <= len(loaders):
-        ctx.line("Invalid choice.", "error")
-        return
-    loader = loaders[int(choice) - 1]
+    loader = next(candidate for candidate in loaders if candidate.name == choice)
 
     ctx.line()
     ctx.line("These commands will run as root:", "warn")
@@ -193,12 +187,14 @@ def boot_repair(ctx: ToolContext) -> None:
     ctx.line()
 
     # Two confirmations, same as the Windows tool: this is the one place where
-    # a mistaken keystroke leaves the machine unbootable.
-    if ctx.ask("Type 'yes' to continue or anything else to cancel").strip().lower() != "yes":
-        ctx.line("Cancelled.", "muted")
+    # a mistaken click leaves the machine unbootable.
+    if not ctx.confirm(f"Reinstall {loader.name} on {esp}?"):
+        ctx.cancelled()
         return
-    if ctx.ask("Last chance -- type 'CONFIRM' in capitals to proceed").strip() != "CONFIRM":
-        ctx.line("Cancelled.", "muted")
+    if not ctx.confirm(
+        "Last chance. An interrupted repair can leave this machine unbootable. Proceed?"
+    ):
+        ctx.cancelled()
         return
 
     ctx.line()

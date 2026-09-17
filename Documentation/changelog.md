@@ -1,5 +1,17 @@
 # Changelog.md - pcHealth
 
+## 18-09-2026 - @Stensel8
+
+Linux GUI rebuilt to match the WinUI 3 app.
+
+- **Tools no longer render menus of their own.** They used to print `[1] [2] [B]` and ask for a line of text, which the GUI could only present as a text box -- a terminal pretending to be an app. A tool now *declares* its options (`ctx.choose`) and each front-end renders them its own way: a numbered list in the terminal, real buttons in the GUI. Affects Power Options, System Logs, BIOS Password Recovery and Boot Repair.
+- `ctx.ask` (free text) is gone with it. Boot Repair's "type CONFIRM" is now two explicit confirmations, which is what the Windows tool does anyway.
+- **Fixed: categories repeated in the sidebar.** The tool list started a new heading on every change of category, and since the catalogue is in menu order, categories interleave -- UPDATES, HARDWARE and INFORMATION each appeared several times. They are grouped properly now.
+- **Fixed: output from the previous tool stayed on screen** after selecting another one. Each tool now has its own page and its own output.
+- Laid out like the Windows app: a navigation sidebar, a Tools page of grouped cards with icons, and one page per tool with its title, description and Run button.
+- The "Actions ask for elevation" note moved out of the window controls into the sidebar footer.
+
+
 ## 17-09-2026 (3) - @Stensel8
 
 Self-contained builds and an MSI installer.
