@@ -11,9 +11,11 @@
 #
 # Build prerequisites on THIS machine:
 #   - .NET 10 SDK            winget install Microsoft.DotNet.SDK.10
-#   - WiX v5 (for the MSI)   dotnet tool install --global wix --version 5.0.2
-#     v6 and v7 refuse to build until you accept the Open Source Maintenance
-#     Fee EULA (https://wixtoolset.org/osmf/); v5 is the last plain one.
+#   - WiX v7 (for the MSI)   dotnet tool install --global wix --version 7.0.0
+#     v7 refuses to build until the Open Source Maintenance Fee EULA is
+#     accepted; -acceptEula below does that. The fee is owed by organisations
+#     above $10,000 annual revenue that use WiX to generate revenue, which
+#     pcHealth is not. See https://docs.firegiant.com/wix/osmf/
 #
 # Usage:
 #   pwsh -File development/tools/Build-Release.ps1
@@ -137,7 +139,9 @@ if (-not $wix) {
 } else {
     $wxs = Join-Path $repoRoot 'installer\pcHealth.wxs'
 
+    # -acceptEula: see the note at the top of this file.
     & $wix.Source build $wxs `
+        -acceptEula `
         -arch $Architecture `
         -d "Version=$version" `
         -d "PublishDir=$((Resolve-Path $publishDir).Path)" `

@@ -120,7 +120,7 @@ A Linux GUI is available separately -- WinUI 3 is Windows-only, so the Linux des
 | .NET 10 SDK | `winget install Microsoft.DotNet.SDK.10` |
 | Visual Studio 2026 | `winget install Microsoft.VisualStudio.Community` |
 | Windows App SDK | Included via NuGet on build |
-| WiX v5 | `dotnet tool install --global wix --version 5.0.2` (only for the MSI) |
+| WiX v7 | `dotnet tool install --global wix --version 7.0.0` (only for the MSI) |
 
 **Building the release artifacts** (self-contained app, ZIPs and MSI):
 

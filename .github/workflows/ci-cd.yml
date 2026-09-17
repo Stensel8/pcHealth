@@ -140,14 +140,17 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # Pinned to v5 deliberately. WiX v6 and v7 require accepting the Open
-      # Source Maintenance Fee EULA before they will build anything, which is
-      # a licensing decision for the project owner, not a CI default. v5 is
-      # the last release under the plain open-source licence and builds the
-      # same MSI from the same authoring.
+      # WiX v7 refuses to build until the Open Source Maintenance Fee EULA is
+      # accepted (error WIX7015), which -acceptEula below does.
+      #
+      # Accepted by the pcHealth maintainers (@Stensel8, REALSDEALS). The fee
+      # itself does not apply here: it is owed by organisations above $10,000
+      # annual revenue that use WiX to generate revenue, and pcHealth is a
+      # FOSS project well under that line. Only the acceptance is required.
+      # https://docs.firegiant.com/wix/osmf/
       - name: Install WiX
         shell: pwsh
-        run: dotnet tool install --global wix --version 5.0.2
+        run: dotnet tool install --global wix --version 7.0.0
 
       # A stub stands in for the publish output: this job checks the
       # authoring, not the app. The real payload is built by
@@ -164,6 +167,7 @@ jobs:
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
           wix build installer/pcHealth.wxs `
+            -acceptEula `
             -arch x64 `
             -d "Version=$version" `
             -d "PublishDir=$((Resolve-Path stub-publish).Path)" `
