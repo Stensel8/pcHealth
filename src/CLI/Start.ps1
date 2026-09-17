@@ -39,13 +39,34 @@ if ($onLinux) {
 
 # -- Windows: build check, elevate, relaunch in PS7 ---------------------------
 if (-not $onLinux) {
+    # Windows support tiers -- see README.md and SECURITY.md.
+    #   >= 26200  recommended : the build every release is tested on
+    #   >= 19045  supported   : Windows 10 22H2 and up; also the GUI's floor
+    #   >= 14393  legacy      : runs, but untested -- winget may be missing
+    #   <  14393  blocked     : PowerShell 7 does not run on these builds
+    # The floor is PowerShell 7's own, not a preference: below 1607 there is no
+    # pwsh to bootstrap, so the CLI cannot start no matter what pcHealth allows.
+    $recommendedBuild = 26200   # Windows 11 25H2
+    $supportedBuild   = 19045   # Windows 10 22H2
+    $hardMinimumBuild = 14393   # Windows 10 1607
     $build = [System.Environment]::OSVersion.Version.Build
-    if ($build -lt 26200) {
+
+    if ($build -lt $hardMinimumBuild) {
         Write-Host "[!!] pcHealth cannot run on Windows build $build." -ForegroundColor Red
-        Write-Host "     Minimum required: build 26200 (Windows 11 version 25H2)." -ForegroundColor Red
-        Write-Host "     https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information" -ForegroundColor DarkGray
+        Write-Host "     Minimum required: build $hardMinimumBuild (Windows 10 version 1607)," -ForegroundColor Red
+        Write-Host "     the oldest build PowerShell 7 supports." -ForegroundColor Red
+        Write-Host "     https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows" -ForegroundColor DarkGray
         Read-Host 'Press Enter to exit'
         exit 1
+    } elseif ($build -lt $supportedBuild) {
+        Write-Host ''
+        Write-Host "[!] Legacy Windows build $build -- below the supported floor of $supportedBuild (10 22H2)." -ForegroundColor Yellow
+        Write-Host "    pcHealth continues, but this build is not tested. Tools that need winget" -ForegroundColor Yellow
+        Write-Host "    stay unavailable until winget is installed (Tools > Repair Winget)." -ForegroundColor DarkGray
+    } elseif ($build -lt $recommendedBuild) {
+        Write-Host ''
+        Write-Host "[!] Windows build $build is supported; $recommendedBuild (11 25H2) is recommended." -ForegroundColor Yellow
+        Write-Host "    https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information" -ForegroundColor DarkGray
     }
 
     $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(

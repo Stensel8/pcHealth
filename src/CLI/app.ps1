@@ -28,11 +28,13 @@ if ($IsLinux) {
     $Global:PcPlatformLabel = 'Linux'
 } elseif ($IsWindows) {
     # Also checked in Start.ps1 before elevation; repeated here as safety net.
+    # Only the hard floor is enforced here -- the tier warnings live in Start.ps1
+    # so a normal launch does not print them twice.
     $build = [System.Environment]::OSVersion.Version.Build
-    if ($build -lt 26200) {
+    if ($build -lt 14393) {
         Write-Host "[!!] pcHealth cannot run on Windows build $build." -ForegroundColor Red
-        Write-Host "     Minimum required: build 26200 (Windows 11 version 25H2)." -ForegroundColor Red
-        Write-Host "     Please upgrade your system." -ForegroundColor Yellow
+        Write-Host "     Minimum required: build 14393 (Windows 10 version 1607)." -ForegroundColor Red
+        Write-Host "     PowerShell 7 does not support older builds." -ForegroundColor Yellow
         exit 1
     }
     $Global:PcPlatform      = 'Windows'
