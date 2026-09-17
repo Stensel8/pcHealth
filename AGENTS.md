@@ -12,8 +12,8 @@ This project has **two separate codebases**. Know which one you're in:
 
 | Part | Location | Language | Purpose |
 |---|---|---|---|
-| CLI | `src/CLI/` | PowerShell 7 + Bash | Cross-platform terminal health tool |
-| GUI | `src/GUI/pcHealth/` | C# / WinUI 3 (.NET) | Windows-only graphical frontend |
+| CLI | `src/Windows/CLI/` | PowerShell 7 | Cross-platform terminal health tool |
+| GUI | `src/Windows/GUI/pcHealth/` | C# / WinUI 3 (.NET) | Windows-only graphical frontend |
 
 Do not mix patterns between them. C# APIs do not belong in PowerShell scripts and vice versa.
 
@@ -42,7 +42,7 @@ https://github.com/JuliusBrussee/caveman
 
 ## Deprecated APIs — Avoid These
 
-### C# / .NET (GUI — `src/GUI/`)
+### C# / .NET (GUI — `src/Windows/GUI/`)
 
 The GUI uses WinUI 3 on .NET. Replace legacy APIs with their modern equivalents:
 
@@ -74,7 +74,7 @@ foreach (var instance in session.QueryInstances(
     Console.WriteLine(instance.CimInstanceProperties["Caption"].Value);
 ```
 
-### PowerShell 7 (CLI — `src/CLI/`)
+### PowerShell 7 (CLI — `src/Windows/CLI/`)
 
 | Deprecated / Avoid | Preferred | Why |
 |---|---|---|

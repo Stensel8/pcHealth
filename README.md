@@ -52,7 +52,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 2. Run `Start.ps1` from an elevated PowerShell 7 terminal:
 
 ```powershell
-.\src\CLI\Start.ps1
+.\src\Windows\CLI\Start.ps1
 ```
 
 ### Linux
@@ -63,7 +63,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 2. Run `Start.ps1` elevated:
 
 ```bash
-sudo pwsh src/CLI/Start.ps1
+sudo pwsh src/Windows/CLI/Start.ps1
 ```
 
 ### GUI
@@ -84,10 +84,10 @@ A Linux GUI is not yet available - WinUI 3 is Windows-only. A cross-platform alt
 | Windows App SDK | Included via NuGet on build |
 
 ```powershell
-dotnet build "src/GUI/pcHealth/pcHealth.csproj" -c Release
+dotnet build "src/Windows/GUI/pcHealth/pcHealth.csproj" -c Release
 ```
 
-Or open `src/GUI/pcHealth/pcHealth.csproj` in Visual Studio 2026.
+Or open `src/Windows/GUI/pcHealth/pcHealth.csproj` in Visual Studio 2026.
 
 ---
 
@@ -187,8 +187,8 @@ Installed packages are marked `[installed]` in the menu.
 
 Contributions are welcome. Follow the existing naming conventions: `Verb-Noun.ps1` for tools, consistent `Write-PcOption` / `Set-PcTheme` calls for UI.
 
-- New tool scripts go in `src/CLI/tools/` and must be registered in `src/CLI/menus/Tools.ps1` with appropriate `Platforms` tags.
-- Linux-only tools go in `src/CLI/tools/linux/`.
+- New tool scripts go in `src/Windows/CLI/tools/` and must be registered in `src/Windows/CLI/menus/Tools.ps1` with appropriate `Platforms` tags.
+- Linux-only tools go in `src/Windows/CLI/tools/linux/`.
 - Open an issue before starting larger changes to avoid duplicate work.
 
 See [SECURITY.md](SECURITY.md) for responsible disclosure of vulnerabilities.

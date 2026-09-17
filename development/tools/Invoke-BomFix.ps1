@@ -6,7 +6,7 @@
 #
 # Usage:
 #   pwsh -File development/tools/Invoke-BomFix.ps1
-#   pwsh -File development/tools/Invoke-BomFix.ps1 -Path src/CLI
+#   pwsh -File development/tools/Invoke-BomFix.ps1 -Path src/Windows/CLI
 #   pwsh -File development/tools/Invoke-BomFix.ps1 -WhatIf
 # ============================================================================
 

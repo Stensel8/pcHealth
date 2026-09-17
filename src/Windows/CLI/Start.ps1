@@ -32,7 +32,7 @@ if ($onLinux) {
     $isRoot = ("$(& id -u 2>$null)".Trim() -eq '0')
     if (-not $isRoot) {
         Write-Host '[!!] pcHealth must be run as root on Linux.' -ForegroundColor Red
-        Write-Host '     Run: sudo pwsh src/CLI/Start.ps1'       -ForegroundColor Yellow
+        Write-Host '     Run: sudo pwsh src/Windows/CLI/Start.ps1'       -ForegroundColor Yellow
         exit 1
     }
 }

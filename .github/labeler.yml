@@ -75,13 +75,13 @@
 "windows-11":
   - changed-files:
       - any-glob-to-any-file:
-          - "src/GUI/**"
+          - "src/Windows/GUI/**"
 
 "linux":
   - changed-files:
       - any-glob-to-any-file:
-          - "src/CLI/tools/linux/**"
-          - "src/CLI/start.sh"
+          - "src/Windows/CLI/tools/linux/**"
+          - "src/Linux/**"
 
 # ── Language labels ───────────────────────────────────────────────────────────
 

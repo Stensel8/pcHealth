@@ -57,7 +57,7 @@ $null = New-Item $cliStage -ItemType Directory -Force
 
 Write-Host '[2/4] Building GUI...' -ForegroundColor Yellow
 
-$csproj = Join-Path $repoRoot 'src\GUI\pcHealth\pcHealth.csproj'
+$csproj = Join-Path $repoRoot 'src\Windows\GUI\pcHealth\pcHealth.csproj'
 
 dotnet build $csproj --configuration Release --runtime $rid --no-self-contained --nologo
 
@@ -68,7 +68,7 @@ if ($LASTEXITCODE -ne 0) {
 # Read TargetFramework from csproj so the bin path never drifts.
 $tfm      = ([xml](Get-Content $csproj)).Project.PropertyGroup.TargetFramework |
                 Where-Object { $_ } | Select-Object -First 1
-$binOut   = Join-Path $repoRoot "src\GUI\pcHealth\bin\Release\$tfm\$rid"
+$binOut   = Join-Path $repoRoot "src\Windows\GUI\pcHealth\bin\Release\$tfm\$rid"
 
 Copy-Item "$binOut\*" $guiStage -Recurse
 
@@ -80,7 +80,7 @@ Write-Host '[3/4] Packaging ZIPs...' -ForegroundColor Yellow
 Compress-Archive -Path $guiStage -DestinationPath $guiZipPath -CompressionLevel Optimal
 
 # CLI — copy PS1 scripts as-is
-Copy-Item (Join-Path $repoRoot 'src\CLI\*') $cliStage -Recurse
+Copy-Item (Join-Path $repoRoot 'src\Windows\CLI\*') $cliStage -Recurse
 Compress-Archive -Path $cliStage -DestinationPath $cliZipPath -CompressionLevel Optimal
 
 # ── SHA256 hashes ─────────────────────────────────────────────────────────────

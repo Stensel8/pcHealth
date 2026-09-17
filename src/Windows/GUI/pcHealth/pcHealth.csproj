@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- Single source of truth: version is read from the repo-root VERSION file at build time. -->
-    <Version>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)..\..\..\VERSION').Trim())</Version>
+    <Version>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)..\..\..\..\VERSION').Trim())</Version>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -10,7 +10,7 @@
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <!-- Floor is Windows 10 22H2, the oldest build WinUI 3 still renders on.
          10.0.19041.0 is the nearest SDK version that exists; the exact 19045
-         check lives in src/GUI/Start.ps1. TargetFramework stays on the newest
+         check lives in src/Windows/GUI/Start.ps1. TargetFramework stays on the newest
          SDK so current APIs remain available behind runtime guards. -->
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <RootNamespace>pcHealth</RootNamespace>
@@ -50,7 +50,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <!-- Hardware database for Health page age/chipset lookups (source: repo root assets/). -->
-    <Content Include="..\..\..\assets\hardware-db.json" Link="assets\hardware-db.json">
+    <Content Include="..\..\..\..\assets\hardware-db.json" Link="assets\hardware-db.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

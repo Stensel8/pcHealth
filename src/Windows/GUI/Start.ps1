@@ -11,7 +11,7 @@ $ErrorActionPreference = 'Stop'
 # $IsLinux / $IsMacOS are PS6+ variables; on PS 5.1 they are $null (falsy).
 if ($IsLinux -or $IsMacOS) {
     Write-Host '[!!] The pcHealth GUI is not available on Linux or macOS.' -ForegroundColor Red
-    Write-Host '     Use src/CLI/start.sh to run the CLI version.'         -ForegroundColor Yellow
+    Write-Host '     Use src/Windows/CLI/Start.ps1 for the Windows CLI.'         -ForegroundColor Yellow
     exit 1
 }
 

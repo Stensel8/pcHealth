@@ -53,10 +53,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore "src/GUI/pcHealth/pcHealth.csproj"
+        run: dotnet restore "src/Windows/GUI/pcHealth/pcHealth.csproj"
 
       - name: Build
-        run: dotnet build "src/GUI/pcHealth/pcHealth.csproj" -c Release --no-restore
+        run: dotnet build "src/Windows/GUI/pcHealth/pcHealth.csproj" -c Release --no-restore
 
   # ----------------------------------------------------------
   # DOTNET FORMAT
@@ -78,10 +78,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore "src/GUI/pcHealth/pcHealth.csproj"
+        run: dotnet restore "src/Windows/GUI/pcHealth/pcHealth.csproj"
 
       - name: Check formatting
-        run: dotnet format "src/GUI/pcHealth/pcHealth.csproj" --verify-no-changes --verbosity diagnostic
+        run: dotnet format "src/Windows/GUI/pcHealth/pcHealth.csproj" --verify-no-changes --verbosity diagnostic
 
   # ----------------------------------------------------------
   # PR TITLE CHECK

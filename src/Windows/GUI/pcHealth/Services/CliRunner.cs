@@ -22,14 +22,14 @@ internal sealed class CliRunner : ICliRunner
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            var candidate = Path.Combine(dir.FullName, "src", "CLI", "tools");
+            var candidate = Path.Combine(dir.FullName, "src", "Windows", "CLI", "tools");
             if (Directory.Exists(candidate))
                 return _toolsDir = candidate;
             dir = dir.Parent;
         }
 
         throw new DirectoryNotFoundException(
-            "Cannot locate src/CLI/tools.\n" +
+            "Cannot locate src/Windows/CLI/tools.\n" +
             "Make sure the app is run from within the pcHealth repository.");
     }
 

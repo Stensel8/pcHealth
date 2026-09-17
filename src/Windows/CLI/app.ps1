@@ -21,7 +21,7 @@ if ($IsLinux) {
     $uid = "$(& id -u 2>$null)".Trim()
     if ($uid -ne '0') {
         Write-Host '[!!] pcHealth must be run as root on Linux.' -ForegroundColor Red
-        Write-Host '     Run: sudo pwsh src/CLI/Start.ps1'       -ForegroundColor Yellow
+        Write-Host '     Run: sudo pwsh src/Windows/CLI/Start.ps1'       -ForegroundColor Yellow
         exit 1
     }
     $Global:PcPlatform      = 'Linux'
