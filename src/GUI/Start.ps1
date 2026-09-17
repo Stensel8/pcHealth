@@ -16,17 +16,17 @@ if ($IsLinux -or $IsMacOS) {
 }
 
 # Recommended and hard minimum Windows build versions (see README.md).
-# The GUI floor sits above the CLI's: WinUI 3 does not render below 22H2, so
-# older machines are pointed at the CLI rather than blocked outright.
+# 19045 is WinUI 3's own floor; the CLI uses the same one so the two never
+# disagree about which machines pcHealth supports.
 $recommendedBuild = 26200   # 25H2+
 $hardMinimumBuild = 19045   # 22H2 (hard minimum -- WinUI 3's own floor)
 $build = [System.Environment]::OSVersion.Version.Build
 
 if ($build -lt $hardMinimumBuild) {
-    Write-Host "[!!] The pcHealth GUI requires at least Windows build $hardMinimumBuild (22H2)." -ForegroundColor Red
+    Write-Host "[!!] pcHealth requires at least Windows build $hardMinimumBuild (22H2)." -ForegroundColor Red
     Write-Host "     Your build: $build" -ForegroundColor Red
     Write-Host "     WinUI 3 does not run on older builds." -ForegroundColor Yellow
-    Write-Host "     Use the CLI instead: .\src\CLI\Start.ps1" -ForegroundColor Yellow
+    Write-Host "     Update Windows and try again." -ForegroundColor Yellow
     Read-Host 'Press Enter to exit'
     exit 1
 } elseif ($build -lt $recommendedBuild) {

@@ -11,9 +11,9 @@ if ($IsLinux) {
     # Also checked in Start.ps1; repeated here as safety net for direct invocation.
     $kernelVersion = (uname -r)
     $kernelMajor   = [int]($kernelVersion -split '[\.\-]')[0]
-    if ($kernelMajor -lt 7) {
+    if ($kernelMajor -lt 6) {
         Write-Host "[!!] pcHealth cannot run on kernel $kernelVersion." -ForegroundColor Red
-        Write-Host "     Minimum required: kernel 7.0." -ForegroundColor Red
+        Write-Host "     Minimum required: kernel 6.0." -ForegroundColor Red
         exit 1
     }
     # Also checked in Start.ps1; repeated here so tools can rely on being root
@@ -28,13 +28,13 @@ if ($IsLinux) {
     $Global:PcPlatformLabel = 'Linux'
 } elseif ($IsWindows) {
     # Also checked in Start.ps1 before elevation; repeated here as safety net.
-    # Only the hard floor is enforced here -- the tier warnings live in Start.ps1
-    # so a normal launch does not print them twice.
+    # Only the hard floor is enforced here -- the "recommended build" note lives
+    # in Start.ps1 so a normal launch does not print it twice.
     $build = [System.Environment]::OSVersion.Version.Build
-    if ($build -lt 14393) {
+    if ($build -lt 19045) {
         Write-Host "[!!] pcHealth cannot run on Windows build $build." -ForegroundColor Red
-        Write-Host "     Minimum required: build 14393 (Windows 10 version 1607)." -ForegroundColor Red
-        Write-Host "     PowerShell 7 does not support older builds." -ForegroundColor Yellow
+        Write-Host "     Minimum required: build 19045 (Windows 10 version 22H2)." -ForegroundColor Red
+        Write-Host "     Please upgrade your system." -ForegroundColor Yellow
         exit 1
     }
     $Global:PcPlatform      = 'Windows'

@@ -103,16 +103,15 @@ function Get-PcPackageManager {
 }
 
 # Windows counterpart of Get-PcPackageManager: reports whether winget is usable.
-# winget ships with Windows 10 1809 and later, so on the legacy tier -- and on
-# LTSC images and freshly deployed systems at any build -- it is simply absent.
-# A missing native command throws under $ErrorActionPreference = 'Stop', which
-# would take the whole menu down instead of just the tool the user picked.
+# Every supported build ships winget, but LTSC images, stripped deployment
+# images and machines where App Installer was removed do not have it. A missing
+# native command throws under $ErrorActionPreference = 'Stop', which would take
+# the whole menu down instead of just the tool the user picked.
 function Test-PcWinget {
     if (Get-Command winget -CommandType Application -ErrorAction SilentlyContinue) { return $true }
 
     Write-Host "`n[!!] winget is not available on this system." -ForegroundColor Red
-    Write-Host "     It ships with Windows 10 1809 and later; older or stripped-down" -ForegroundColor Yellow
-    Write-Host "     installations need it added separately." -ForegroundColor Yellow
+    Write-Host "     LTSC and stripped-down images ship without App Installer." -ForegroundColor Yellow
     Write-Host "     Try 'Repair Winget' in the Tools menu.`n" -ForegroundColor DarkGray
     return $false
 }

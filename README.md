@@ -17,23 +17,20 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 
 ## Supported Platforms
 
-| Platform | CLI | GUI | Minimum                        |
-|----------|-----|-----|--------------------------------|
-| Windows  | ✅  | ✅  | CLI: build 14393 (Windows 10 1607) · GUI: build 19045 (Windows 10 22H2) |
-| Linux    | ✅  | ❌  | Kernel 7.0                     |
+| Platform | CLI | GUI | Minimum                       |
+|----------|-----|-----|-------------------------------|
+| Windows  | ✅  | ✅  | Build 19045 (Windows 10 22H2) |
+| Linux    | ✅  | ❌  | Kernel 6.0                    |
 
-### Windows support tiers
+### Windows support levels
 
-The CLI runs on anything PowerShell 7 itself runs on; the GUI cannot go below what WinUI 3 supports. Rather than one hard cut-off, pcHealth tells you which tier you are on and keeps going where it can:
+| Level       | Build   | Windows     | Behaviour                                  |
+|-------------|---------|-------------|--------------------------------------------|
+| Recommended | ≥ 26200 | 11 25H2     | What every release is tested on            |
+| Supported   | ≥ 19045 | 10 22H2, 11 | Runs; a note on start names the recommended build |
+| Blocked     | < 19045 | older       | Exits immediately                          |
 
-| Tier        | Build   | Windows        | CLI                                   | GUI |
-|-------------|---------|----------------|---------------------------------------|-----|
-| Recommended | ≥ 26200 | 11 25H2        | ✅ tested                             | ✅ tested |
-| Supported   | ≥ 19045 | 10 22H2, 11    | ✅ note on start                      | ✅ note on start |
-| Legacy      | ≥ 14393 | 10 1607 – 21H2 | ⚠️ runs, warns, untested              | ❌ WinUI 3 will not render |
-| Blocked     | < 14393 | older          | ❌ PowerShell 7 does not run here     | ❌ |
-
-On the legacy tier tools keep working where the OS allows it: winget ships with Windows 10 1809 and later, so on older builds the tools that need it say so instead of failing, and `Repair Winget` can add it. Boot Repair stays UEFI-only at every tier — a BIOS/MBR install is detected and refused rather than half-repaired.
+Build 19045 is where WinUI 3 stops rendering, so the CLI and the GUI share one floor rather than drifting apart. Windows 10 22H2 still runs on plenty of BIOS/MBR machines: Boot Repair detects the firmware type and refuses a legacy install rather than half-repairing it. Tools that need winget say so when App Installer is missing (LTSC and stripped images) instead of failing, and `Repair Winget` can add it.
 
 On image-based systems (Fedora Silverblue, Bazzite, Kinoite, openSUSE MicroOS) the tools that manage packages or boot files are hidden rather than reimplemented: `/usr` is read-only and the bootloader belongs to the deployment, so `bootc` and `rpm-ostree` own that work. The other 14 Linux tools -- all the diagnostics -- run normally.
 
@@ -47,7 +44,7 @@ See [SECURITY.md](SECURITY.md) for version and end-of-life details.
 
 ## Getting Started
 
-**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum: Windows build 14393 (10 1607) or Linux kernel 7.0. Build 26200 (11 25H2) is what releases are tested on.
+**Requirements:** PowerShell 7+, run as Administrator (Windows) or root/sudo (Linux). Minimum: Windows build 19045 (10 22H2) or Linux kernel 6.0. Build 26200 (11 25H2) is what releases are tested on.
 
 ### Windows
 
@@ -71,7 +68,7 @@ sudo pwsh src/CLI/Start.ps1
 
 ### GUI
 
-On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface. Minimum: build 19045 (Windows 10 22H2) — below that WinUI 3 does not render, and the launcher points you at the CLI instead. Recommended: build 26200 (Windows 11 25H2).
+On Windows, pcHealth includes a native desktop application built with **WinUI 3** (.NET 10). It provides the same functionality as the CLI in a graphical interface. Minimum: build 19045 (Windows 10 22H2) — the build where WinUI 3 stops rendering. Recommended: build 26200 (Windows 11 25H2).
 ![Health tab](Health-tab.avif)
 ![Tools tab](Tools-tab.avif)
 ![Programs tab](Programs-tab.avif)

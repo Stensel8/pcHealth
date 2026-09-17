@@ -4,8 +4,8 @@
 # Repairs the EFI boot files via CHKDSK, SFC and BCDBOOT.
 # Best run from a recovery environment (WinRE/CMD) with Administrator rights.
 #
-# UEFI only, and it stays that way now that the legacy tier lets older Windows
-# 10 builds in: a BIOS/MBR install is detected and refused below rather than
+# UEFI only. Windows 10 22H2 still runs on plenty of BIOS/MBR machines, so the
+# firmware type is checked below and a legacy install is refused rather than
 # half-repaired. The old bootrec /fixmbr and /fixboot steps wrote MBR-era boot
 # code that nothing on a GPT disk reads -- /fixboot in fact returns "Access is
 # denied" on EFI systems, which is why the real repair was always the bcdboot

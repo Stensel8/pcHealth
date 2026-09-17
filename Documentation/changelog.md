@@ -2,14 +2,15 @@
 
 ## 17-09-2026 - @Stensel8
 
-Windows — tiered support replaces the single hard cut-off, so older hardware is usable again.
+Support floors lowered so older devices are usable again — Windows 10 22H2 and Linux kernel 6.0.
 
-- **CLI floor lowered from build 26200 to 14393** (Windows 10 1607). That is PowerShell 7's own minimum, so it is the lowest build on which the CLI can physically start. `Start.ps1` now reports the tier instead of exiting: recommended (>= 26200), supported (>= 19045), legacy (>= 14393, warns and continues), blocked (below that).
-- **GUI floor lowered from build 26200 to 19045** (Windows 10 22H2) — WinUI 3 does not render below 22H2, so this is its technical floor. `TargetPlatformMinVersion` was still pinned at 10.0.26100.0, which contradicted the launcher's existing 19045 check; it is now 10.0.19041.0 (the nearest real SDK version). Below 19045 the launcher points users at the CLI rather than just refusing.
+- **Windows floor lowered from build 26200 to 19045** (Windows 10 22H2) for both the CLI and the GUI. 19045 is where WinUI 3 stops rendering, so the two share one floor instead of drifting apart. Builds between 19045 and 26200 run normally and get a note naming the recommended build.
+- `TargetPlatformMinVersion` was still pinned at 10.0.26100.0 while the GUI launcher already allowed 19045 — the launcher promised what the build did not deliver. It is now 10.0.19041.0, the nearest real SDK version; `TargetFramework` stays on the newest SDK.
+- **Linux kernel floor lowered from 7.0 to 6.0**, covering the LTS kernels still shipping on current distros.
 - Title bar customization is now applied only where `AppWindowTitleBar.IsCustomizationSupported()` is true (Windows 11), so Windows 10 keeps the system caption instead of relying on version-dependent fallback behaviour.
-- Added `Test-PcWinget` helper: winget ships with Windows 10 1809 and later, so tools that need it (`Invoke-SystemUpdate`, `Invoke-HPUpdate`, the Programs menu) now report it as missing and point at "Repair Winget" instead of throwing and taking the menu down.
-- Boot Repair is unchanged and still UEFI-only: a BIOS/MBR install is detected and refused, which is what keeps the lower floor safe on pre-UEFI hardware.
-- Updated `README.md` and `SECURITY.md` with the tier table.
+- Added `Test-PcWinget` helper: LTSC and stripped-down images ship without App Installer, and a missing native command throws under `$ErrorActionPreference = 'Stop'`, taking the whole menu down. The tools that need winget (`Invoke-SystemUpdate`, `Invoke-HPUpdate`, the Programs menu) now report it and point at "Repair Winget".
+- Boot Repair is unchanged and still UEFI-only: Windows 10 22H2 runs on plenty of BIOS/MBR machines, and those are detected and refused rather than half-repaired.
+- Updated `README.md` and `SECURITY.md` with the support levels.
 
 ## 02-05-2026 - @Stensel8
 

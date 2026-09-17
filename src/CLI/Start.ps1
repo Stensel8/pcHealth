@@ -21,9 +21,9 @@ if ($onLinux) {
         exit 1
     }
     $kernelMajor = [int]($kernelStr -split '[.-]')[0]
-    if ($kernelMajor -lt 7) {
+    if ($kernelMajor -lt 6) {
         Write-Host "[!!] pcHealth cannot run on kernel $kernelStr." -ForegroundColor Red
-        Write-Host "     Minimum required: kernel 7.0." -ForegroundColor Red
+        Write-Host "     Minimum required: kernel 6.0." -ForegroundColor Red
         Write-Host "     https://www.kernel.org/" -ForegroundColor DarkGray
         Read-Host 'Press Enter to exit'
         exit 1
@@ -39,30 +39,22 @@ if ($onLinux) {
 
 # -- Windows: build check, elevate, relaunch in PS7 ---------------------------
 if (-not $onLinux) {
-    # Windows support tiers -- see README.md and SECURITY.md.
+    # Windows support floors -- see README.md and SECURITY.md.
     #   >= 26200  recommended : the build every release is tested on
-    #   >= 19045  supported   : Windows 10 22H2 and up; also the GUI's floor
-    #   >= 14393  legacy      : runs, but untested -- winget may be missing
-    #   <  14393  blocked     : PowerShell 7 does not run on these builds
-    # The floor is PowerShell 7's own, not a preference: below 1607 there is no
-    # pwsh to bootstrap, so the CLI cannot start no matter what pcHealth allows.
+    #   >= 19045  supported   : Windows 10 22H2 and Windows 11
+    #   <  19045  blocked     : WinUI 3 does not render below 22H2, so the GUI
+    #                           cannot follow the CLI down and the two floors
+    #                           are kept identical rather than drifting apart
     $recommendedBuild = 26200   # Windows 11 25H2
-    $supportedBuild   = 19045   # Windows 10 22H2
-    $hardMinimumBuild = 14393   # Windows 10 1607
+    $hardMinimumBuild = 19045   # Windows 10 22H2
     $build = [System.Environment]::OSVersion.Version.Build
 
     if ($build -lt $hardMinimumBuild) {
         Write-Host "[!!] pcHealth cannot run on Windows build $build." -ForegroundColor Red
-        Write-Host "     Minimum required: build $hardMinimumBuild (Windows 10 version 1607)," -ForegroundColor Red
-        Write-Host "     the oldest build PowerShell 7 supports." -ForegroundColor Red
-        Write-Host "     https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows" -ForegroundColor DarkGray
+        Write-Host "     Minimum required: build $hardMinimumBuild (Windows 10 version 22H2)." -ForegroundColor Red
+        Write-Host "     https://learn.microsoft.com/en-us/windows/release-health/release-information" -ForegroundColor DarkGray
         Read-Host 'Press Enter to exit'
         exit 1
-    } elseif ($build -lt $supportedBuild) {
-        Write-Host ''
-        Write-Host "[!] Legacy Windows build $build -- below the supported floor of $supportedBuild (10 22H2)." -ForegroundColor Yellow
-        Write-Host "    pcHealth continues, but this build is not tested. Tools that need winget" -ForegroundColor Yellow
-        Write-Host "    stay unavailable until winget is installed (Tools > Repair Winget)." -ForegroundColor DarkGray
     } elseif ($build -lt $recommendedBuild) {
         Write-Host ''
         Write-Host "[!] Windows build $build is supported; $recommendedBuild (11 25H2) is recommended." -ForegroundColor Yellow
