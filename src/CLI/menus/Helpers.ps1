@@ -102,6 +102,21 @@ function Get-PcPackageManager {
     return [PSCustomObject]($definitions[$name] + @{ Cmd = $name })
 }
 
+# Windows counterpart of Get-PcPackageManager: reports whether winget is usable.
+# winget ships with Windows 10 1809 and later, so on the legacy tier -- and on
+# LTSC images and freshly deployed systems at any build -- it is simply absent.
+# A missing native command throws under $ErrorActionPreference = 'Stop', which
+# would take the whole menu down instead of just the tool the user picked.
+function Test-PcWinget {
+    if (Get-Command winget -CommandType Application -ErrorAction SilentlyContinue) { return $true }
+
+    Write-Host "`n[!!] winget is not available on this system." -ForegroundColor Red
+    Write-Host "     It ships with Windows 10 1809 and later; older or stripped-down" -ForegroundColor Yellow
+    Write-Host "     installations need it added separately." -ForegroundColor Yellow
+    Write-Host "     Try 'Repair Winget' in the Tools menu.`n" -ForegroundColor DarkGray
+    return $false
+}
+
 # Opens a URL in the user's browser.
 # Start-Process cannot launch a URL on Linux -- it tries to exec it as a file --
 # so hand the address to xdg-open, and drop privileges so the browser lands in

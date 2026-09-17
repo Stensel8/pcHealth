@@ -156,10 +156,16 @@ function Show-WindowsProgramsMenu {
                     '1' {
                         Clear-PcHost
                         Write-Host "[>>] Checking for updates for $($pkg.Name)...`n" -ForegroundColor Yellow
-                        $proc   = Start-Process winget `
-                            -ArgumentList "upgrade --id $($pkg.Id) --accept-source-agreements --accept-package-agreements" `
-                            -Wait -PassThru -NoNewWindow
-                        $result = Get-WingetResult $proc.ExitCode
+                        # Checked here rather than via Test-PcWinget so a missing winget
+                        # renders through the same result path as a winget failure.
+                        $result = if (-not (Get-Command winget -CommandType Application -ErrorAction SilentlyContinue)) {
+                            @{ Ok = $false; Message = 'winget is not available on this system.'; SuggestRepair = $true }
+                        } else {
+                            $proc = Start-Process winget `
+                                -ArgumentList "upgrade --id $($pkg.Id) --accept-source-agreements --accept-package-agreements" `
+                                -Wait -PassThru -NoNewWindow
+                            Get-WingetResult $proc.ExitCode
+                        }
                         if ($result.Ok) {
                             Write-Host "`n[OK] $($pkg.Name) updated." -ForegroundColor Green
                         } else {
@@ -191,11 +197,14 @@ function Show-WindowsProgramsMenu {
                 Clear-PcHost
                 Write-Host "[>>] Installing $($pkg.Name)...`n" -ForegroundColor Yellow
 
-                $proc = Start-Process winget `
-                    -ArgumentList "install --id $($pkg.Id) --accept-source-agreements --accept-package-agreements" `
-                    -Wait -PassThru -NoNewWindow
-
-                $result = Get-WingetResult $proc.ExitCode
+                $result = if (-not (Get-Command winget -CommandType Application -ErrorAction SilentlyContinue)) {
+                    @{ Ok = $false; Message = 'winget is not available on this system.'; SuggestRepair = $true }
+                } else {
+                    $proc = Start-Process winget `
+                        -ArgumentList "install --id $($pkg.Id) --accept-source-agreements --accept-package-agreements" `
+                        -Wait -PassThru -NoNewWindow
+                    Get-WingetResult $proc.ExitCode
+                }
                 if ($result.Ok) {
                     Write-Host "`n[OK] $($pkg.Name) installed." -ForegroundColor Green
                     $allApps = @(Get-InstalledApp)

@@ -4,6 +4,8 @@
 # Installs HP Image Assistant which detects and updates HP-specific drivers.
 # ============================================================================
 
+if (-not (Test-PcWinget)) { return }
+
 # Warn if this does not appear to be an HP device so users don't install
 # unnecessary software on non-HP machines.
 $manufacturer = (Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue).Manufacturer

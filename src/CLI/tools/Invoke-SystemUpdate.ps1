@@ -4,6 +4,8 @@
 # Upgrades all installed winget packages.
 # ============================================================================
 
+if (-not (Test-PcWinget)) { return }
+
 Write-Host "`nDetecting updatable packages...`n" -ForegroundColor Cyan
 
 winget upgrade
