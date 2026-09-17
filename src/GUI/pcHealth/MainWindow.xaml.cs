@@ -1,3 +1,4 @@
+using Microsoft.UI.Windowing;
 using NLog;
 using pcHealth.Pages;
 using pcHealth.Services;
@@ -30,7 +31,12 @@ public sealed partial class MainWindow : Window
         }
 
         AppWindow.Resize(new SizeInt32(1100, 720));
-        ExtendsContentIntoTitleBar = true;
+
+        // Title bar customization is Windows 11 only -- IsCustomizationSupported()
+        // returns false on Windows 10, where the fallback behaviour differs per
+        // Windows App SDK version. Keep the system caption there instead.
+        if (AppWindowTitleBar.IsCustomizationSupported())
+            ExtendsContentIntoTitleBar = true;
 
         var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "pcHealth.ico");
         if (File.Exists(iconPath))
