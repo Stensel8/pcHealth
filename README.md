@@ -74,8 +74,16 @@ CI fails if the catalogue lists a tool the registry cannot run. See
 
 ### Windows
 
-1. Download or clone this repository.
-2. Run `Start.ps1` from an elevated PowerShell 7 terminal:
+**Install the desktop app** — download `pcHealth-<version>-win-x64.msi` (or `-win-arm64`) from [Releases](https://github.com/REALSDEALS/pcHealth/releases) and run it. The build is self-contained: the .NET runtime and the Windows App SDK travel inside it, so nothing has to be installed on the machine first. That matters on a PC you are there to repair.
+
+```powershell
+# Unattended, for deployment
+msiexec /i pcHealth-2.0.0-win-x64.msi /qn
+```
+
+A portable ZIP is published alongside the MSI for running straight off a USB stick — same binaries, no installation.
+
+**Run the CLI from source** — from an elevated PowerShell 7 terminal:
 
 ```powershell
 .\src\Windows\CLI\Start.ps1
@@ -112,6 +120,13 @@ A Linux GUI is available separately -- WinUI 3 is Windows-only, so the Linux des
 | .NET 10 SDK | `winget install Microsoft.DotNet.SDK.10` |
 | Visual Studio 2026 | `winget install Microsoft.VisualStudio.Community` |
 | Windows App SDK | Included via NuGet on build |
+| WiX v6 | `dotnet tool install --global wix` (only needed to build the MSI) |
+
+**Building the release artifacts** (self-contained app, ZIPs and MSI):
+
+```powershell
+pwsh -File development/tools/Build-Release.ps1 -Architecture x64
+```
 
 ```powershell
 dotnet build "src/Windows/GUI/pcHealth/pcHealth.csproj" -c Release

@@ -11,8 +11,9 @@ jobs:
 
   # ------------------------------------------------------------
   # BUILD
-  # Compiles the WinUI 3 app and packages GUI + CLI into ZIPs,
-  # then uploads the artifacts to the GitHub Release.
+  # Publishes the WinUI 3 app self-contained, packages GUI + CLI
+  # into ZIPs, builds the MSI installers, and uploads everything
+  # to the GitHub Release.
   # ------------------------------------------------------------
   build:
     name: Build & upload release artifacts
@@ -37,13 +38,19 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # The MSI is built by WiX; -RequireMsi below turns a missing toolset
+      # into a failed release rather than a release without its installer.
+      - name: Install WiX
+        shell: pwsh
+        run: dotnet tool install --global wix
+
       - name: Build release (x64)
         shell: pwsh
-        run: pwsh -File development/tools/Build-Release.ps1 -Architecture x64
+        run: pwsh -File development/tools/Build-Release.ps1 -Architecture x64 -RequireMsi
 
       - name: Build release (arm64)
         shell: pwsh
-        run: pwsh -File development/tools/Build-Release.ps1 -Architecture arm64 -Output dist-arm64
+        run: pwsh -File development/tools/Build-Release.ps1 -Architecture arm64 -Output dist-arm64 -RequireMsi
 
       - name: Upload release assets
         shell: pwsh
@@ -53,6 +60,8 @@ jobs:
           $v   = "${{ steps.version.outputs.version }}"
           $tag = "${{ github.ref_name }}"
           gh release upload $tag `
+            "dist/pcHealth-${v}-win-x64.msi" `
+            "dist-arm64/pcHealth-${v}-win-arm64.msi" `
             "dist/pcHealth-${v}-win-x64.zip" `
             "dist-arm64/pcHealth-${v}-win-arm64.zip" `
             "dist/pcHealth-CLI-${v}.zip" `

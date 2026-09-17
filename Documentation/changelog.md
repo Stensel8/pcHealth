@@ -1,5 +1,16 @@
 # Changelog.md - pcHealth
 
+## 17-09-2026 (3) - @Stensel8
+
+Self-contained builds and an MSI installer.
+
+- The GUI is now published **self-contained**: the .NET runtime and the Windows App SDK travel inside the app, so the target machine needs neither installed first. Previously a release ZIP was useless until the technician installed two runtimes on the machine they were there to repair.
+- **New: an MSI installer** (`pcHealth-<version>-win-x64.msi` and `-win-arm64.msi`), built with WiX v6 from `installer/pcHealth.wxs`. Per-machine install to Program Files, Start menu shortcut, and a fixed UpgradeCode so a new version replaces the old one instead of installing beside it. `msiexec /qn` works for unattended deployment.
+- The portable ZIP stays, with the same name, so the existing WinGet manifest keeps working.
+- `Build-Release.ps1` switched from `dotnet build --no-self-contained` to `dotnet publish --self-contained`, and gained `-SingleFile` (opt-in; the Windows App SDK's native binaries cannot all be merged into the exe) and `-RequireMsi` (used by CI so a release can never silently ship without its installer).
+- Trimming is explicitly disabled: WinUI 3 resolves XAML types by reflection, so a trimmed build fails at runtime rather than at build time.
+- CI gained an `installer-build` job that compiles the WiX authoring against a stub payload on every push, so a broken installer surfaces then rather than during a release.
+
 ## 17-09-2026 (2) - @Stensel8
 
 Split the codebase into a Windows stack and a Linux stack.
