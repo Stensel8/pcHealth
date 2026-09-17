@@ -167,7 +167,7 @@ jobs:
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
           wix build installer/pcHealth.wxs `
-            -acceptEula `
+            -acceptEula wix7 `
             -arch x64 `
             -d "Version=$version" `
             -d "PublishDir=$((Resolve-Path stub-publish).Path)" `

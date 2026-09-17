@@ -139,9 +139,10 @@ if (-not $wix) {
 } else {
     $wxs = Join-Path $repoRoot 'installer\pcHealth.wxs'
 
-    # -acceptEula: see the note at the top of this file.
+    # -acceptEula names the EULA being accepted, not a bare switch: see the
+    # note at the top of this file for who accepted it and why.
     & $wix.Source build $wxs `
-        -acceptEula `
+        -acceptEula wix7 `
         -arch $Architecture `
         -d "Version=$version" `
         -d "PublishDir=$((Resolve-Path $publishDir).Path)" `
