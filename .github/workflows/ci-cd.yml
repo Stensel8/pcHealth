@@ -21,6 +21,7 @@ concurrency:
 #
 #  dotnet-build    → dotnet build (GUI/ WinUI 3 app)
 #  dotnet-format   → dotnet format --verify-no-changes (code style)
+#  python-lint     → ruff + mypy (Linux app, src/Linux)
 #  pr-title        → conventional commits (PR title format)
 #  commit-lint     → conventional commits (commit message format)
 #  markdown-lint   → markdownlint (README, SECURITY, .github docs)
@@ -82,6 +83,40 @@ jobs:
 
       - name: Check formatting
         run: dotnet format "src/Windows/GUI/pcHealth/pcHealth.csproj" --verify-no-changes --verbosity diagnostic
+
+  # ----------------------------------------------------------
+  # PYTHON LINT
+  # ruff (lint + format) and mypy for the Linux app.
+  # Runs on Linux because that is the only platform it targets.
+  # The runner image already ships Python, so no setup step is needed.
+  # ----------------------------------------------------------
+  python-lint:
+    name: Python lint (Linux app)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: src/Linux
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install tooling
+        run: python3 -m pip install --disable-pip-version-check ruff mypy
+
+      - name: Lint
+        run: python3 -m ruff check .
+
+      - name: Check formatting
+        run: python3 -m ruff format --check .
+
+      - name: Type check
+        run: python3 -m mypy pchealth
+
+      # Guards the split: the shared catalogue and the Python registry must
+      # list the same tools, or the menu shows an entry that cannot run.
+      - name: Catalogue matches registry
+        run: python3 -c "from pchealth import catalog; from pchealth.tools import REGISTRY; missing = [t.id for t in catalog.load() if t.id not in REGISTRY]; assert not missing, f'no implementation for {missing}'; print(f'{len(REGISTRY)} tools wired')"
 
   # ----------------------------------------------------------
   # PR TITLE CHECK
