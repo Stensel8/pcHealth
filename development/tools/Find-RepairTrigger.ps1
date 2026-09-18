@@ -45,14 +45,17 @@ param(
 
 Set-StrictMode -Version Latest
 
+# Processes worth shouting about: these are the ones the button reaches for.
+$NotableProcess = 'SystemSettingsAdminFlows|MoUsoCoreWorker|usoclient|UsoCoreWorker|TiWorker|TrustedInstaller|SetupHost|WaaSMedic'
+
 # Words worth finding in a binary that knows about this repair.
 $InterestingPattern = 'Reinstall|CloudDownload|RepairVersion|repair version|SelfHeal|Self-heal|' +
                       'RecoveryReinstall|FixProblem|ms-settings:recovery|StartRepair|RemediationRequired|' +
-                      'ms-cxh'
+                      'ms-cxh|Ipu[A-Z]|AdminFlow'
 
 # Settings names every control it owns as SystemSettings_<Area>_<Setting>, so
 # the repair button has an id of its own and that id is the real lead.
-$SettingIdPattern = 'SystemSettings_[A-Za-z0-9_]*(Recovery|Reinstall|Repair|Reset|Update)[A-Za-z0-9_]*'
+$SettingIdPattern = 'SystemSettings_[A-Za-z0-9_]*(Recovery|Reinstall|Repair|Reset|Update|Ipu)[A-Za-z0-9_]*'
 
 function Get-BinaryString {
     <#
@@ -119,6 +122,7 @@ function Get-ScanCandidate {
     else {
         @(
             'SystemSettings.Handlers.dll', 'SystemSettings.DataModel.dll', 'SystemSettings.dll',
+            'SystemSettingsAdminFlows.exe',
             'usoclient.exe', 'UsoCore.dll', 'MoUsoCoreWorker.exe', 'usocoreworker.exe',
             'SystemReset.exe', 'ResetEngine.dll', 'ResetEngOnline.dll', 'wuaueng.dll'
         )
@@ -158,8 +162,14 @@ function Invoke-Scan {
 
     foreach ($path in $Candidate) {
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-            $missing.Add($path)
-            continue
+            $found = Get-ChildItem -LiteralPath (Join-Path $env:SystemRoot 'System32') `
+                -Filter (Split-Path -Leaf $path) -Recurse -File -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+            if ($null -eq $found) {
+                $missing.Add($path)
+                continue
+            }
+            $path = $found.FullName
         }
         $scanned++
 
@@ -313,7 +323,9 @@ function Invoke-ButtonWatch {
     Write-Host ("Baseline: {0} registry values, {1} orchestrator tasks." -f $registryBefore.Count, $tasksBefore.Count)
 
     $known = @{}
-    foreach ($process in Get-Process -ErrorAction SilentlyContinue) { $known[$process.Id] = $true }
+    foreach ($process in Get-CimInstance -ClassName Win32_Process -ErrorAction SilentlyContinue) {
+        $known[$process.ProcessId] = $true
+    }
 
     Write-Host ''
     Write-Host 'Now press "Reinstall now" in Settings > System > Recovery.' -ForegroundColor Green
@@ -325,11 +337,18 @@ function Invoke-ButtonWatch {
     $lastTick = Get-Date
 
     while ((Get-Date) -lt $deadline) {
-        foreach ($process in Get-Process -ErrorAction SilentlyContinue) {
-            if ($known.ContainsKey($process.Id)) { continue }
-            $known[$process.Id] = $true
-            $started.Add($process.ProcessName)
-            Write-Host ('    {0:HH:mm:ss}  {1} (pid {2})' -f (Get-Date), $process.ProcessName, $process.Id) -ForegroundColor Green
+        foreach ($process in Get-CimInstance -ClassName Win32_Process -ErrorAction SilentlyContinue) {
+            if ($known.ContainsKey($process.ProcessId)) { continue }
+            $known[$process.ProcessId] = $true
+            $started.Add($process.Name)
+
+            $colour = if ($process.Name -match $NotableProcess) { 'Magenta' } else { 'Green' }
+            Write-Host ('    {0:HH:mm:ss}  {1} (pid {2})' -f (Get-Date), $process.Name, $process.ProcessId) -ForegroundColor $colour
+
+            $line = if ([string]::IsNullOrWhiteSpace($process.CommandLine)) { $process.ExecutablePath } else { $process.CommandLine }
+            if (-not [string]::IsNullOrWhiteSpace($line)) {
+                Write-Host ('             {0}' -f $line) -ForegroundColor DarkGray
+            }
         }
 
         # A heartbeat every 30s, so a quiet stretch still looks like progress.
