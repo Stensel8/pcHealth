@@ -33,8 +33,11 @@ internal sealed class CliRunner : ICliRunner
             "Make sure the app is run from within the pcHealth repository.");
     }
 
+    // ShellExecute hands a protocol off to a handler that is already running --
+    // Settings, a browser -- without creating a process, so a null return here
+    // means someone took the request, not that it failed.
     public void OpenUri(string uri) =>
-        Start(new ProcessStartInfo { FileName = uri, UseShellExecute = true });
+        Process.Start(new ProcessStartInfo { FileName = uri, UseShellExecute = true })?.Dispose();
 
     public void OpenApp(string exeName, string registryName = "")
     {
