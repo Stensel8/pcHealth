@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="pcHealth.Pages.HPUpdatePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -9,7 +9,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -37,16 +37,17 @@
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </StackPanel>
 
-        <Border Grid.Row="3"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1" CornerRadius="8" Margin="28,0,28,8">
-            <ScrollViewer x:Name="OutputScroller" VerticalScrollBarVisibility="Auto" Padding="16">
+        <!-- Command output is secondary: a GUI should not open onto a wall of log text. -->
+        <Expander Grid.Row="3" Header="Details" IsExpanded="False"
+                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                  Margin="28,0,28,8">
+            <ScrollViewer MaxHeight="360" x:Name="OutputScroller"
+                          VerticalScrollBarVisibility="Auto" Padding="16">
                 <TextBlock Text="{x:Bind ViewModel.Output, Mode=OneWay}"
                            FontFamily="Cascadia Code, Consolas, Courier New"
                            FontSize="12" IsTextSelectionEnabled="True" TextWrapping="Wrap"/>
             </ScrollViewer>
-        </Border>
+        </Expander>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal"
                     HorizontalAlignment="Right" Padding="28,4,28,20" Spacing="8">

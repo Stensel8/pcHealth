@@ -104,7 +104,8 @@ foreach (var instance in session.QueryInstances(
 | `os.system`, backticks, `shell=True` pipelines | `system.run` / `system.stream` | They centralise the missing-command, timeout and encoding handling |
 | Bare `subprocess` calls in a tool | `system.run`, `system.output`, `system.stream` | A missing binary is the normal case on Linux, not an edge case; these return instead of raising |
 | `os.geteuid() == 0` checks scattered in tools | `system.run_root` / `system.elevated` | Privilege is raised per action via pkexec so the GUI never runs as root |
-| `print()` inside a tool | `ctx.line(...)` / `ctx.emit(...)` | A tool must not know whether it is in a terminal or in GTK |
+| `print()` inside a tool, or any formatted text | `ui.section` / `ui.fields` / `ui.note` / `ui.run` | A tool describes results; the front-end decides whether they become text or widgets. A tool that emits `"[>>] ..."` has decided it lives in a terminal |
+| Running a command by hand and printing its output | `ui.run(argv, label=...)` / `ui.run_all(...)` | Handles the step, its raw output, the exit code, and a single elevation prompt for a batch |
 | `$HOME` / `os.environ["USER"]` | `system.desktop_user()` | Under sudo or pkexec both describe root, not the person at the keyboard |
 | Touching GTK from a worker thread | `GLib.idle_add` | GTK may only be called from the main loop |
 

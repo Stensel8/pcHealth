@@ -1,5 +1,14 @@
 # Changelog.md - pcHealth
 
+## 18-09-2026 (4) - @Stensel8
+
+Both GUIs stop being terminals in a window.
+
+- **The tool contract is structural instead of line-based.** `ctx.line(text, style)` gave a front-end nothing to render but text, which is why the GTK window looked like a console. A tool now calls `ui.section()`, `ui.fields()`, `ui.note()` and `ui.run()`; the terminal turns those into text and the GTK window into groups, rows and an expander. Raw command output belongs to the step that produced it and stays folded away.
+- `ui.run()` / `ui.run_all()` absorb the six lines every tool repeated around each command -- label, stream with an indent, check the exit code, report OK or the failure -- and keep the single elevation prompt.
+- **Windows: `ICliRunner.RunScript` is gone** (it was dead code) and so is `RunWinget`, which opened a real pwsh window that waited for a keypress. Installing a program now reports its progress on its own card.
+- **Windows: command output moved behind a `Details` expander** on the seven pages that opened onto a wall of monospace log text -- Scan + Repair, Boot Repair, Network Reset, Continuous Ping, System Update, Winget Repair and HP Update. The redundant card border inside it went with it. The CBS log and licence key pages keep their text: there the text *is* the result.
+
 ## 18-09-2026 (3) - @Stensel8
 
 One password prompt per tool, instead of one per command.
