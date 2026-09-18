@@ -24,4 +24,27 @@ internal static class DialogHelper
         };
         await dialog.ShowAsync();
     }
+
+    /// <summary>
+    /// Asks the user to confirm something consequential. The close button is
+    /// the default, so leaning on Enter cannot start anything.
+    /// Must be called on the UI thread.
+    /// </summary>
+    internal static async Task<bool> ShowConfirmAsync(
+        XamlRoot xamlRoot,
+        string title,
+        string message,
+        string confirmText)
+    {
+        var dialog = new ContentDialog
+        {
+            Title = title,
+            Content = message,
+            PrimaryButtonText = confirmText,
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = xamlRoot,
+        };
+        return await dialog.ShowAsync() == ContentDialogResult.Primary;
+    }
 }

@@ -40,6 +40,7 @@ public partial class App : Application
         s.AddSingleton<WinGetComClient>();
         s.AddSingleton<WinGetCliClient>();
         s.AddSingleton<IWinGet, WinGetClient>();
+        s.AddSingleton<IWindowsRepair, WindowsRepair>();
 
         // ViewModels — Transient: elke navigatie krijgt een frisse instantie
         s.AddTransient<AudioRestartViewModel>();
@@ -68,6 +69,7 @@ public partial class App : Application
         s.AddTransient<ToolsViewModel>();
         s.AddTransient<TracerouteViewModel>();
         s.AddTransient<WindowsUpdateViewModel>();
+        s.AddTransient<WindowsRepairViewModel>();
         s.AddTransient<WingetRepairViewModel>();
 
         Services = s.BuildServiceProvider();

@@ -23,6 +23,7 @@ public partial class ToolsViewModel : ObservableObject
         new ToolItem { Name = "Update HP Drivers",           Glyph = "",   Note = "HP only",                         PageType = typeof(HPUpdatePage),          Category = "Updates",     Platforms = ["Windows"] },
         new ToolItem { Name = "Get Ninite",                  Glyph = "",   Note = "Edge, Chrome, VLC, 7-Zip",        PageType = typeof(NinitePage),            Category = "Updates",     Platforms = ["Windows"] },
         new ToolItem { Name = "Scan + Repair",               Glyph = "",   Note = "SFC + DISM combined",             PageType = typeof(ScanRepairPage),        Category = "Maintenance", Platforms = ["Windows"] },
+        new ToolItem { Name = "Repair Windows",              Glyph = "",   Note = "keeps files and apps",            PageType = typeof(WindowsRepairPage),      Category = "Maintenance", Platforms = ["Windows"] },
         new ToolItem { Name = "Repair Boot Record",          Glyph = "",   Note = "use with caution!",               PageType = typeof(BootRepairPage),        Category = "Maintenance", Platforms = ["Windows"] },
         new ToolItem { Name = "Open CBS Log",                Glyph = "",   PageType = typeof(CBSLogPage),            Category = "Maintenance", Platforms = ["Windows"] },
         new ToolItem { Name = "Repair Winget",               Glyph = "",   PageType = typeof(WingetRepairPage),      Category = "Maintenance", Platforms = ["Windows"] },

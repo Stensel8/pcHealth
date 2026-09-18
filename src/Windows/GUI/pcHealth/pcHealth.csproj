@@ -76,6 +76,10 @@
     <!-- WinGet COM API, so package installs report progress objects instead of
          a console progress bar scraped out of a pipe. -->
     <PackageReference Include="Microsoft.WindowsPackageManager.ComInterop" Version="1.29.380" />
+    <!-- UI Automation client. Windows offers no API for the "Fix problems using
+         Windows Update" repair, so Services/WindowsRepair.cs presses the real
+         Settings button; FlaUI wraps the UIA3 COM interfaces. -->
+    <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />
   </ItemGroup>
 
 </Project>
