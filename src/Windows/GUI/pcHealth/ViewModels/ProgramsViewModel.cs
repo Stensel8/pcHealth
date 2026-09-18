@@ -22,14 +22,14 @@ public partial class ProgramsViewModel : ObservableObject
     ];
 
     private readonly ICliRunner _cli;
-    private readonly IProcessRunner _runner;
+    private readonly IWinGet _winGet;
 
     public ObservableCollection<ItemGroup<ProgramItem>> GroupedPrograms { get; } = new();
 
-    public ProgramsViewModel(ICliRunner cli, IProcessRunner runner)
+    public ProgramsViewModel(ICliRunner cli, IWinGet winGet)
     {
         _cli = cli;
-        _runner = runner;
+        _winGet = winGet;
         var categoryOrder = new[] { "Hardware", "Disk", "Security", "Utilities" };
         var groups = AllPrograms
             .GroupBy(p => p.Category)
@@ -61,7 +61,7 @@ public partial class ProgramsViewModel : ObservableObject
 
     public void InstallOrOpen(ProgramItem item) => _ = InstallOrOpenCoreAsync(item);
 
-    // Open if installed, install otherwise. Throws on error so callers can show feedback.
+    // Open if installed, install otherwise. Failures land on the card, not in an exception.
     public async Task InstallOrOpenAsync(ProgramItem item)
     {
         if (item.IsInstalled)
@@ -71,7 +71,7 @@ public partial class ProgramsViewModel : ObservableObject
         }
         else if (!string.IsNullOrEmpty(item.WingetId))
         {
-            await RunWingetAsync(item, "install", "Installed");
+            await RunWingetAsync(item, upgrade: false);
         }
         else if (!string.IsNullOrEmpty(item.BrowserUrl))
         {
@@ -79,41 +79,41 @@ public partial class ProgramsViewModel : ObservableObject
         }
     }
 
-    public Task UpdateAsync(ProgramItem item) => RunWingetAsync(item, "upgrade", "Updated");
+    public Task UpdateAsync(ProgramItem item) => RunWingetAsync(item, upgrade: true);
 
     public Task ForceInstallAsync(ProgramItem item) =>
-        RunWingetAsync(item, "install", "Installed", force: true);
+        RunWingetAsync(item, upgrade: false, force: true);
 
     // winget used to run in a console window that popped up over the app and
-    // waited for a keypress. Its output goes to the card and the log instead:
-    // a GUI should not hand you a terminal to read.
-    private async Task RunWingetAsync(ProgramItem item, string verb, string done, bool force = false)
+    // waited for a keypress. The COM API reports a stage and a percentage
+    // instead, so the card can say what is happening on its own.
+    private async Task RunWingetAsync(ProgramItem item, bool upgrade, bool force = false)
     {
         if (string.IsNullOrEmpty(item.WingetId) || item.IsBusy) return;
 
-        var arguments =
-            $"{verb} --id {item.WingetId} --accept-source-agreements --accept-package-agreements"
-            + (force ? " --force" : "");
-
         item.IsBusy = true;
-        item.Status = $"Starting {verb}...";
+        item.Status = upgrade ? "Checking for a newer version..." : "Starting...";
         try
         {
-            var exitCode = await _runner.RunAsync("winget", arguments, line =>
-            {
-                Log.Debug("winget {Name}: {Line}", item.Name, line);
-                // Progress bars redraw themselves into noise through a pipe;
-                // only keep lines that read as a sentence.
-                if (line.Length > 3 && !line.TrimStart().StartsWith('\u2588'))
-                    item.Status = line.Trim();
-            });
+            // Progress<T> posts back to the thread that made it, which is the
+            // UI thread, so the card updates without a dispatcher.
+            var progress = new Progress<WinGetProgress>(step =>
+                item.Status = step.Percent is double percent
+                    ? $"{step.Stage} {percent:0}%"
+                    : step.Stage);
 
-            item.Status = exitCode == 0 ? done : $"winget exited with code {exitCode}";
+            var result = upgrade
+                ? await _winGet.UpgradeAsync(item.WingetId, progress)
+                : await _winGet.InstallAsync(item.WingetId, progress, force);
+
+            item.Status = result.RebootRequired
+                ? $"{result.Message} A restart is required."
+                : result.Message;
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "winget {Verb} failed for {Name}", verb, item.Name);
-            item.Status = "Could not run winget. Is App Installer present?";
+            Log.Error(ex, "winget {Verb} failed for {Name}", upgrade ? "upgrade" : "install", item.Name);
+            item.Status = ex.Message;
         }
         finally
         {

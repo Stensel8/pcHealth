@@ -30,6 +30,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <!-- We reach the WinGet COM server with CoCreateInstance ourselves, so the
+         package's in-process activation factory is not needed and its native
+         binaries stay out of the publish output. -->
+    <MicrosoftManagementDeployment-FactoryLinkage>none</MicrosoftManagementDeployment-FactoryLinkage>
   </PropertyGroup>
 
   <ItemGroup>
@@ -69,6 +73,9 @@
     <!-- Service Control Manager client, so services are driven through the SCM
          API instead of net.exe and sc.exe text output. -->
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.12" />
+    <!-- WinGet COM API, so package installs report progress objects instead of
+         a console progress bar scraped out of a pipe. -->
+    <PackageReference Include="Microsoft.WindowsPackageManager.ComInterop" Version="1.29.380" />
   </ItemGroup>
 
 </Project>

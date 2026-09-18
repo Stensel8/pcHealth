@@ -24,25 +24,19 @@
             <Button Content="Update All Packages"
                     Style="{StaticResource AccentButtonStyle}"
                     Command="{x:Bind ViewModel.RunCommand}"/>
-            <ProgressRing IsActive="{x:Bind ViewModel.IsRunning, Mode=OneWay}" Width="22" Height="22" VerticalAlignment="Center"/>
             <TextBlock Text="{x:Bind ViewModel.Status, Mode=OneWay}"
                        VerticalAlignment="Center"
                        Style="{StaticResource CaptionTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </StackPanel>
 
-        <!-- Command output is secondary: a GUI should not open onto a wall of log text. -->
-        <Expander Grid.Row="2" Header="Details" IsExpanded="False"
-                  HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                  Margin="28,0,28,8">
-            <ScrollViewer MaxHeight="360" x:Name="OutputScroller" VerticalScrollBarVisibility="Auto" Padding="16">
-            <TextBlock Text="{x:Bind ViewModel.Output, Mode=OneWay}"
-                       FontFamily="Cascadia Code, Consolas, Courier New"
-                       FontSize="12" IsTextSelectionEnabled="True"
-                       TextWrapping="Wrap"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-            </ScrollViewer>
-        </Expander>
+        <!-- The COM API reports a stage and a percentage, so the page shows
+             those rather than the console text winget.exe would have printed. -->
+        <ProgressBar Grid.Row="2" Margin="28,0,28,12"
+                     Value="{x:Bind ViewModel.Percent, Mode=OneWay}"
+                     IsIndeterminate="{x:Bind ViewModel.IsIndeterminate, Mode=OneWay}"
+                     ShowPaused="False" ShowError="False"
+                     Visibility="{x:Bind ViewModel.ProgressVisibility, Mode=OneWay}"/>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal"
                     HorizontalAlignment="Right" Padding="28,4,28,20" Spacing="8">

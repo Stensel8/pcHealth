@@ -35,6 +35,12 @@ public partial class App : Application
         s.AddSingleton<IUpdateChecker, UpdateChecker>();
         s.AddSingleton<IProcessRunner, ProcessRunner>();
 
+        // Singletons: WinGetComClient probes the COM server once and caches
+        // the answer, so every page shares that one decision.
+        s.AddSingleton<WinGetComClient>();
+        s.AddSingleton<WinGetCliClient>();
+        s.AddSingleton<IWinGet, WinGetClient>();
+
         // ViewModels — Transient: elke navigatie krijgt een frisse instantie
         s.AddTransient<AudioRestartViewModel>();
         s.AddTransient<BatteryReportViewModel>();
