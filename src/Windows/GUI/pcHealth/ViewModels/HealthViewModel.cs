@@ -1020,74 +1020,38 @@ public partial class HealthViewModel : ObservableObject
             ["DirectPlay"] = ("DirectPlay", false),
         };
 
-        var dismPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.System), "dism.exe");
-
-        if (File.Exists(dismPath))
-        {
-            var tasks = featureMap
-                .Select(kvp => Task.Run(() => (kvp.Key, kvp.Value, CheckDismFeature(dismPath, kvp.Key))))
-                .ToArray();
-            Task.WaitAll(tasks, TimeSpan.FromSeconds(30));
-
-            foreach (var t in tasks.Where(t => t.IsCompletedSuccessfully))
-            {
-                var (key, info, (found, enabled)) = t.Result;
-                {
-                    var active = found && enabled;
-                    var s = active ? (info.IsCritical ? CheckStatus.Bad : CheckStatus.Warning) : CheckStatus.Good;
-                    rows.Add(new HealthRow(info.Label, active ? "Enabled" : "Disabled", s));
-                }
-            }
-        }
-        else
-        {
-            rows.Add(new HealthRow("Optional features", "dism.exe not found", CheckStatus.Unknown));
-        }
-
-        return rows;
-    }
-
-    private static readonly Regex _dismStateRegex = new(@"State\s*:\s*(\w[\w ]*)", RegexOptions.Multiline | RegexOptions.Compiled);
-
-    private static (bool Found, bool Enabled) CheckDismFeature(string dismPath, string featureName)
-    {
+        // Win32_OptionalFeature reports the state DISM does, over the same
+        // servicing stack, in one query. Asking dism.exe instead meant six
+        // processes, six 15-second timeouts and a regex over its prose.
+        // InstallState 1 is Enabled; a feature this SKU does not carry is
+        // simply absent, which reads as Disabled the same way it did before.
         try
         {
-            var psi = new ProcessStartInfo
+            using var session = CimSession.Create(null);
+            var enabled = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var inst in session.QueryInstances("root/cimv2", "WQL",
+                "SELECT Name FROM Win32_OptionalFeature WHERE InstallState = 1"))
             {
-                FileName = dismPath,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-            };
-            psi.ArgumentList.Add("/Online");
-            psi.ArgumentList.Add("/Get-FeatureInfo");
-            psi.ArgumentList.Add($"/FeatureName:{featureName}");
+                var name = inst.CimInstanceProperties["Name"]?.Value?.ToString();
+                if (!string.IsNullOrEmpty(name)) enabled.Add(name);
+            }
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-            using var proc = new Process { StartInfo = psi };
-            proc.Start();
-            string output;
-            try { output = proc.StandardOutput.ReadToEndAsync(cts.Token).GetAwaiter().GetResult(); }
-            catch (OperationCanceledException) { proc.Kill(entireProcessTree: true); return (false, false); }
-            try { proc.StandardError.ReadToEndAsync(cts.Token).GetAwaiter().GetResult(); }
-            catch (Exception ex) { Log.Debug(ex, "DISM stderr drain failed"); }
-            proc.WaitForExit();
-
-            if (proc.ExitCode != 0) return (false, false);
-
-            var m = _dismStateRegex.Match(output);
-            if (!m.Success) return (false, false);
-            bool enabled = m.Groups[1].Value.Trim().StartsWith("Enabled", StringComparison.OrdinalIgnoreCase);
-            return (true, enabled);
+            foreach (var (feature, info) in featureMap)
+            {
+                bool active = enabled.Contains(feature);
+                rows.Add(new HealthRow(
+                    info.Label,
+                    active ? "Enabled" : "Disabled",
+                    active ? (info.IsCritical ? CheckStatus.Bad : CheckStatus.Warning) : CheckStatus.Good));
+            }
         }
         catch (Exception ex)
         {
-            Log.Debug(ex, "DISM {Feature} failed", featureName);
-            return (false, false);
+            Log.Debug(ex, "Win32_OptionalFeature query failed");
+            rows.Add(new HealthRow("Optional features", "Query failed", CheckStatus.Unknown));
         }
+
+        return rows;
     }
 
     // --- CPU helpers ---

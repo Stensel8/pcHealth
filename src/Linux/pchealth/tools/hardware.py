@@ -2,34 +2,10 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
-from .. import smart, system
+from .. import probe, smart, system
 from .base import Level, ToolUI
-
-GPU_PATTERN = re.compile(
-    r"^[\w:.]+\s+(?:VGA compatible controller|Display controller|3D controller):\s*(.+)$"
-)
-
-
-def _lscpu() -> dict[str, str]:
-    values: dict[str, str] = {}
-    for line in (system.output(["lscpu"]) or "").splitlines():
-        key, sep, value = line.partition(":")
-        if sep:
-            values[key.strip()] = value.strip()
-    return values
-
-
-def _meminfo() -> dict[str, int]:
-    values: dict[str, int] = {}
-    for line in (system.read_text("/proc/meminfo") or "").splitlines():
-        key, sep, rest = line.partition(":")
-        number = rest.strip().split(" ", 1)[0] if sep else ""
-        if number.isdigit():
-            values[key] = int(number)
-    return values
 
 
 def _gb(kib: int) -> str:
@@ -38,62 +14,40 @@ def _gb(kib: int) -> str:
 
 def _cpu(ui: ToolUI) -> None:
     ui.section("CPU")
-    data = _lscpu()
-    if not data:
-        ui.note("lscpu not available. Install util-linux.", Level.WARN)
-        return
-
-    max_mhz = data.get("CPU max MHz", "")
-    try:
-        speed = f"{round(float(max_mhz.replace(',', '.')))} MHz" if max_mhz else "N/A"
-    except ValueError:
-        speed = "N/A"
-
+    info = probe.cpu()
     ui.fields(
         [
-            ("Name", data.get("Model name", "N/A")),
-            ("Architecture", data.get("Architecture", "N/A")),
-            ("Cores", data.get("Core(s) per socket", "N/A")),
-            ("Threads", data.get("CPU(s)", "N/A")),
-            ("Max speed", speed),
-            ("L1d cache", data.get("L1d cache", "N/A")),
-            ("L1i cache", data.get("L1i cache", "N/A")),
-            ("L2 cache", data.get("L2 cache", "N/A")),
-            ("L3 cache", data.get("L3 cache", "N/A")),
-            ("Virtualization", data.get("Virtualization", "N/A")),
+            ("Name", info.model),
+            ("Architecture", info.architecture),
+            ("Cores", str(info.cores)),
+            ("Threads", str(info.threads)),
+            ("Max speed", f"{info.max_mhz} MHz" if info.max_mhz else "N/A"),
+            # Sizes come from cpu0, so they are what one core sees.
+            *[(f"{level} cache (per core)", size) for level, size in info.caches.items()],
+            ("Virtualization", info.virtualization),
         ]
     )
 
 
 def _gpu(ui: ToolUI) -> None:
     ui.section("GPU")
-    listing = system.output(["lspci"])
-    if listing is None:
-        ui.note("lspci not available. Install pciutils.", Level.WARN)
-        return
-
-    found = [
-        match.group(1).strip()
-        for line in listing.splitlines()
-        if (match := GPU_PATTERN.match(line))
-    ]
+    found = probe.gpus()
     if found:
         ui.fields([(f"GPU {n}", name) for n, name in enumerate(found, 1)])
     else:
-        ui.note("No GPU found via lspci.", Level.WARN)
+        ui.note("No display adapter found.", Level.WARN)
 
 
 def _storage(ui: ToolUI) -> None:
     ui.section("Storage")
 
     if not smart.available():
-        listing = system.output(["lsblk", "-d", "-o", "NAME,SIZE,TYPE,MODEL"])
-        if listing:
-            rows = [line.split(None, 1) for line in listing.splitlines()[1:] if line.strip()]
-            ui.fields([(parts[0], parts[1] if len(parts) > 1 else "") for parts in rows])
+        disks = probe.block_devices()
+        if disks:
+            ui.fields([(d.name, f"{d.size_text} {d.kind} {d.model}".strip()) for d in disks])
             ui.note("Install smartmontools for life %, temperature and power-on hours.")
         else:
-            ui.note("Neither smartctl nor lsblk is available.", Level.WARN)
+            ui.note("No physical disks found under /sys/block.", Level.WARN)
         return
 
     devices = smart.devices()
@@ -119,7 +73,7 @@ def _storage(ui: ToolUI) -> None:
 
 def _memory(ui: ToolUI) -> None:
     ui.section("Memory")
-    memory = _meminfo()
+    memory = probe.meminfo()
     total = memory.get("MemTotal", 0)
     if not total:
         ui.note("RAM information not available.", Level.WARN)

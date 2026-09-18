@@ -14,7 +14,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from .. import system
+from .. import probe, system
 from .base import Choice, Level, ToolUI
 
 ESP_CANDIDATES = ("/efi", "/boot/efi", "/boot")
@@ -53,7 +53,7 @@ def _find_esp() -> str | None:
     one filesystem where a wrong guess is fatal.
     """
     for candidate in ESP_CANDIDATES:
-        if system.output(["findmnt", "-rno", "FSTYPE", "--target", candidate]) == "vfat":
+        if probe.fstype_for(candidate) == "vfat":
             return candidate
     return None
 

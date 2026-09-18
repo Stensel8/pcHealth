@@ -1,14 +1,25 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NLog;
-using pcHealth.Services;
+using System.ServiceProcess;
 
 namespace pcHealth.ViewModels;
 
+/// <summary>
+/// Restarts the Windows audio stack. The Service Control Manager is driven
+/// through ServiceController rather than net.exe and sc.exe: the state comes
+/// back as an enum instead of the word "RUNNING" somewhere in a wall of text,
+/// and WaitForStatus replaces the fixed one-second guess between stop and
+/// start.
+/// </summary>
 public partial class AudioRestartViewModel : ObservableObject
 {
     private static readonly Logger Log = LogManager.GetCurrentClassLogger();
-    private readonly IProcessRunner _runner;
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
+
+    // Audiosrv depends on AudioEndpointBuilder, so it stops first and starts last.
+    private const string Endpoint = "AudioEndpointBuilder";
+    private const string Audio = "Audiosrv";
 
     [ObservableProperty] public partial bool AebRunning { get; set; }
     [ObservableProperty] public partial bool AudioRunning { get; set; }
@@ -16,15 +27,12 @@ public partial class AudioRestartViewModel : ObservableObject
     [ObservableProperty] public partial bool Succeeded { get; set; }
     [ObservableProperty] public partial string ErrorMessage { get; set; } = "";
 
-    public AudioRestartViewModel(IProcessRunner runner) => _runner = runner;
-
     [RelayCommand]
     public async Task LoadStatusAsync()
     {
         try
         {
-            AebRunning = await IsServiceRunningAsync("AudioEndpointBuilder");
-            AudioRunning = await IsServiceRunningAsync("Audiosrv");
+            (AebRunning, AudioRunning) = await Task.Run(ReadStatus);
         }
         catch (Exception ex)
         {
@@ -41,13 +49,14 @@ public partial class AudioRestartViewModel : ObservableObject
         ErrorMessage = "";
         try
         {
-            await _runner.RunAsync("net.exe", "stop Audiosrv /yes", _ => { });
-            await _runner.RunAsync("net.exe", "stop AudioEndpointBuilder /yes", _ => { });
-            await Task.Delay(1000);
-            await _runner.RunAsync("net.exe", "start AudioEndpointBuilder", _ => { });
-            await _runner.RunAsync("net.exe", "start Audiosrv", _ => { });
-            AebRunning = await IsServiceRunningAsync("AudioEndpointBuilder");
-            AudioRunning = await IsServiceRunningAsync("Audiosrv");
+            (AebRunning, AudioRunning) = await Task.Run(() =>
+            {
+                Stop(Audio);
+                Stop(Endpoint);
+                Start(Endpoint);
+                Start(Audio);
+                return ReadStatus();
+            });
             Succeeded = true;
         }
         catch (Exception ex)
@@ -63,10 +72,29 @@ public partial class AudioRestartViewModel : ObservableObject
 
     private bool CanRestart() => !IsRunning;
 
-    private async Task<bool> IsServiceRunningAsync(string name)
+    private static (bool Endpoint, bool Audio) ReadStatus() => (Running(Endpoint), Running(Audio));
+
+    private static bool Running(string name)
     {
-        var sb = new System.Text.StringBuilder();
-        await _runner.RunAsync("sc.exe", $"query {name}", line => sb.AppendLine(line));
-        return sb.ToString().Contains("RUNNING", StringComparison.OrdinalIgnoreCase);
+        using var service = new ServiceController(name);
+        return service.Status == ServiceControllerStatus.Running;
+    }
+
+    private static void Stop(string name)
+    {
+        using var service = new ServiceController(name);
+        if (service.Status != ServiceControllerStatus.Stopped
+            && service.Status != ServiceControllerStatus.StopPending)
+            service.Stop(stopDependentServices: true);
+        service.WaitForStatus(ServiceControllerStatus.Stopped, Timeout);
+    }
+
+    private static void Start(string name)
+    {
+        using var service = new ServiceController(name);
+        if (service.Status != ServiceControllerStatus.Running
+            && service.Status != ServiceControllerStatus.StartPending)
+            service.Start();
+        service.WaitForStatus(ServiceControllerStatus.Running, Timeout);
     }
 }

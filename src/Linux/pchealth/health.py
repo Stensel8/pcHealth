@@ -12,14 +12,13 @@ and a package count. The shape of the answer is the same.
 from __future__ import annotations
 
 import json
-import re
 import shutil
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 
-from . import smart, system
+from . import probe, smart, system
 
 
 class Status(Enum):
@@ -139,7 +138,7 @@ def _overview() -> Section:
             Status.GOOD if uefi else Status.WARNING,
             "" if uefi else "Boot Repair only supports UEFI systems.",
         ),
-        Check("Uptime", system.output(["uptime", "-p"]) or "Unknown"),
+        Check("Uptime", probe.uptime_text()),
     ]
     if system.is_image_based():
         checks.append(
@@ -154,73 +153,41 @@ def _overview() -> Section:
 
 
 def _cpu() -> Section:
-    values: dict[str, str] = {}
-    for line in (system.output(["lscpu"]) or "").splitlines():
-        label, sep, value = line.partition(":")
-        if sep:
-            values[label.strip()] = value.strip()
-
-    model = values.get("Model name", "Unknown")
-    year = _release_year(model, "cpu_models", "name")
+    info = probe.cpu()
+    year = _release_year(info.model, "cpu_models", "name")
     checks = [
         Check(
             "Processor",
-            model,
+            info.model,
             _age_status(year),
             f"Released {year}" if year else "Not in the hardware database",
         ),
-        Check(
-            "Cores / threads",
-            f"{values.get('Core(s) per socket', '?')} / {values.get('CPU(s)', '?')}",
-        ),
+        Check("Cores / threads", f"{info.cores} / {info.threads}"),
     ]
 
     # Mitigations are the closest Linux equivalent of the Windows security rows.
-    vulnerable = []
-    root = Path("/sys/devices/system/cpu/vulnerabilities")
-    if root.is_dir():
-        for entry in sorted(root.iterdir()):
-            state = system.read_text(entry) or ""
-            if state.startswith("Vulnerable"):
-                vulnerable.append(entry.name)
+    if probe.has_vulnerability_reporting():
         checks.append(
             Check(
                 "CPU mitigations",
-                "All mitigated" if not vulnerable else f"{len(vulnerable)} vulnerable",
-                Status.GOOD if not vulnerable else Status.WARNING,
-                ", ".join(vulnerable),
+                "All mitigated" if not info.vulnerable else f"{len(info.vulnerable)} vulnerable",
+                Status.GOOD if not info.vulnerable else Status.WARNING,
+                ", ".join(info.vulnerable),
             )
         )
     return Section("Processor", checks)
 
 
 def _graphics() -> Section:
-    listing = system.output(["lspci"])
-    if listing is None:
-        return Section("Graphics", [Check("GPU", "lspci not installed", Status.UNKNOWN)])
-
-    pattern = re.compile(
-        r"^[\w:.]+\s+(?:VGA compatible controller|Display controller|3D controller):\s*(.+)$"
-    )
     checks = []
-    for line in listing.splitlines():
-        match = pattern.match(line)
-        if not match:
-            continue
-        name = match.group(1).strip()
+    for name in probe.gpus():
         year = _release_year(name, "gpu_series", "pattern")
         checks.append(Check("GPU", name, _age_status(year), f"Released {year}" if year else ""))
     return Section("Graphics", checks or [Check("GPU", "None detected", Status.UNKNOWN)])
 
 
 def _memory() -> Section:
-    values: dict[str, int] = {}
-    for line in (system.read_text("/proc/meminfo") or "").splitlines():
-        label, sep, rest = line.partition(":")
-        number = rest.strip().split(" ", 1)[0] if sep else ""
-        if number.isdigit():
-            values[label] = int(number)
-
+    values = probe.meminfo()
     total = values.get("MemTotal", 0)
     if not total:
         return Section("Memory", [Check("RAM", "Not readable", Status.UNKNOWN)])
@@ -280,12 +247,11 @@ def _storage() -> Section:
 
     # Filesystem usage: the thing that actually breaks a machine day to day.
     seen: set[int] = set()
-    for line in (system.output(["findmnt", "-rno", "TARGET,FSTYPE"]) or "").splitlines():
-        target, _, fstype = line.partition(" ")
-        if fstype in _PSEUDO_FILESYSTEMS:
+    for mount in probe.mounts():
+        if mount.fstype in _PSEUDO_FILESYSTEMS:
             continue
         try:
-            usage = shutil.disk_usage(target)
+            usage = shutil.disk_usage(mount.target)
         except OSError:
             continue
         # Bind mounts and container overlays repeat the same device, and a
@@ -299,7 +265,7 @@ def _storage() -> Section:
         total_gb = usage.total / 1024**3
         checks.append(
             Check(
-                f"Free space on {target}",
+                f"Free space on {mount.target}",
                 f"{free_gb:.0f} GB free of {total_gb:.0f} GB ({used_pct}% used)",
                 Status.BAD if used_pct >= 95 else Status.WARNING if used_pct >= 85 else Status.GOOD,
             )
@@ -352,13 +318,19 @@ def _battery() -> Section | None:
 def _security() -> Section:
     checks: list[Check] = []
 
-    state = system.output(["mokutil", "--sb-state"]) or ""
-    if "enabled" in state.lower():
-        checks.append(Check("Secure Boot", "Enabled", Status.GOOD))
-    elif "disabled" in state.lower():
-        checks.append(Check("Secure Boot", "Disabled", Status.WARNING))
-    else:
-        checks.append(Check("Secure Boot", "Unknown", Status.UNKNOWN, "mokutil not installed"))
+    state = probe.secure_boot()
+    checks.append(
+        Check(
+            "Secure Boot",
+            state,
+            Status.GOOD
+            if state == "Enabled"
+            else Status.WARNING
+            if state == "Disabled"
+            else Status.UNKNOWN,
+            "" if state != "Unknown" else "No EFI SecureBoot variable on this system.",
+        )
+    )
 
     tpm = Path("/sys/class/tpm/tpm0")
     version = system.read_text(tpm / "tpm_version_major") if tpm.is_dir() else None

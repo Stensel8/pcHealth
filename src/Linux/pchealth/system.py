@@ -3,7 +3,7 @@
 This is the Linux counterpart of the PowerShell CLI's Helpers.ps1. The rules
 that shaped that file apply here too: a missing command is the normal case, not
 an edge case. Containers and WSL have no systemd, minimal installs have no
-lspci or mokutil, and an image-based system has no package manager to speak of.
+lspci or smartctl, and an image-based system has no package manager to speak of.
 Every helper here returns None or an empty result instead of raising.
 """
 
@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import json
 import os
+import pwd
 import shutil
 import subprocess
 import sys
+import webbrowser
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -225,38 +227,28 @@ def desktop_user() -> DesktopUser | None:
 
     Under sudo or pkexec the process environment describes root, so anything
     touching the desktop session -- audio, topgrade, the thumbnail cache, log
-    off -- has to ask who actually logged in.
+    off -- has to ask who actually logged in. The passwd database answers that
+    through the pwd module; shelling out to id and getent for the same three
+    fields only added three ways to fail.
     """
-    name = os.environ.get("SUDO_USER") or os.environ.get("PKEXEC_UID") or ""
-    if name.isdigit():
-        # PKEXEC_UID is a uid, not a name.
-        name = output(["id", "-un", name]) or ""
-    if not name:
-        name = os.environ.get("USER") or ""
-    if not name:
-        name = output(["id", "-un"]) or ""
-    if not name:
+    try:
+        if name := os.environ.get("SUDO_USER"):
+            entry = pwd.getpwnam(name)
+        elif (uid := os.environ.get("PKEXEC_UID", "")).isdigit():
+            entry = pwd.getpwuid(int(uid))
+        else:
+            entry = pwd.getpwuid(os.getuid())
+    except (KeyError, OSError):
         return None
-
-    uid = output(["id", "-u", name]) or ""
-
-    home = ""
-    passwd = output(["getent", "passwd", name])
-    if passwd:
-        fields = passwd.split(":")
-        if len(fields) > 5:
-            home = fields[5]
-    if not home:
-        home = "/root" if name == "root" else f"/home/{name}"
 
     # The session bus `systemctl --user` needs. An inherited address is passed
     # on to `env` as key=value, so reject anything that is not a D-Bus
     # transport and derive the standard path instead.
     dbus = os.environ.get("DBUS_SESSION_BUS_ADDRESS", "")
     if not dbus.startswith(("unix:", "tcp:", "nonce-tcp:", "autolaunch:")):
-        dbus = f"unix:path=/run/user/{uid}/bus"
+        dbus = f"unix:path=/run/user/{entry.pw_uid}/bus"
 
-    return DesktopUser(name=name, uid=uid, home=home, dbus=dbus)
+    return DesktopUser(name=entry.pw_name, uid=str(entry.pw_uid), home=entry.pw_dir, dbus=dbus)
 
 
 def run_as_user(user: DesktopUser, argv: Sequence[str], extra_env: Sequence[str] = ()) -> Result:
@@ -345,19 +337,20 @@ def package_manager() -> PackageManager | None:
 def open_url(url: str) -> bool:
     """Open a URL in the desktop user's browser.
 
-    Running as root means xdg-open would launch the browser as root, into a
-    session that may not even accept it. Drop back to the user who logged in,
-    with their session bus, the same way the audio and topgrade tools do.
+    webbrowser is the standard library's own launcher and knows the desktop
+    handler, a $BROWSER setting and the plain browsers besides, so it succeeds
+    on systems where xdg-open is not installed at all. Root is the exception:
+    its browser would open into a session that may not even accept it, so the
+    URL goes back to the user who logged in, the way the audio and topgrade
+    tools do.
     """
     if not url.startswith(("http://", "https://")):
         return False
-    if not has("xdg-open"):
-        return False
 
     user = desktop_user()
-    if user and is_root() and user.name != "root" and has("sudo"):
+    if is_root() and user and user.name != "root" and has("sudo"):
         return run_as_user(user, ["xdg-open", url]).ok
-    return run(["xdg-open", url]).ok
+    return webbrowser.open(url)
 
 
 def _helper_argv() -> list[str]:

@@ -66,6 +66,9 @@
     <PackageReference Include="Microsoft.Management.Infrastructure" Version="3.0.0" />
     <!-- Windows event log reader (System.Diagnostics.Eventing.Reader) for boot time diagnostics -->
     <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.12" />
+    <!-- Service Control Manager client, so services are driven through the SCM
+         API instead of net.exe and sc.exe text output. -->
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.12" />
   </ItemGroup>
 
 </Project>
