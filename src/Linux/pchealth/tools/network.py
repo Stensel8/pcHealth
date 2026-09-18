@@ -62,5 +62,8 @@ def network_reset(ui: ToolUI) -> None:
     elif system.has("systemd-resolve"):
         steps.append(("Flushing DNS cache", ["systemd-resolve", "--flush-caches"]))
 
-    ui.run_all(steps, root=True)
-    ui.note("Network reset complete.", Level.OK)
+    results = ui.run_all(steps, root=True)
+    if all(result.ok for result in results):
+        ui.note("Network reset complete.", Level.OK)
+    else:
+        ui.note("The network stack did not come back cleanly. See the steps above.", Level.ERROR)

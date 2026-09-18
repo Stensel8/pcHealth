@@ -45,7 +45,11 @@ def has(command: str) -> bool:
 
 
 def run(
-    argv: Sequence[str], *, timeout: float | None = None, stdin_text: str | None = None
+    argv: Sequence[str],
+    *,
+    timeout: float | None = None,
+    stdin_text: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> Result:
     """Run a command and capture its output. Never raises on a missing binary."""
     if not argv or not has(argv[0]):
@@ -57,6 +61,7 @@ def run(
             text=True,
             timeout=timeout,
             input=stdin_text,
+            env=env,
             check=False,
         )
     except subprocess.TimeoutExpired:
@@ -251,14 +256,31 @@ def desktop_user() -> DesktopUser | None:
     return DesktopUser(name=entry.pw_name, uid=str(entry.pw_uid), home=entry.pw_dir, dbus=dbus)
 
 
-def run_as_user(user: DesktopUser, argv: Sequence[str], extra_env: Sequence[str] = ()) -> Result:
-    """Drop privileges to the desktop user, forwarding their session bus.
+def run_as_user(user: DesktopUser, argv: Sequence[str]) -> Result:
+    """Run a command as the desktop user, with their session bus.
 
-    Each environment value is a separate argv token for `env` rather than text
-    spliced into a shell command, so a hostile DISPLAY cannot become a command.
+    Usually there is nothing to drop to. The GUI already runs as that user --
+    it must never run as root -- so wrapping the call in sudo would ask for a
+    password that `systemctl --user` does not need, which is exactly the kind
+    of prompt this codebase keeps trying to get rid of. Only a process that
+    really is root has to switch back, and a machine with polkit but no sudo
+    still has a way through.
     """
-    env_args = [f"DBUS_SESSION_BUS_ADDRESS={user.dbus}", *extra_env]
-    return run(["sudo", "-u", user.name, "env", *env_args, *argv])
+    session = {**os.environ, "DBUS_SESSION_BUS_ADDRESS": user.dbus}
+
+    if str(os.getuid()) == user.uid:
+        return run(argv, env=session)
+
+    # Switching user means a new process environment, so the session bus is
+    # passed as an argument to env rather than inherited. Each value is its own
+    # argv token and never shell text, so a hostile DISPLAY cannot become a
+    # command.
+    bus = f"DBUS_SESSION_BUS_ADDRESS={user.dbus}"
+    if has("sudo"):
+        return run(["sudo", "-u", user.name, "env", bus, *argv])
+    if has("pkexec"):
+        return run(["pkexec", "--user", user.name, "env", bus, *argv])
+    return Result(COMMAND_NOT_FOUND, "", "Neither sudo nor pkexec is available.")
 
 
 # -- Package manager ----------------------------------------------------------
