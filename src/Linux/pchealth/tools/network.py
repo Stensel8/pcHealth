@@ -70,23 +70,22 @@ def network_reset(ctx: ToolContext) -> None:
     manager_active = system.output(["systemctl", "is-active", "NetworkManager"]) == "active"
     unit = "NetworkManager" if manager_active or system.has("nmcli") else "systemd-networkd"
 
-    ctx.line(f"[>>] Restarting {unit}...", "info")
-    rc = system.stream_root(
-        ["systemctl", "restart", unit], lambda line: ctx.line(f"  {line}", "muted")
-    )
-    ctx.command_output(rc, ok="[OK] Done.")
-
+    steps: list[tuple[str, list[str]]] = [
+        (f"Restarting {unit}", ["systemctl", "restart", unit]),
+    ]
     if system.has("resolvectl"):
-        flush = ["resolvectl", "flush-caches"]
+        steps.append(("Flushing DNS cache", ["resolvectl", "flush-caches"]))
     elif system.has("systemd-resolve"):
-        flush = ["systemd-resolve", "--flush-caches"]
-    else:
-        flush = []
+        steps.append(("Flushing DNS cache", ["systemd-resolve", "--flush-caches"]))
 
-    if flush:
-        ctx.line("[>>] Flushing DNS cache...", "info")
-        rc = system.stream_root(flush, lambda line: ctx.line(f"  {line}", "muted"))
-        ctx.command_output(rc, ok="[OK] Done.")
+    # One elevation for the whole reset rather than one per command.
+    results = system.run_root_batch(
+        [argv for _, argv in steps],
+        on_line=lambda index, line: ctx.line(f"  {line}", "muted"),
+    )
+    for (label, _), result in zip(steps, results, strict=True):
+        ctx.line(f"[>>] {label}", "info")
+        ctx.command_output(result.returncode, ok="[OK] Done.")
 
     ctx.line()
     ctx.line("Network reset complete.", "ok")

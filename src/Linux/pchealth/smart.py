@@ -40,17 +40,16 @@ class Device:
         return "FAILING" if self.passed is False else "Unknown"
 
 
-def _read(argv: list[str]) -> dict[str, Any] | None:
+def _parse(stdout: str) -> dict[str, Any] | None:
     """smartctl exits non-zero for a disk with warnings, so ignore the code.
 
     Its JSON is still complete in that case -- which is the whole point of
     asking for JSON rather than parsing the human-readable report.
     """
-    result = system.run_root(argv)
-    if not result.stdout.strip():
+    if not stdout.strip():
         return None
     try:
-        parsed = json.loads(result.stdout)
+        parsed = json.loads(stdout)
     except json.JSONDecodeError:
         return None
     return parsed if isinstance(parsed, dict) else None
@@ -61,23 +60,41 @@ def available() -> bool:
 
 
 def devices() -> list[Device]:
-    """Every disk smartctl can see. Empty when smartmontools is not installed."""
+    """Every disk smartctl can see. Empty when smartmontools is not installed.
+
+    Reading a disk needs root, so all of them are read in one elevated batch:
+    one password prompt for the whole machine rather than one per disk.
+    """
     if not available():
         return []
 
-    scan = _read(["smartctl", "--scan", "--json"])
-    found: list[Device] = []
+    # Enumerating devices only reads /dev, which a normal user may do. Falling
+    # back to an elevated scan costs a second prompt, so only do it if needed.
+    scan = _parse(system.run(["smartctl", "--scan", "--json"]).stdout)
+    entries = (scan or {}).get("devices", [])
+    if not entries:
+        scan = _parse(system.run_root(["smartctl", "--scan", "--json"]).stdout)
+        entries = (scan or {}).get("devices", [])
 
-    for entry in (scan or {}).get("devices", []):
+    targets = []
+    for entry in entries:
         name = entry.get("name")
-        kind = entry.get("type", "")
         if not name:
             continue
-
+        kind = entry.get("type", "")
         argv = ["smartctl", "-a", name, "--json"]
         if kind and kind != "auto":
             argv += ["-d", kind]
-        data = _read(argv)
+        targets.append((name, kind, argv))
+
+    if not targets:
+        return []
+
+    results = system.run_root_batch([argv for _, _, argv in targets])
+    found: list[Device] = []
+
+    for (name, kind, _argv), result in zip(targets, results, strict=True):
+        data = _parse(result.stdout)
         if not data or not data.get("model_name"):
             continue
 

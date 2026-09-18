@@ -1,5 +1,15 @@
 # Changelog.md - pcHealth
 
+## 18-09-2026 (3) - @Stensel8
+
+One password prompt per tool, instead of one per command.
+
+- **Fixed: pkexec asked for the admin password once per privileged command.** Disk Cleanup ran six of them, so it asked six times; Hardware Information asked once per disk; the Health page asked for nearly every section. Each of those is one prompt now.
+- `privileged.py` is elevated once and runs the whole batch, streaming each line back as it arrives. It holds no logic and takes no decisions: it runs exactly the argv lists it is handed on stdin as JSON, with no shell involved, and exits when the batch is done -- there is no long-lived root process listening on a pipe.
+- Boot Repair passes `stop_on_error`, so `grub-mkconfig` can never run after `grub-install` failed.
+- The Health report no longer elevates at all for the firewall state. A report that asks for the root password to tell you whether ufw is running is not worth the interruption; it says the state needs root instead.
+- Reading SMART is now one batch for every disk, so Hardware Information and Health ask once rather than once per drive.
+
 ## 18-09-2026 (2) - @Stensel8
 
 Health report for Linux, and two fixes the screencast turned up.

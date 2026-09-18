@@ -26,18 +26,6 @@ from . import dialogs  # noqa: E402
 
 REPO_URL = "https://github.com/REALSDEALS/pcHealth"
 
-# Category -> icon, mirroring the glyphs the WinUI 3 tool list uses.
-_CATEGORY_ICONS = {
-    "Information": "dialog-information-symbolic",
-    "Network": "network-wired-symbolic",
-    "Disk": "drive-harddisk-symbolic",
-    "Updates": "software-update-available-symbolic",
-    "Maintenance": "applications-engineering-symbolic",
-    "Security": "security-high-symbolic",
-    "Hardware": "computer-symbolic",
-    "System": "system-shutdown-symbolic",
-}
-
 # Health statuses map onto libadwaita's own semantic classes, so they follow
 # the theme instead of carrying hardcoded colours around.
 _STATUS_CLASS = {
@@ -47,12 +35,12 @@ _STATUS_CLASS = {
     health.Status.UNKNOWN: "dim-label",
     health.Status.INFO: "dim-label",
 }
-_STATUS_ICON = {
-    health.Status.GOOD: "emblem-ok-symbolic",
-    health.Status.WARNING: "dialog-warning-symbolic",
-    health.Status.BAD: "dialog-error-symbolic",
-    health.Status.UNKNOWN: "dialog-question-symbolic",
-    health.Status.INFO: "dialog-information-symbolic",
+_STATUS_LABEL = {
+    health.Status.GOOD: "OK",
+    health.Status.WARNING: "Check",
+    health.Status.BAD: "Problem",
+    health.Status.UNKNOWN: "Unknown",
+    health.Status.INFO: "",
 }
 
 
@@ -223,9 +211,7 @@ def _tools_page(open_tool: Callable[[catalog.Tool], None]) -> Adw.NavigationPage
     for category, tools in by_category.items():
         group = Adw.PreferencesGroup(title=category)
         for tool in tools:
-            icon = _CATEGORY_ICONS.get(category, "application-x-executable-symbolic")
             row = Adw.ActionRow(title=tool.name, subtitle=tool.note, activatable=True)
-            row.add_prefix(Gtk.Image.new_from_icon_name(icon))
             row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
             row.connect("activated", lambda _row, t=tool: open_tool(t))
             group.add(row)
@@ -256,9 +242,11 @@ def _health_page() -> Adw.NavigationPage:
             row = Adw.ActionRow(title=check.label, subtitle=check.value)
             if check.detail:
                 row.set_tooltip_text(check.detail)
-            icon = Gtk.Image.new_from_icon_name(_STATUS_ICON[check.status])
-            icon.add_css_class(_STATUS_CLASS[check.status])
-            row.add_suffix(icon)
+            label = _STATUS_LABEL[check.status]
+            if label:
+                row.add_suffix(
+                    Gtk.Label(label=label, css_classes=["caption", _STATUS_CLASS[check.status]])
+                )
             group.add(row)
         page.add(group)
 

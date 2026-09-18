@@ -17,58 +17,90 @@ FS_ERROR_PATTERNS = (
 MAX_FINDINGS_SHOWN = 20
 
 
-def _step(ctx: ToolContext, label: str, argv: list[str]) -> None:
-    ctx.line(f"[>>] {label}", "info")
+Step = tuple[str, list[str]]
+
+
+def _run_steps(ctx: ToolContext, steps: list[Step]) -> None:
+    """Run every step under a single elevation prompt.
+
+    Cleaning a machine is half a dozen privileged commands. Elevating each one
+    separately asked for the password half a dozen times, which is what made
+    this tool exhausting to use.
+    """
+    if not steps:
+        return
+
     progress = ProgressFilter(lambda line: ctx.line(f"  {line}", "muted"))
-    rc = system.stream_root(argv, progress)
+    current = -1
+
+    def on_line(index: int, line: str) -> None:
+        nonlocal current
+        if index != current:
+            progress.flush()
+            current = index
+            ctx.line(f"[>>] {steps[index][0]}", "info")
+        progress(line)
+
+    results = system.run_root_batch([argv for _, argv in steps], on_line=on_line)
     progress.flush()
-    if rc == 0:
-        ctx.line("[OK] Done.", "ok")
-    else:
-        ctx.line(f"[--] Exit code {rc} (may be non-fatal).", "muted")
+
+    for (label, _), result in zip(steps, results, strict=True):
+        if result.ok:
+            ctx.line(f"[OK] {label}", "ok")
+        else:
+            ctx.line(f"[--] {label} exited {result.returncode} (may be non-fatal).", "muted")
     ctx.line()
 
 
 # -- Disk cleanup -------------------------------------------------------------
 
 
-def _clean_packages(ctx: ToolContext, distro_id: str, distro_like: str) -> None:
+def _package_steps(ctx: ToolContext, distro_id: str, distro_like: str) -> list[Step]:
     family = f"{distro_id} {distro_like}"
 
     if any(
         key in family for key in ("arch", "cachyos", "manjaro", "endeavouros", "artix", "garuda")
     ):
+        steps: list[Step] = []
         if system.has("paccache"):
-            _step(ctx, "Clearing pacman cache (keeping last 2 versions)...", ["paccache", "-rk2"])
+            steps.append(("Clearing pacman cache (keeping last 2 versions)", ["paccache", "-rk2"]))
         # Passing an empty list to pacman -Rns exits non-zero and reads like a
         # failure, so only run it when there is something to remove.
         orphans = system.output(["pacman", "-Qdtq"])
         if orphans:
-            _step(
-                ctx,
-                "Removing unneeded pacman dependencies...",
-                ["pacman", "-Rns", *orphans.split(), "--noconfirm"],
+            steps.append(
+                (
+                    "Removing unneeded pacman dependencies",
+                    ["pacman", "-Rns", *orphans.split(), "--noconfirm"],
+                )
             )
         else:
             ctx.line("[--] No unneeded pacman dependencies found, skipping.", "muted")
-            ctx.line()
-    elif any(
+        return steps
+
+    if any(
         key in family for key in ("debian", "ubuntu", "mint", "pop", "elementary", "zorin", "kali")
     ):
-        _step(ctx, "Removing unneeded apt packages...", ["apt", "autoremove", "-y"])
-        _step(ctx, "Cleaning apt cache...", ["apt", "autoclean"])
-    elif any(key in family for key in ("fedora", "rhel", "centos", "almalinux", "rocky")):
-        _step(ctx, "Removing unneeded dnf packages...", ["dnf", "autoremove", "-y"])
-        _step(ctx, "Cleaning dnf cache...", ["dnf", "clean", "all"])
-    elif "suse" in family:
-        _step(ctx, "Cleaning zypper cache...", ["zypper", "clean", "--all"])
-    else:
-        ctx.line("[--] Package cache: distro not recognised, skipping.", "muted")
-        ctx.line()
+        return [
+            ("Removing unneeded apt packages", ["apt", "autoremove", "-y"]),
+            ("Cleaning apt cache", ["apt", "autoclean"]),
+        ]
+
+    if any(key in family for key in ("fedora", "rhel", "centos", "almalinux", "rocky")):
+        return [
+            ("Removing unneeded dnf packages", ["dnf", "autoremove", "-y"]),
+            ("Cleaning dnf cache", ["dnf", "clean", "all"]),
+        ]
+
+    if "suse" in family:
+        return [("Cleaning zypper cache", ["zypper", "clean", "--all"])]
+
+    ctx.line("[--] Package cache: distro not recognised, skipping.", "muted")
+    return []
 
 
 def _clear_thumbnails(ctx: ToolContext) -> None:
-    # $HOME under sudo is root's, so resolve the desktop user's cache instead.
+    """Runs unprivileged: the cache belongs to the user, not to root."""
     user = system.desktop_user()
     if not user:
         return
@@ -76,10 +108,10 @@ def _clear_thumbnails(ctx: ToolContext) -> None:
     if not thumbnails.is_dir():
         return
 
-    files = [p for p in thumbnails.rglob("*") if p.is_file()]
-    size_mb = sum(p.stat().st_size for p in files) / 1048576 if files else 0.0
+    files = [path for path in thumbnails.rglob("*") if path.is_file()]
+    size_mb = sum(path.stat().st_size for path in files) / 1048576 if files else 0.0
 
-    ctx.line(f"[>>] Clearing thumbnail cache ({size_mb:.1f} MB)...", "info")
+    ctx.line(f"[>>] Clearing thumbnail cache ({size_mb:.1f} MB)", "info")
     removed = 0
     for path in files:
         try:
@@ -98,20 +130,17 @@ def disk_cleanup(ctx: ToolContext) -> None:
     ctx.line(f"Distro: {info['PRETTY_NAME']}", "muted")
     ctx.line()
 
-    _clean_packages(ctx, info["ID"], info["ID_LIKE"])
-
+    steps = _package_steps(ctx, info["ID"], info["ID_LIKE"])
     if system.has("journalctl"):
-        _step(
-            ctx,
-            "Vacuuming journal logs (keeping last 7 days)...",
-            ["journalctl", "--vacuum-time=7d"],
+        steps.append(
+            ("Vacuuming journal logs (keeping last 7 days)", ["journalctl", "--vacuum-time=7d"])
         )
-
     if system.has("flatpak"):
-        _step(
-            ctx, "Removing unused Flatpak runtimes...", ["flatpak", "uninstall", "--unused", "-y"]
+        steps.append(
+            ("Removing unused Flatpak runtimes", ["flatpak", "uninstall", "--unused", "-y"])
         )
 
+    _run_steps(ctx, steps)
     _clear_thumbnails(ctx)
 
     ctx.line("Disk cleanup complete.", "ok")

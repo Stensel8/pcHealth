@@ -9,9 +9,11 @@ Every helper here returns None or an empty result instead of raising.
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
+import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -356,3 +358,83 @@ def open_url(url: str) -> bool:
     if user and is_root() and user.name != "root" and has("sudo"):
         return run_as_user(user, ["xdg-open", url]).ok
     return run(["xdg-open", url]).ok
+
+
+def _helper_argv() -> list[str]:
+    """pkexec clears the environment, so the helper is run as a plain path."""
+    return [sys.executable, str(Path(__file__).resolve().parent / "privileged.py")]
+
+
+def run_root_batch(
+    commands: Sequence[Sequence[str]],
+    on_line: Callable[[int, str], None] | None = None,
+    *,
+    stop_on_error: bool = False,
+) -> list[Result]:
+    """Run several commands as root, asking for the password once.
+
+    Every caller that needs more than one privileged command should use this.
+    Six separate run_root calls means six pkexec prompts, which is what made
+    the Health page unusable.
+
+    on_line receives (index, line) as output arrives, so a long-running batch
+    still shows progress.
+    """
+    batch = [list(command) for command in commands]
+    if not batch:
+        return []
+
+    if is_root():
+        results = []
+        for index, argv in enumerate(batch):
+            if on_line is None:
+                results.append(run(argv))
+            else:
+                collected: list[str] = []
+
+                def collect(line: str, sink: list[str] = collected, i: int = index) -> None:
+                    sink.append(line)
+                    on_line(i, line)
+
+                rc = stream(argv, collect)
+                results.append(Result(rc, "\n".join(collected)))
+            if stop_on_error and not results[-1].ok:
+                break
+        return results
+
+    payload = json.dumps({"commands": batch, "stop_on_error": stop_on_error})
+    output: list[list[str]] = [[] for _ in batch]
+    codes: list[int] = [COMMAND_NOT_FOUND] * len(batch)
+
+    # Fixed argv, no shell: the batch travels on stdin as JSON.
+    process = subprocess.Popen(
+        elevated(_helper_argv()),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        bufsize=1,
+    )
+    assert process.stdin is not None and process.stdout is not None
+    try:
+        process.stdin.write(payload)
+        process.stdin.close()
+        for raw in process.stdout:
+            try:
+                event = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+            index = event.get("i")
+            if not isinstance(index, int) or not 0 <= index < len(batch):
+                continue
+            if "line" in event:
+                output[index].append(str(event["line"]))
+                if on_line is not None:
+                    on_line(index, str(event["line"]))
+            elif "exit" in event:
+                codes[index] = int(event["exit"])
+    finally:
+        process.stdout.close()
+        process.wait()
+
+    return [Result(code, "\n".join(lines)) for code, lines in zip(codes, output, strict=True)]

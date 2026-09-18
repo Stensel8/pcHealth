@@ -386,15 +386,17 @@ def _security() -> Section:
     ):
         if not system.has(command):
             continue
-        output = (system.run_root(argv).stdout or "").lower()
-        checks.append(
-            Check(
-                "Firewall",
-                command,
-                Status.GOOD if good in output else Status.WARNING,
-                output.strip()[:60],
-            )
-        )
+        # Deliberately unprivileged: a report that asks for the root password
+        # to tell you the firewall state is not worth the interruption. Where
+        # the query needs root, say so rather than prompting.
+        result = system.run(argv)
+        output = (result.stdout + result.stderr).lower()
+        if good in output:
+            checks.append(Check("Firewall", f"{command}: active", Status.GOOD))
+        elif result.ok:
+            checks.append(Check("Firewall", f"{command}: inactive", Status.WARNING))
+        else:
+            checks.append(Check("Firewall", command, Status.UNKNOWN, "State needs root to query."))
         break
     else:
         checks.append(Check("Firewall", "No firewall tool found", Status.UNKNOWN))

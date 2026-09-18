@@ -198,25 +198,39 @@ def boot_repair(ctx: ToolContext) -> None:
         return
 
     ctx.line()
+    # One elevation for the repair, and stop_on_error so grub-mkconfig never
+    # runs after grub-install failed. efibootmgr rides along: a copied EFI
+    # binary with no firmware boot entry still leaves an unbootable machine,
+    # so the entries are shown before the user reboots.
+    commands = list(loader.commands)
+    show_entries = system.has("efibootmgr")
+    if show_entries:
+        commands.append(["efibootmgr"])
+
     for command in loader.commands:
         ctx.line(f"[>>] {' '.join(command)}", "info")
-        rc = system.stream_root(command, lambda line: ctx.line(f"  {line}", "muted"))
-        if rc != 0:
-            ctx.line()
-            ctx.line(f"[!!] Failed with exit code {rc} -- stopping here.", "error")
-            ctx.line("The system may still boot from its existing entry. Do not reboot", "warn")
-            ctx.line("until you have resolved this, and keep a live USB to hand.", "warn")
-            return
+
+    results = system.run_root_batch(
+        commands,
+        on_line=lambda index, line: ctx.line(f"  {line}", "muted"),
+        stop_on_error=True,
+    )
+
+    failed = next((r for r in results[: len(loader.commands)] if not r.ok), None)
+    if failed is not None or len(results) < len(loader.commands):
+        code = failed.returncode if failed else -1
+        ctx.line()
+        ctx.line(f"[!!] Failed with exit code {code} -- stopping here.", "error")
+        ctx.line("The system may still boot from its existing entry. Do not reboot", "warn")
+        ctx.line("until you have resolved this, and keep a live USB to hand.", "warn")
+        return
 
     ctx.line(f"[OK] {loader.name} reinstalled on {esp}.", "ok")
     ctx.line()
 
-    # A copied EFI binary with no firmware boot entry still leaves an
-    # unbootable machine, so show the entries before the user reboots.
-    if system.has("efibootmgr"):
+    if show_entries and len(results) > len(loader.commands):
         ctx.line("Current firmware boot entries:", "info")
-        entries = system.run_root(["efibootmgr"]).stdout
-        for line in entries.splitlines():
+        for line in results[-1].stdout.splitlines():
             ctx.line(f"  {line}", "muted")
         ctx.line()
 

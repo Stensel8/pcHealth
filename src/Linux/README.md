@@ -74,10 +74,13 @@ A tool never talks to the terminal or to GTK, and it never renders a menu of
 its own. It emits styled lines and *declares* the choices it needs:
 
 ```python
-choice = ctx.choose("What should happen?", [
-    Choice("restart", "Restart", "Restarts the system immediately.", destructive=True),
-    Choice("shutdown", "Shut Down", "Powers the system off immediately.", destructive=True),
-])
+choice = ctx.choose(
+    "What should happen?",
+    [
+        Choice("restart", "Restart", "Restarts the system immediately.", destructive=True),
+        Choice("shutdown", "Shut Down", "Powers the system off immediately.", destructive=True),
+    ],
+)
 ```
 
 The terminal renders that as a numbered list, the GUI as one button per

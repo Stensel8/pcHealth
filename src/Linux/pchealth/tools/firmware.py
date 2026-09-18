@@ -40,9 +40,12 @@ def firmware_update(ctx: ToolContext) -> None:
         return
 
     ctx.line("[>>] Refreshing firmware metadata from LVFS...", "info")
-    # --force refreshes even when the cached metadata is still considered fresh.
-    refresh = system.run_root(["fwupdmgr", "refresh", "--force"])
-    refresh_text = refresh.stdout + refresh.stderr
+    # --force refreshes even when the cached metadata is still considered
+    # fresh. Both queries run under one elevation prompt.
+    refresh, updates = system.run_root_batch(
+        [["fwupdmgr", "refresh", "--force"], ["fwupdmgr", "get-updates"]]
+    )
+    refresh_text = refresh.stdout
     progress = ProgressFilter(lambda line: ctx.line(f"  {line}", "muted"))
     for line in refresh_text.splitlines():
         progress(line)
@@ -54,8 +57,7 @@ def firmware_update(ctx: ToolContext) -> None:
     ctx.line()
     ctx.line("[>>] Checking for firmware updates...", "info")
     ctx.line()
-    updates = system.run_root(["fwupdmgr", "get-updates"])
-    updates_text = updates.stdout + updates.stderr
+    updates_text = updates.stdout
 
     if any(marker in updates_text for marker in _DAEMON_DOWN):
         ctx.line("Could not reach the fwupd daemon.", "error")

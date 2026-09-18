@@ -41,21 +41,26 @@ def system_update(ctx: ToolContext) -> None:
     ctx.line(f"Package manager: {manager.cmd}", "muted")
     ctx.line()
 
+    # Refresh and list are back to back, so they share one elevation prompt.
+    commands = []
     if manager.refresh:
         ctx.line("[>>] Refreshing package index...", "info")
-        refresh = system.run_root([manager.cmd, *manager.refresh])
-        if not refresh.ok:
-            ctx.line(
-                f"[!!] Refresh failed (exit code {refresh.returncode}). Check your network.",
-                "error",
-            )
-            return
-
+        commands.append([manager.cmd, *manager.refresh])
     ctx.line("[>>] Checking for available updates...", "info")
     ctx.line()
+    commands.append([manager.cmd, *manager.list_updates])
+
+    results = system.run_root_batch(commands)
+    if manager.refresh and not results[0].ok:
+        ctx.line(
+            f"[!!] Refresh failed (exit code {results[0].returncode}). Check your network.",
+            "error",
+        )
+        return
+
     # dnf check-update exits 100 when updates exist and 0 when there are none;
     # pacman -Qu exits 1 on an empty list. Judge by output, not exit code.
-    listing = system.run_root([manager.cmd, *manager.list_updates])
+    listing = results[-1]
     lines = [
         line.strip()
         for line in listing.stdout.splitlines()
