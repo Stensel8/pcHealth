@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .. import system
-from .base import Choice, ToolContext
+from .base import Choice, Level, ToolUI
 
 ESP_CANDIDATES = ("/efi", "/boot/efi", "/boot")
 
@@ -121,117 +121,99 @@ def _detect_loaders(esp: str, efi_name: str, grub_target: str) -> list[Loader]:
     return loaders
 
 
-def boot_repair(ctx: ToolContext) -> None:
-    ctx.heading("Boot Repair  (UEFI)")
-    ctx.line("WARNING: This operation modifies boot-critical files.", "warn")
-    ctx.line("Incorrect use can render the system unbootable.", "warn")
-    ctx.line("Only proceed if you understand what you are doing.", "warn")
-    ctx.line()
+def boot_repair(ui: ToolUI) -> None:
+    ui.section("Boot Repair")
+    ui.note(
+        "This modifies boot-critical files. Incorrect use can render the "
+        "system unbootable. Only proceed if you understand what you are doing.",
+        Level.WARN,
+    )
 
     # On ostree systems the bootloader entries are generated from the
     # deployments. Reinstalling by hand fights whatever produced them.
     if system.is_image_based():
-        ctx.line("This is an image-based system (ostree).", "error")
-        ctx.line("Its bootloader is managed by the deployment, not by hand.", "warn")
-        ctx.line("Roll back to a working deployment instead:", "warn")
-        ctx.line("  rpm-ostree status      # list deployments", "muted")
-        ctx.line("  rpm-ostree rollback    # boot the previous one", "muted")
+        ui.note("This is an image-based system (ostree).", Level.ERROR)
+        ui.note("Its bootloader belongs to the deployment. Roll back instead: rpm-ostree rollback")
         return
 
     if not Path("/sys/firmware/efi").exists():
-        ctx.line("This system booted in legacy BIOS mode (no /sys/firmware/efi).", "error")
-        ctx.line("pcHealth only repairs UEFI bootloaders.", "warn")
+        ui.note("This system booted in legacy BIOS mode (no /sys/firmware/efi).", Level.ERROR)
+        ui.note("pcHealth only repairs UEFI bootloaders.")
         return
 
     efi_name, grub_target = _efi_names()
     esp = _find_esp()
     if not esp:
-        ctx.line("No mounted EFI System Partition found at /efi, /boot/efi or /boot.", "error")
-        ctx.line("Mount it first, then run this tool again. Candidates:", "warn")
-        listing = system.output(["lsblk", "-o", "NAME,SIZE,FSTYPE,PARTTYPENAME,MOUNTPOINT"])
-        for line in (listing or "").splitlines():
-            if "EFI System" in line or "vfat" in line or line.startswith("NAME"):
-                ctx.line(f"  {line}", "muted")
+        ui.note("No mounted EFI System Partition at /efi, /boot/efi or /boot.", Level.ERROR)
+        ui.note("Mount it first, then run this tool again.")
+        listing = system.output(["lsblk", "-o", "NAME,SIZE,FSTYPE,PARTTYPENAME,MOUNTPOINT"]) or ""
+        candidates = [
+            line for line in listing.splitlines() if "EFI System" in line or "vfat" in line
+        ]
+        if candidates:
+            ui.fields([(line.split()[0], line) for line in candidates])
         return
 
     bits = system.read_text("/sys/firmware/efi/fw_platform_size") or "64"
-    ctx.rows(
+    ui.fields(
         [
-            ("Firmware:", f"UEFI ({bits}-bit, {os.uname().machine})"),
-            ("ESP:", esp),
-            ("EFI binary:", efi_name),
-        ],
-        "muted",
+            ("Firmware", f"UEFI ({bits}-bit, {os.uname().machine})"),
+            ("ESP", esp),
+            ("EFI binary", efi_name),
+        ]
     )
-    ctx.line()
 
     loaders = _detect_loaders(esp, efi_name, grub_target)
     if not loaders:
-        ctx.line("No supported bootloader found (systemd-boot, GRUB or Limine).", "error")
-        ctx.line("Install your bootloader's package first, then run this tool again.", "warn")
+        ui.note("No supported bootloader found (systemd-boot, GRUB or Limine).", Level.ERROR)
+        ui.note("Install your bootloader's package first, then run this tool again.")
         return
 
-    choice = ctx.choose(
+    choice = ui.choose(
         "Which bootloader should be repaired?",
         [Choice(loader.name, loader.name, loader.state, destructive=True) for loader in loaders],
     )
     if choice is None:
-        ctx.cancelled()
         return
     loader = next(candidate for candidate in loaders if candidate.name == choice)
 
-    ctx.line()
-    ctx.line("These commands will run as root:", "warn")
-    for command in loader.commands:
-        ctx.line(f"    {' '.join(command)}")
-    ctx.line()
+    ui.section("These commands will run as root")
+    ui.fields([(f"{n}.", " ".join(command)) for n, command in enumerate(loader.commands, 1)])
 
     # Two confirmations, same as the Windows tool: this is the one place where
     # a mistaken click leaves the machine unbootable.
-    if not ctx.confirm(f"Reinstall {loader.name} on {esp}?"):
-        ctx.cancelled()
+    if not ui.confirm(f"Reinstall {loader.name} on {esp}?"):
         return
-    if not ctx.confirm(
-        "Last chance. An interrupted repair can leave this machine unbootable. Proceed?"
-    ):
-        ctx.cancelled()
+    if not ui.confirm("Last chance. An interrupted repair can leave this machine unbootable."):
         return
 
-    ctx.line()
-    # One elevation for the repair, and stop_on_error so grub-mkconfig never
-    # runs after grub-install failed. efibootmgr rides along: a copied EFI
-    # binary with no firmware boot entry still leaves an unbootable machine,
-    # so the entries are shown before the user reboots.
-    commands = list(loader.commands)
+    # stop_on_error so grub-mkconfig never runs after grub-install failed.
+    # efibootmgr rides along: a copied EFI binary with no firmware boot entry
+    # still leaves an unbootable machine.
+    commands: list[tuple[str, list[str]]] = [
+        (" ".join(command), list(command)) for command in loader.commands
+    ]
     show_entries = system.has("efibootmgr")
     if show_entries:
-        commands.append(["efibootmgr"])
+        commands.append(("Reading firmware boot entries", ["efibootmgr"]))
 
-    for command in loader.commands:
-        ctx.line(f"[>>] {' '.join(command)}", "info")
-
-    results = system.run_root_batch(
-        commands,
-        on_line=lambda index, line: ctx.line(f"  {line}", "muted"),
-        stop_on_error=True,
+    results = ui.run_all(commands, root=True, stop_on_error=True)
+    repaired = len(results) >= len(loader.commands) and all(
+        result.ok for result in results[: len(loader.commands)]
     )
 
-    failed = next((r for r in results[: len(loader.commands)] if not r.ok), None)
-    if failed is not None or len(results) < len(loader.commands):
-        code = failed.returncode if failed else -1
-        ctx.line()
-        ctx.line(f"[!!] Failed with exit code {code} -- stopping here.", "error")
-        ctx.line("The system may still boot from its existing entry. Do not reboot", "warn")
-        ctx.line("until you have resolved this, and keep a live USB to hand.", "warn")
+    if not repaired:
+        ui.note("The repair stopped at a failing command.", Level.ERROR)
+        ui.note(
+            "The system may still boot from its existing entry. Do not reboot "
+            "until you have resolved this, and keep a live USB to hand.",
+            Level.WARN,
+        )
         return
 
-    ctx.line(f"[OK] {loader.name} reinstalled on {esp}.", "ok")
-    ctx.line()
-
+    ui.note(f"{loader.name} reinstalled on {esp}.", Level.OK)
     if show_entries and len(results) > len(loader.commands):
-        ctx.line("Current firmware boot entries:", "info")
-        for line in results[-1].stdout.splitlines():
-            ctx.line(f"  {line}", "muted")
-        ctx.line()
-
-    ctx.line("Verify the entry above before rebooting.", "warn")
+        entries = results[-1].stdout.splitlines()
+        ui.section("Firmware boot entries")
+        ui.fields([(line.split()[0].rstrip("*"), line) for line in entries if line.strip()])
+    ui.note("Verify the entry above before rebooting.", Level.WARN)

@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 from .. import system
-from .base import ProgressFilter, ToolContext
+from .base import Level, ToolUI
 
 PREVIEW_LINES = 15
 
@@ -30,95 +30,74 @@ def _reboot_required() -> bool:
     return Path("/var/run/reboot-required").exists()
 
 
-def system_update(ctx: ToolContext) -> None:
-    ctx.heading("Update all packages")
+def system_update(ui: ToolUI) -> None:
+    ui.section("Update all packages")
 
     manager = system.package_manager()
     if not manager:
-        ctx.line("No supported package manager found (apt/dnf/pacman/zypper).", "error")
+        ui.note("No supported package manager found (apt/dnf/pacman/zypper).", Level.ERROR)
         return
 
-    ctx.line(f"Package manager: {manager.cmd}", "muted")
-    ctx.line()
-
     # Refresh and list are back to back, so they share one elevation prompt.
-    commands = []
+    steps: list[tuple[str, list[str]]] = []
     if manager.refresh:
-        ctx.line("[>>] Refreshing package index...", "info")
-        commands.append([manager.cmd, *manager.refresh])
-    ctx.line("[>>] Checking for available updates...", "info")
-    ctx.line()
-    commands.append([manager.cmd, *manager.list_updates])
+        steps.append(("Refreshing package index", [manager.cmd, *manager.refresh]))
+    steps.append(("Checking for updates", [manager.cmd, *manager.list_updates]))
 
-    results = system.run_root_batch(commands)
+    results = ui.run_all(steps, root=True)
     if manager.refresh and not results[0].ok:
-        ctx.line(
-            f"[!!] Refresh failed (exit code {results[0].returncode}). Check your network.",
-            "error",
-        )
+        ui.note("Refresh failed. Check your network connection.", Level.ERROR)
         return
 
     # dnf check-update exits 100 when updates exist and 0 when there are none;
     # pacman -Qu exits 1 on an empty list. Judge by output, not exit code.
-    listing = results[-1]
     lines = [
         line.strip()
-        for line in listing.stdout.splitlines()
+        for line in results[-1].stdout.splitlines()
         if line.strip() and not line.startswith(("Listing", "Last metadata"))
     ]
-
     if not lines:
-        ctx.line("Everything is already up to date.", "ok")
+        ui.note("Everything is already up to date.", Level.OK)
         return
 
-    for line in lines[:PREVIEW_LINES]:
-        ctx.line(f"  {line}", "muted")
+    ui.section(f"{len(lines)} update(s) available")
+    ui.fields([(line.split()[0], " ".join(line.split()[1:])) for line in lines[:PREVIEW_LINES]])
     if len(lines) > PREVIEW_LINES:
-        ctx.line(f"  ... and {len(lines) - PREVIEW_LINES} more", "muted")
-    ctx.line()
-    ctx.line(f"{len(lines)} update(s) available.", "info")
-    ctx.line()
+        ui.note(f"... and {len(lines) - PREVIEW_LINES} more.")
 
-    if not ctx.confirm("Proceed with updating all packages?"):
-        ctx.line("Update cancelled.", "muted")
+    if not ui.confirm(f"Install {len(lines)} update(s)?"):
         return
 
-    ctx.line()
-    ctx.line("[>>] Updating all packages...", "info")
-    progress = ProgressFilter(lambda line: ctx.line(f"  {line}", "muted"))
-    rc = system.stream_root([manager.cmd, *manager.update], progress)
-    progress.flush()
-    ctx.line()
-    if rc != 0:
-        ctx.line(f"[!!] Update exited with code {rc}.", "error")
+    result = ui.run([manager.cmd, *manager.update], label="Updating packages", root=True)
+    if not result.ok:
         return
 
-    ctx.line("[OK] Update complete.", "ok")
     # Kernel and glibc updates only take effect after a restart.
     if _reboot_required():
-        ctx.line("[!] A reboot is required to finish this update.", "warn")
+        ui.note("A reboot is required to finish this update.", Level.WARN)
 
 
-def topgrade(ctx: ToolContext) -> None:
-    ctx.heading("Topgrade -- Full System Upgrade")
+def topgrade(ui: ToolUI) -> None:
+    ui.section("Topgrade")
 
     if not system.has("topgrade"):
-        ctx.line("topgrade is not installed.", "error")
-        ctx.line()
-        ctx.line("Install it with your package manager:", "muted")
-        ctx.line("  Arch / CachyOS / Manjaro:  pacman -S topgrade", "muted")
-        ctx.line("  Debian / Ubuntu / Fedora:  cargo install topgrade", "muted")
+        ui.note("topgrade is not installed.", Level.ERROR)
+        ui.note(
+            "Install it with your package manager: pacman -S topgrade, "
+            "or cargo install topgrade elsewhere."
+        )
         return
 
     user = system.desktop_user()
     if not user:
-        ctx.line("Could not determine the desktop user.", "error")
+        ui.note("Could not determine the desktop user.", Level.ERROR)
         return
 
-    ctx.line("topgrade will upgrade:", "muted")
-    ctx.line("  packages, flatpak, VS Code extensions, uv tools,", "muted")
-    ctx.line("  gcloud, helm, firmware, and more.", "muted")
-    ctx.line()
+    ui.note(
+        "topgrade upgrades packages, flatpak, VS Code extensions, uv tools, "
+        "gcloud, helm, firmware and more. It asks its own questions, so it "
+        "opens in a terminal window of its own."
+    )
 
     # Reconstruct the session environment so GNOME Shell extensions and
     # session-aware tools work when topgrade is spawned from a root context
@@ -144,9 +123,8 @@ def topgrade(ctx: ToolContext) -> None:
     for terminal, args in TERMINALS.items():
         if not system.has(terminal):
             continue
-        ctx.line(f"[>>] Opening topgrade in {terminal}...", "info")
-        system.run([terminal, *args, *run_command])
+        ui.run([terminal, *args, *run_command], label=f"Opening topgrade in {terminal}")
         return
 
-    ctx.line("No supported terminal emulator found.", "error")
-    ctx.line("Install one of: " + ", ".join(TERMINALS), "muted")
+    ui.note("No supported terminal emulator found.", Level.ERROR)
+    ui.note("Install one of: " + ", ".join(TERMINALS))

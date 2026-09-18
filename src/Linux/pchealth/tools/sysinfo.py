@@ -6,10 +6,10 @@ import os
 import socket
 
 from .. import system
-from .base import Choice, ToolContext
+from .base import Choice, Level, ToolUI
 
 _SECURE_BOOT_NOTE = (
-    "[*] Secure Boot shows the UEFI firmware state only. Actual enforcement "
+    "Secure Boot shows the UEFI firmware state only. Actual enforcement "
     "depends on shim/MOK setup and varies per distro."
 )
 
@@ -101,38 +101,34 @@ def _session_type() -> str:
     return "Unknown"
 
 
-def system_info(ctx: ToolContext) -> None:
-    ctx.heading("System Information")
+def system_info(ui: ToolUI) -> None:
+    ui.section("System Information")
 
     memory = _meminfo()
     total_kib = memory.get("MemTotal")
     available_kib = memory.get("MemAvailable")
-    total_gb = f"{total_kib / 1048576:.2f}" if total_kib else "N/A"
-    used_gb = (
-        f"{(total_kib - available_kib) / 1048576:.2f}"
-        if total_kib and available_kib is not None
-        else "N/A"
-    )
-
     uname = os.uname()
     user = system.desktop_user()
-    shell = os.environ.get("SHELL", "Unknown").rsplit("/", 1)[-1]
-    firmware = "UEFI" if os.path.exists("/sys/firmware/efi") else "Legacy BIOS"
 
-    ctx.rows(
+    ui.fields(
         [
-            ("Computer Name", socket.gethostname()),
+            ("Computer name", socket.gethostname()),
             ("Machine", _machine_model()),
-            ("OS Name", system.distro_info()["PRETTY_NAME"]),
+            ("OS name", system.distro_info()["PRETTY_NAME"]),
             ("Kernel", uname.release),
             ("Architecture", uname.machine),
             ("CPU", _cpu_model()),
-            ("RAM Used (GB)", used_gb),
-            ("RAM Total (GB)", total_gb),
-            ("Firmware", firmware),
-            ("Secure Boot", f"{_secure_boot()}  [*]"),
+            (
+                "RAM used",
+                f"{(total_kib - available_kib) / 1048576:.2f} GB"
+                if total_kib and available_kib is not None
+                else "N/A",
+            ),
+            ("RAM total", f"{total_kib / 1048576:.2f} GB" if total_kib else "N/A"),
+            ("Firmware", "UEFI" if os.path.exists("/sys/firmware/efi") else "Legacy BIOS"),
+            ("Secure Boot", _secure_boot()),
             ("Uptime", system.output(["uptime", "-p"]) or "N/A"),
-            ("Last Boot", system.output(["uptime", "-s"]) or "N/A"),
+            ("Last boot", system.output(["uptime", "-s"]) or "N/A"),
             (
                 "Desktop",
                 os.environ.get("XDG_CURRENT_DESKTOP")
@@ -140,29 +136,28 @@ def system_info(ctx: ToolContext) -> None:
                 or "Unknown",
             ),
             ("Session", _session_type()),
-            ("Shell", shell),
+            ("Shell", os.environ.get("SHELL", "Unknown").rsplit("/", 1)[-1]),
             ("Packages", _package_count()),
             ("Timezone", _timezone()),
             ("User", user.name if user else "N/A"),
         ]
     )
-    ctx.line()
-    ctx.line(_SECURE_BOOT_NOTE, "muted")
+    ui.note(_SECURE_BOOT_NOTE)
 
 
-def bios_password(ctx: ToolContext) -> None:
+def bios_password(ui: ToolUI) -> None:
     """Links to bios-pw.org. Credits: @bacher09 -- pwgen-for-bios."""
-    ctx.heading("BIOS Password Recovery")
-    ctx.line("This tool links to bios-pw.org -- a website that generates")
-    ctx.line("recovery codes for locked BIOS passwords.")
-    ctx.line("Credits for this tool go to: @bacher09", "muted")
-    ctx.line()
+    ui.section("BIOS Password Recovery")
+    ui.note(
+        "bios-pw.org generates recovery codes for locked BIOS passwords. "
+        "Credits for this tool go to @bacher09."
+    )
 
     urls = {
         "site": "https://bios-pw.org",
         "repo": "https://github.com/bacher09/pwgen-for-bios",
     }
-    choice = ctx.choose(
+    choice = ui.choose(
         "Which page should open?",
         [
             Choice("site", "bios-pw.org", "The recovery tool itself"),
@@ -170,9 +165,7 @@ def bios_password(ctx: ToolContext) -> None:
         ],
     )
     if choice is None:
-        ctx.cancelled()
         return
 
-    url = urls[choice]
-    if not system.open_url(url):
-        ctx.line(f"Could not open a browser. Visit: {url}", "warn")
+    if not system.open_url(urls[choice]):
+        ui.note(f"Could not open a browser. Visit: {urls[choice]}", Level.WARN)

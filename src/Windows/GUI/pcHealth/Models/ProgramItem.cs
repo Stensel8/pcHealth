@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 namespace pcHealth;
 
@@ -36,6 +36,47 @@ public sealed class ProgramItem : INotifyPropertyChanged
             Notify(nameof(ButtonLabel));
         }
     }
+
+    // Installing used to open a console window. The card shows the progress
+    // and the outcome itself now, so nothing has to pop up over the app.
+    private bool _isBusy;
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set
+        {
+            if (_isBusy == value) return;
+            _isBusy = value;
+            Notify(nameof(IsBusy));
+            Notify(nameof(IsIdle));
+            Notify(nameof(BusyVisibility));
+        }
+    }
+
+    public bool IsIdle => !_isBusy;
+
+    // The page binds Visibility properties rather than converting bools, which
+    // is how NoteVisibility below already does it.
+    public Microsoft.UI.Xaml.Visibility BusyVisibility =>
+        _isBusy ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+
+    private string _status = "";
+    public string Status
+    {
+        get => _status;
+        set
+        {
+            if (_status == value) return;
+            _status = value;
+            Notify(nameof(Status));
+            Notify(nameof(StatusVisibility));
+        }
+    }
+
+    public Microsoft.UI.Xaml.Visibility StatusVisibility =>
+        string.IsNullOrEmpty(Status)
+            ? Microsoft.UI.Xaml.Visibility.Collapsed
+            : Microsoft.UI.Xaml.Visibility.Visible;
 
     public string ButtonLabel =>
         IsInstalled ? "Installed" :

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NLog;
 using pcHealth.Models;
@@ -22,12 +22,14 @@ public partial class ProgramsViewModel : ObservableObject
     ];
 
     private readonly ICliRunner _cli;
+    private readonly IProcessRunner _runner;
 
     public ObservableCollection<ItemGroup<ProgramItem>> GroupedPrograms { get; } = new();
 
-    public ProgramsViewModel(ICliRunner cli)
+    public ProgramsViewModel(ICliRunner cli, IProcessRunner runner)
     {
         _cli = cli;
+        _runner = runner;
         var categoryOrder = new[] { "Hardware", "Disk", "Security", "Utilities" };
         var groups = AllPrograms
             .GroupBy(p => p.Category)
@@ -69,10 +71,7 @@ public partial class ProgramsViewModel : ObservableObject
         }
         else if (!string.IsNullOrEmpty(item.WingetId))
         {
-            using var p = _cli.RunWinget(
-                $"install --id {item.WingetId} --accept-source-agreements --accept-package-agreements");
-            await p.WaitForExitAsync();
-            await CheckInstalledAsync();
+            await RunWingetAsync(item, "install", "Installed");
         }
         else if (!string.IsNullOrEmpty(item.BrowserUrl))
         {
@@ -80,22 +79,47 @@ public partial class ProgramsViewModel : ObservableObject
         }
     }
 
-    public async Task UpdateAsync(ProgramItem item)
-    {
-        if (string.IsNullOrEmpty(item.WingetId)) return;
-        using var p = _cli.RunWinget(
-            $"upgrade --id {item.WingetId} --accept-source-agreements --accept-package-agreements");
-        await p.WaitForExitAsync();
-        await CheckInstalledAsync();
-    }
+    public Task UpdateAsync(ProgramItem item) => RunWingetAsync(item, "upgrade", "Updated");
 
-    public async Task ForceInstallAsync(ProgramItem item)
+    public Task ForceInstallAsync(ProgramItem item) =>
+        RunWingetAsync(item, "install", "Installed", force: true);
+
+    // winget used to run in a console window that popped up over the app and
+    // waited for a keypress. Its output goes to the card and the log instead:
+    // a GUI should not hand you a terminal to read.
+    private async Task RunWingetAsync(ProgramItem item, string verb, string done, bool force = false)
     {
-        if (string.IsNullOrEmpty(item.WingetId)) return;
-        using var p = _cli.RunWinget(
-            $"install --id {item.WingetId} --force --accept-source-agreements --accept-package-agreements");
-        await p.WaitForExitAsync();
-        await CheckInstalledAsync();
+        if (string.IsNullOrEmpty(item.WingetId) || item.IsBusy) return;
+
+        var arguments =
+            $"{verb} --id {item.WingetId} --accept-source-agreements --accept-package-agreements"
+            + (force ? " --force" : "");
+
+        item.IsBusy = true;
+        item.Status = $"Starting {verb}...";
+        try
+        {
+            var exitCode = await _runner.RunAsync("winget", arguments, line =>
+            {
+                Log.Debug("winget {Name}: {Line}", item.Name, line);
+                // Progress bars redraw themselves into noise through a pipe;
+                // only keep lines that read as a sentence.
+                if (line.Length > 3 && !line.TrimStart().StartsWith('\u2588'))
+                    item.Status = line.Trim();
+            });
+
+            item.Status = exitCode == 0 ? done : $"winget exited with code {exitCode}";
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "winget {Verb} failed for {Name}", verb, item.Name);
+            item.Status = "Could not run winget. Is App Installer present?";
+        }
+        finally
+        {
+            item.IsBusy = false;
+            await CheckInstalledAsync();
+        }
     }
 
     private async Task InstallOrOpenCoreAsync(ProgramItem item)

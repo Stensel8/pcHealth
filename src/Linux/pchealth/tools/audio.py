@@ -9,51 +9,41 @@ from __future__ import annotations
 import time
 
 from .. import system
-from .base import ToolContext
+from .base import Level, ToolUI
 
 PIPEWIRE_UNITS = ("pipewire", "pipewire-pulse", "wireplumber")
 
 
-def audio_restart(ctx: ToolContext) -> None:
-    ctx.heading("Restart Audio")
+def audio_restart(ui: ToolUI) -> None:
+    ui.section("Restart Audio")
 
     user = system.desktop_user()
     if not user:
-        ctx.line("Could not determine the desktop user.", "error")
+        ui.note("Could not determine the desktop user.", Level.ERROR)
         return
 
     # Exact match: `is-active` answers "inactive" too, which a substring test
     # would happily accept.
     state = system.run_as_user(user, ["systemctl", "--user", "is-active", "pipewire"])
-    is_pipewire = state.stdout.strip() == "active"
 
-    if is_pipewire:
-        ctx.line("Detected: PipeWire", "muted")
-        ctx.line()
+    if state.stdout.strip() == "active":
+        ui.note("Detected PipeWire.")
         for unit in PIPEWIRE_UNITS:
-            ctx.line(f"[>>] Restarting {unit}...", "info")
+            step = ui.step(f"Restarting {unit}")
             result = system.run_as_user(user, ["systemctl", "--user", "restart", unit])
-            if result.ok:
-                ctx.line("[OK] Done.", "ok")
-            else:
-                ctx.line(f"[!!] Exit code {result.returncode}.", "error")
-                if result.stderr.strip():
-                    ctx.line(f"  {result.stderr.strip()}", "muted")
+            for line in (result.stdout + result.stderr).splitlines():
+                step.output(line)
+            step.finish(result.ok, "Done" if result.ok else f"Exit code {result.returncode}")
     elif system.has("pulseaudio"):
-        ctx.line("Detected: PulseAudio", "muted")
-        ctx.line()
-        ctx.line("[>>] Restarting PulseAudio...", "info")
+        ui.note("Detected PulseAudio.")
+        step = ui.step("Restarting PulseAudio")
         # Kill then start as two invocations to avoid a shell compound command.
         system.run_as_user(user, ["pulseaudio", "--kill"])
         time.sleep(0.5)
         result = system.run_as_user(user, ["pulseaudio", "--start"])
-        if result.ok:
-            ctx.line("[OK] Done.", "ok")
-        else:
-            ctx.line(f"[!!] Exit code {result.returncode}.", "error")
+        step.finish(result.ok, "Done" if result.ok else f"Exit code {result.returncode}")
     else:
-        ctx.line("No supported audio server found (PipeWire or PulseAudio).", "error")
+        ui.note("No supported audio server found (PipeWire or PulseAudio).", Level.ERROR)
         return
 
-    ctx.line()
-    ctx.line("Audio services restarted.", "ok")
+    ui.note("Audio services restarted.", Level.OK)

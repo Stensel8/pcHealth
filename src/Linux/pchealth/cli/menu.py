@@ -2,43 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 from .. import catalog, health, system
-from ..tools import REGISTRY, Cancelled, Choice, ToolContext
+from ..tools import REGISTRY, Cancelled
 from ..version import get_version
-from . import programs, theme
+from . import programs, theme, ui
 
 REPO_URL = "https://github.com/REALSDEALS/pcHealth"
 RELEASES_URL = f"{REPO_URL}/releases"
-
-
-def _terminal_context() -> ToolContext:
-    def prompt(text: str) -> str:
-        try:
-            return input(f"  {text}: ")
-        except EOFError as exc:
-            raise Cancelled("no input available") from exc
-
-    def choose(question: str, options: Sequence[Choice]) -> str | None:
-        while True:
-            theme.write()
-            for index, option in enumerate(options, start=1):
-                theme.option(str(index), option.label, option.detail)
-            theme.option("B", "Back")
-            theme.write()
-
-            answer = prompt(question).strip()
-            if answer.upper() == "B":
-                return None
-            if answer.isdigit() and 1 <= int(answer) <= len(options):
-                return options[int(answer) - 1].key
-            theme.write("Invalid choice.", "error")
-
-    def confirm(question: str) -> bool:
-        return prompt(f"{question} (y/n)").strip().lower() in ("y", "yes")
-
-    return ToolContext(emit=theme.write, choose=choose, confirm=confirm)
 
 
 def _run_tool(tool: catalog.Tool) -> None:
@@ -52,7 +22,7 @@ def _run_tool(tool: catalog.Tool) -> None:
         theme.write(f"No implementation registered for '{tool.id}'.", "error")
         return
     try:
-        implementation(_terminal_context())
+        implementation(ui.TerminalUI())
     except Cancelled:
         theme.write()
         theme.write("Cancelled.", "muted")

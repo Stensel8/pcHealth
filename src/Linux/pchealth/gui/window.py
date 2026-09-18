@@ -17,12 +17,12 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, GLib, Gtk, Pango  # noqa: E402
+from gi.repository import Adw, GLib, Gtk  # noqa: E402
 
 from .. import catalog, health, system  # noqa: E402
-from ..tools import REGISTRY, Cancelled, ToolContext  # noqa: E402
+from ..tools import REGISTRY, Cancelled, Level  # noqa: E402
 from ..version import get_version  # noqa: E402
-from . import dialogs  # noqa: E402
+from .toolui import GtkToolUI  # noqa: E402
 
 REPO_URL = "https://github.com/REALSDEALS/pcHealth"
 
@@ -44,81 +44,8 @@ _STATUS_LABEL = {
 }
 
 
-# Output colours, close to the terminal palette so both front-ends read alike.
-_PALETTE = {
-    "light": {
-        "head": "#1c71d8",
-        "ok": "#26794e",
-        "warn": "#a35a00",
-        "error": "#c01c28",
-        "muted": "#5e5c64",
-    },
-    "dark": {
-        "head": "#78aeed",
-        "ok": "#8ff0a4",
-        "warn": "#f8e45c",
-        "error": "#ff938c",
-        "muted": "#9a9996",
-    },
-}
-
-
-class OutputView(Gtk.ScrolledWindow):
-    """Read-only monospaced view that tool output is appended to."""
-
-    def __init__(self) -> None:
-        super().__init__(hexpand=True, vexpand=True)
-        self._view = Gtk.TextView(
-            editable=False,
-            cursor_visible=False,
-            monospace=True,
-            wrap_mode=Gtk.WrapMode.WORD_CHAR,
-            top_margin=12,
-            bottom_margin=12,
-            left_margin=16,
-            right_margin=16,
-        )
-        self._buffer = self._view.get_buffer()
-        self.set_child(self._view)
-
-        style = Adw.StyleManager.get_default()
-        for name in _PALETTE["light"]:
-            weight = Pango.Weight.BOLD if name == "head" else Pango.Weight.NORMAL
-            self._buffer.create_tag(name, weight=weight)
-        self._recolour(style)
-        # Light/dark can change while the window is open, and tags hold a fixed
-        # colour -- so repaint them rather than reading the theme once.
-        style.connect("notify::dark", lambda manager, _param: self._recolour(manager))
-
-    def _recolour(self, style: Adw.StyleManager) -> None:
-        table = self._buffer.get_tag_table()
-        for name, colour in _PALETTE["dark" if style.get_dark() else "light"].items():
-            tag = table.lookup(name)
-            if tag is not None:
-                tag.set_property("foreground", colour)
-
-    def clear(self) -> None:
-        self._buffer.set_text("")
-
-    def append(self, text: str, style: str) -> None:
-        """Append one line. Safe to call from any thread."""
-
-        def write() -> bool:
-            end = self._buffer.get_end_iter()
-            if self._buffer.get_tag_table().lookup(style):
-                self._buffer.insert_with_tags_by_name(end, text + "\n", style)
-            else:
-                self._buffer.insert(end, text + "\n")
-            mark = self._buffer.create_mark(None, self._buffer.get_end_iter(), False)
-            self._view.scroll_mark_onscreen(mark)
-            self._buffer.delete_mark(mark)
-            return GLib.SOURCE_REMOVE
-
-        GLib.idle_add(write)
-
-
 class ToolPage(Adw.NavigationPage):
-    """One tool: its description, a Run button, and its own output."""
+    """One tool: its description, a Run button, and its results as rows."""
 
     def __init__(self, tool: catalog.Tool, window: Gtk.Window) -> None:
         super().__init__(title=tool.name)
@@ -127,7 +54,7 @@ class ToolPage(Adw.NavigationPage):
         self._worker: threading.Thread | None = None
         self._stop = threading.Event()
 
-        self._output = OutputView()
+        self._results = Adw.PreferencesPage()
         self._run = Gtk.Button(label="Run", css_classes=["suggested-action"])
         self._stop_button = Gtk.Button(label="Stop", sensitive=False)
         self._run.connect("clicked", self._on_run)
@@ -137,25 +64,18 @@ class ToolPage(Adw.NavigationPage):
         header.pack_end(self._run)
         header.pack_end(self._stop_button)
 
-        description = Gtk.Label(
-            label=tool.note or f"{tool.category} tool",
-            xalign=0,
-            wrap=True,
-            css_classes=["dim-label"],
-            margin_top=12,
-            margin_bottom=12,
-            margin_start=16,
-            margin_end=16,
+        self._placeholder = Adw.StatusPage(
+            title=tool.name,
+            description=tool.note or f"{tool.category} tool. Press Run to start.",
+            icon_name="media-playback-start-symbolic",
         )
-
-        body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        body.append(description)
-        body.append(Gtk.Separator())
-        body.append(self._output)
+        self._body = Gtk.Stack()
+        self._body.add_named(self._placeholder, "idle")
+        self._body.add_named(self._results, "results")
 
         view = Adw.ToolbarView()
         view.add_top_bar(header)
-        view.set_content(body)
+        view.set_content(self._body)
         self.set_child(view)
 
     def _on_run(self, _button: Gtk.Button) -> None:
@@ -163,28 +83,27 @@ class ToolPage(Adw.NavigationPage):
             return
         implementation = REGISTRY.get(self._tool.id)
         if implementation is None:
-            self._output.append(f"No implementation registered for '{self._tool.id}'.", "error")
             return
 
-        self._output.clear()
+        # A fresh page per run: results from the previous run must not linger.
+        self._body.remove(self._results)
+        self._results = Adw.PreferencesPage()
+        self._body.add_named(self._results, "results")
+        self._body.set_visible_child_name("results")
+
         self._stop.clear()
         self._run.set_sensitive(False)
         self._stop_button.set_sensitive(True)
 
-        context = ToolContext(
-            emit=self._output.append,
-            choose=lambda question, options: dialogs.choose(self._window, question, options),
-            confirm=lambda question: dialogs.confirm(self._window, question),
-            should_stop=self._stop.is_set,
-        )
+        ui = GtkToolUI(self._results, self._window, self._stop)
 
         def work() -> None:
             try:
-                implementation(context)
+                implementation(ui)
             except Cancelled:
-                self._output.append("Cancelled.", "muted")
+                ui.note("Cancelled.", Level.INFO)
             except OSError as exc:
-                self._output.append(f"[!!] Tool error: {exc}", "error")
+                ui.note(f"Tool error: {exc}", Level.ERROR)
             finally:
                 GLib.idle_add(self._finish)
 

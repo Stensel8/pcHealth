@@ -15,7 +15,7 @@ from . import (
     sysinfo,
     updates,
 )
-from .base import Cancelled, Choice, ToolContext, ToolFunc
+from .base import Cancelled, Choice, Level, ToolFunc, ToolUI
 
 REGISTRY: dict[str, ToolFunc] = {
     "system-info": sysinfo.system_info,
@@ -38,4 +38,4 @@ REGISTRY: dict[str, ToolFunc] = {
     "system-logs": logs.system_logs,
 }
 
-__all__ = ["REGISTRY", "Cancelled", "Choice", "ToolContext", "ToolFunc"]
+__all__ = ["REGISTRY", "Cancelled", "Choice", "Level", "ToolFunc", "ToolUI"]

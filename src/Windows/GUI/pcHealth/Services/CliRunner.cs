@@ -1,5 +1,4 @@
-using NLog;
-using System.Diagnostics;
+﻿using NLog;
 
 namespace pcHealth.Services;
 
@@ -31,25 +30,6 @@ internal sealed class CliRunner : ICliRunner
         throw new DirectoryNotFoundException(
             "Cannot locate src/Windows/CLI/tools.\n" +
             "Make sure the app is run from within the pcHealth repository.");
-    }
-
-    public void RunScript(string scriptFileName)
-    {
-        var toolsDir = Path.GetFullPath(GetToolsDir());
-        var path = Path.GetFullPath(Path.Combine(toolsDir, scriptFileName));
-        if (!path.StartsWith(toolsDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
-            && !path.Equals(toolsDir, StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException("Script path escapes the tools directory.", nameof(scriptFileName));
-
-        var escaped = path.Replace("'", "''");
-        var cmd = $"& '{escaped}'; Write-Host ''; Read-Host 'Press Enter to close'";
-        var psi = new ProcessStartInfo { FileName = "pwsh.exe", UseShellExecute = true };
-        psi.ArgumentList.Add("-NoProfile");
-        psi.ArgumentList.Add("-ExecutionPolicy");
-        psi.ArgumentList.Add("Bypass");
-        psi.ArgumentList.Add("-Command");
-        psi.ArgumentList.Add(cmd);
-        Start(psi);
     }
 
     public void OpenUri(string uri) =>
@@ -123,19 +103,6 @@ internal sealed class CliRunner : ICliRunner
             Log.Debug(ex, "Uninstall registry security error searching for {RegistryName}", registryName);
         }
         return null;
-    }
-
-    public Process RunWinget(string wingetArguments)
-    {
-        if (wingetArguments.IndexOfAny([';', '|', '&', '`', '$', '"', '\n', '\r', '<', '>']) >= 0)
-            throw new ArgumentException("Invalid characters in winget arguments.", nameof(wingetArguments));
-
-        var cmd = $"winget {wingetArguments}; Write-Host ''; Read-Host 'Press Enter to close'";
-        var psi = new ProcessStartInfo { FileName = "pwsh.exe", UseShellExecute = true };
-        psi.ArgumentList.Add("-NoProfile");
-        psi.ArgumentList.Add("-Command");
-        psi.ArgumentList.Add(cmd);
-        return Start(psi);
     }
 
     public bool IsInstalled(string registryName)

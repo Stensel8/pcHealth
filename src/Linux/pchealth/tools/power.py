@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from .. import system
-from .base import Choice, ToolContext
+from .base import Choice, Level, ToolUI
 
 
-def power_options(ctx: ToolContext) -> None:
-    ctx.heading("Power Options")
+def power_options(ui: ToolUI) -> None:
+    ui.section("Power Options")
 
-    choice = ctx.choose(
+    choice = ui.choose(
         "What should happen?",
         [
             Choice("logoff", "Log Off", "Ends the desktop session.", destructive=True),
@@ -17,28 +17,23 @@ def power_options(ctx: ToolContext) -> None:
             Choice("shutdown", "Shut Down", "Powers the system off immediately.", destructive=True),
         ],
     )
-
     if choice is None:
-        ctx.cancelled()
-    elif choice == "logoff":
+        return
+
+    if choice == "logoff":
         # Under sudo the environment describes root; log off the human instead.
         user = system.desktop_user()
         if not user:
-            ctx.line("Could not determine the desktop user.", "error")
+            ui.note("Could not determine the desktop user.", Level.ERROR)
             return
-        if not ctx.confirm(f"Log off {user.name}?"):
-            ctx.line("Cancelled.", "muted")
-            return
-        # loginctl ends the session cleanly, unlike killing the processes.
-        rc = system.run_root(["loginctl", "terminate-user", user.name]).returncode
-        ctx.command_output(rc, ok="[OK] Session ended.")
-    elif choice == "restart":
-        if not ctx.confirm("Restart the system?"):
-            ctx.line("Cancelled.", "muted")
-            return
-        system.run_root(["shutdown", "-r", "now"])
-    elif choice == "shutdown":
-        if not ctx.confirm("Shut down the system?"):
-            ctx.line("Cancelled.", "muted")
-            return
-        system.run_root(["shutdown", "-h", "now"])
+        if ui.confirm(f"Log off {user.name}?"):
+            # loginctl ends the session cleanly, unlike killing the processes.
+            ui.run(["loginctl", "terminate-user", user.name], label="Ending session", root=True)
+        return
+
+    label, argv = {
+        "restart": ("Restarting", ["shutdown", "-r", "now"]),
+        "shutdown": ("Shutting down", ["shutdown", "-h", "now"]),
+    }[choice]
+    if ui.confirm(f"{label.rstrip('ing')}? This closes everything immediately."):
+        ui.run(argv, label=label, root=True)

@@ -2,90 +2,65 @@
 
 from __future__ import annotations
 
-import contextlib
-
 from .. import system
-from .base import ToolContext
+from .base import Level, ToolUI
 
 PING_TARGET = "8.8.8.8"
 TRACE_TARGET = "google.com"
 
 
-def ping_short(ctx: ToolContext) -> None:
-    ctx.heading(f"Short Ping Test  ({PING_TARGET}, 4 packets)")
+def ping_short(ui: ToolUI) -> None:
+    ui.section(f"Short Ping Test  ({PING_TARGET})")
     # -w caps the total run: without it an unreachable host with a slow DNS
     # path can sit there far longer than four packets suggest.
-    rc = system.stream(
+    result = ui.run(
         ["ping", "-c", "4", "-W", "2", "-w", "15", PING_TARGET],
-        lambda line: ctx.line(f"  {line}", "muted"),
+        label="Sending 4 packets",
+        ok="Host is reachable",
+        failed="No usable reply",
     )
-    ctx.line()
-    if rc == 0:
-        ctx.line("Host is reachable.", "ok")
-    else:
-        ctx.line("No usable reply. Check your network connection.", "error")
+    if not result.ok:
+        ui.note("Check your network connection.", Level.ERROR)
 
 
-def ping_continuous(ctx: ToolContext) -> None:
-    ctx.heading(f"Continuous Ping Test  ({PING_TARGET})")
-    ctx.line("Press Ctrl+C to stop.", "muted")
-    ctx.line()
-    # Ctrl+C is how this tool is meant to end, not a failure.
-    with contextlib.suppress(KeyboardInterrupt):
-        system.stream(
-            ["ping", PING_TARGET],
-            lambda line: ctx.line(f"  {line}", "muted"),
-            should_stop=ctx.should_stop,
-        )
-    ctx.line()
-    ctx.line("Ping test stopped.", "muted")
+def ping_continuous(ui: ToolUI) -> None:
+    ui.section(f"Continuous Ping Test  ({PING_TARGET})")
+    step = ui.step("Pinging until stopped")
+    code = system.stream(["ping", PING_TARGET], step.output, should_stop=ui.should_stop)
+    step.finish(True, f"Stopped (exit {code})")
 
 
-def traceroute(ctx: ToolContext) -> None:
-    ctx.heading(f"Traceroute to {TRACE_TARGET}  (max 30 hops)")
+def traceroute(ui: ToolUI) -> None:
+    ui.section(f"Traceroute to {TRACE_TARGET}")
     command = next((c for c in ("traceroute", "tracepath") if system.has(c)), None)
     if not command:
-        ctx.line("Neither traceroute nor tracepath is installed.", "warn")
-        ctx.line("Install via: apt install traceroute  (or dnf / pacman / zypper)", "muted")
+        ui.note("Neither traceroute nor tracepath is installed.", Level.WARN)
+        ui.note("Install via: apt install traceroute  (or dnf / pacman / zypper)")
         return
-    system.stream(
-        [command, TRACE_TARGET],
-        lambda line: ctx.line(f"  {line}", "muted"),
-        should_stop=ctx.should_stop,
-    )
+
+    step = ui.step(f"Tracing with {command}")
+    code = system.stream([command, TRACE_TARGET], step.output, should_stop=ui.should_stop)
+    step.finish(code == 0, "Route traced" if code == 0 else f"Exit code {code}")
 
 
-def network_reset(ctx: ToolContext) -> None:
-    ctx.heading("Reset Network Stack")
+def network_reset(ui: ToolUI) -> None:
+    ui.section("Reset Network Stack")
     if not system.has("systemctl"):
-        ctx.line("systemctl not found. This system may not use systemd.", "error")
+        ui.note("systemctl not found. This system may not use systemd.", Level.ERROR)
         return
 
-    ctx.line("Note: the network connection will drop briefly.", "warn")
-    ctx.line()
-    if not ctx.confirm("Restart networking now?"):
-        ctx.line("Cancelled.", "muted")
+    ui.note("The network connection will drop briefly.", Level.WARN)
+    if not ui.confirm("Restart networking now?"):
         return
 
     manager_active = system.output(["systemctl", "is-active", "NetworkManager"]) == "active"
     unit = "NetworkManager" if manager_active or system.has("nmcli") else "systemd-networkd"
 
-    steps: list[tuple[str, list[str]]] = [
-        (f"Restarting {unit}", ["systemctl", "restart", unit]),
-    ]
+    steps: list[tuple[str, list[str]]] = [(f"Restarting {unit}", ["systemctl", "restart", unit])]
     if system.has("resolvectl"):
         steps.append(("Flushing DNS cache", ["resolvectl", "flush-caches"]))
     elif system.has("systemd-resolve"):
         steps.append(("Flushing DNS cache", ["systemd-resolve", "--flush-caches"]))
 
-    # One elevation for the whole reset rather than one per command.
-    results = system.run_root_batch(
-        [argv for _, argv in steps],
-        on_line=lambda index, line: ctx.line(f"  {line}", "muted"),
-    )
-    for (label, _), result in zip(steps, results, strict=True):
-        ctx.line(f"[>>] {label}", "info")
-        ctx.command_output(result.returncode, ok="[OK] Done.")
-
-    ctx.line()
-    ctx.line("Network reset complete.", "ok")
+    ui.run_all(steps, root=True)
+    ui.note("Network reset complete.", Level.OK)
