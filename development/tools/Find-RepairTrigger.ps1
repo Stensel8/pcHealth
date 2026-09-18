@@ -6,43 +6,53 @@
 .DESCRIPTION
     Windows publishes no API for the "Fix problems using Windows Update" repair,
     so pcHealth presses the real button through UI Automation. This script looks
-    for something better: the binary, verb or registry flag the button actually
-    uses, so the repair could be started directly instead.
+    for something better: the binary, setting id or registry flag the button
+    actually uses, so the repair could be started directly instead.
 
-    Everything here is read-only. Nothing in this script starts a repair -- the
-    Watch mode asks you to press the button yourself and reports what moved.
+    Everything here is read-only. Nothing in this script starts a repair -- Watch
+    asks you to press the button yourself and reports what moved.
+
+    A warning about false leads: ResetEngine.dll is full of promising words like
+    CloudDownloadConnection and GenerateReinstallList, but every one of them
+    belongs to PushButtonReset -- "Reset this PC". That wipes the machine and is
+    not the repair. Judge a hit by the feature it belongs to, not by its name.
 
 .PARAMETER Mode
+    Settings scans for the Settings page's own setting ids.
     Strings scans the likely binaries for revealing text.
+    Protocols lists the ms- URI schemes this machine registers.
     Watch records what happens while you press the button.
-    Both runs Strings and then Watch.
+    All runs everything.
 
 .PARAMETER WatchSeconds
-    How long Watch records after you are asked to press the button.
+    How long Watch records. The repair takes a while to get going, so this is
+    generous by default.
 
 .EXAMPLE
-    .\Find-RepairTrigger.ps1 -Mode Strings
+    .\Find-RepairTrigger.ps1 -Mode Settings
 
 .EXAMPLE
-    .\Find-RepairTrigger.ps1 -Mode Watch -WatchSeconds 180
+    .\Find-RepairTrigger.ps1 -Mode Watch -WatchSeconds 420
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Strings', 'Watch', 'Both')]
-    [string]$Mode = 'Both',
+    [ValidateSet('Settings', 'Strings', 'Protocols', 'Watch', 'All')]
+    [string]$Mode = 'All',
 
-    [ValidateRange(30, 900)]
-    [int]$WatchSeconds = 150
+    [ValidateRange(30, 1800)]
+    [int]$WatchSeconds = 300
 )
 
 Set-StrictMode -Version Latest
-
-$WatchSource = 'pcHealthProcessWatch'
 
 # Words worth finding in a binary that knows about this repair.
 $InterestingPattern = 'Reinstall|CloudDownload|RepairVersion|repair version|SelfHeal|Self-heal|' +
                       'RecoveryReinstall|FixProblem|ms-settings:recovery|StartRepair|RemediationRequired|' +
                       'ms-cxh'
+
+# Settings names every control it owns as SystemSettings_<Area>_<Setting>, so
+# the repair button has an id of its own and that id is the real lead.
+$SettingIdPattern = 'SystemSettings_[A-Za-z0-9_]*(Recovery|Reinstall|Repair|Reset|Update)[A-Za-z0-9_]*'
 
 function Get-BinaryString {
     <#
@@ -55,8 +65,6 @@ function Get-BinaryString {
         [Parameter(Mandatory)][string]$Pattern,
         [int]$MinimumLength = 6
     )
-
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return }
 
     try {
         $bytes = [System.IO.File]::ReadAllBytes($Path)
@@ -71,16 +79,167 @@ function Get-BinaryString {
     }
 
     # A PE carries literals both as plain bytes and as UTF-16, so both decodings
-    # are searched rather than guessing which one a given string used.
+    # are searched rather than guessing which one a given string used. UTF-16 is
+    # decoded from byte 0 and byte 1, because a string starting at an odd offset
+    # is garbled by the other alignment and would be missed entirely.
     $runPattern = "[\x20-\x7E]{$MinimumLength,}"
     foreach ($text in @(
         [System.Text.Encoding]::ASCII.GetString($bytes),
-        [System.Text.Encoding]::Unicode.GetString($bytes)
+        [System.Text.Encoding]::Unicode.GetString($bytes),
+        [System.Text.Encoding]::Unicode.GetString($bytes, 1, $bytes.Length - 1)
     )) {
         foreach ($match in [regex]::Matches($text, $runPattern)) {
-            if ($match.Value -match $Pattern) { Write-Output $match.Value }
+            if ($match.Value -notmatch $Pattern) { continue }
+
+            # One blob of concatenated error names can be tens of kilobytes and
+            # tells us nothing, so long runs are clipped rather than dumped.
+            if ($match.Value.Length -gt 160) {
+                Write-Output ($match.Value.Substring(0, 160) + ' [clipped]')
+            }
+            else {
+                Write-Output $match.Value
+            }
         }
     }
+}
+
+function Get-ScanCandidate {
+    <#
+        .SYNOPSIS
+            The binaries worth reading, as full paths, deduplicated.
+    #>
+    [CmdletBinding()]
+    param([switch]$SettingsOnly)
+
+    $system32 = Join-Path $env:SystemRoot 'System32'
+
+    $named = if ($SettingsOnly) {
+        @('SystemSettings.Handlers.dll', 'SystemSettings.DataModel.dll', 'SystemSettings.dll')
+    }
+    else {
+        @(
+            'SystemSettings.Handlers.dll', 'SystemSettings.DataModel.dll', 'SystemSettings.dll',
+            'usoclient.exe', 'UsoCore.dll', 'MoUsoCoreWorker.exe', 'usocoreworker.exe',
+            'SystemReset.exe', 'ResetEngine.dll', 'ResetEngOnline.dll', 'wuaueng.dll'
+        )
+    }
+
+    $paths = [System.Collections.Generic.List[string]]::new()
+    foreach ($name in $named) { $paths.Add((Join-Path $system32 $name)) }
+
+    $folders = @((Join-Path $env:SystemRoot 'ImmersiveControlPanel'))
+    if (-not $SettingsOnly) { $folders += (Join-Path $env:SystemRoot 'SystemApps') }
+
+    foreach ($folder in $folders) {
+        if (-not (Test-Path -LiteralPath $folder)) { continue }
+        Get-ChildItem -LiteralPath $folder -Filter '*.dll' -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.Directory.Name -notlike '*Edge*' } |
+            ForEach-Object { $paths.Add($_.FullName) }
+    }
+
+    Write-Output ($paths | Sort-Object -Unique)
+}
+
+function Invoke-Scan {
+    <#
+        .SYNOPSIS
+            Scans a candidate set and reports missing files as well as hits, so
+            "no output" cannot be mistaken for "no matches".
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][AllowEmptyCollection()][string[]]$Candidate,
+        [Parameter(Mandatory)][string]$Pattern
+    )
+
+    $scanned = 0
+    $missing = [System.Collections.Generic.List[string]]::new()
+    $hitFiles = 0
+
+    foreach ($path in $Candidate) {
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+            $missing.Add($path)
+            continue
+        }
+        $scanned++
+
+        $hits = @(Get-BinaryString -Path $path -Pattern $Pattern | Sort-Object -Unique)
+        if ($hits.Count -eq 0) { continue }
+
+        $hitFiles++
+        Write-Host ''
+        Write-Host ("--- {0} ({1} hits)" -f $path, $hits.Count) -ForegroundColor Yellow
+        $hits | ForEach-Object { Write-Host "    $_" }
+    }
+
+    Write-Host ''
+    Write-Host ("Read {0} files, {1} had hits." -f $scanned, $hitFiles)
+    if ($missing.Count -gt 0) {
+        Write-Host ("{0} candidate(s) were not on this machine:" -f $missing.Count) -ForegroundColor DarkYellow
+        $missing | ForEach-Object { Write-Host "    $_" }
+    }
+}
+
+function Invoke-SettingIdScan {
+    [CmdletBinding()]
+    param()
+
+    Write-Host ''
+    Write-Host '== Settings page ids around recovery and repair ==' -ForegroundColor Cyan
+    Write-Host 'The button has an id of its own; that id is the lead worth chasing.'
+
+    Invoke-Scan -Candidate @(Get-ScanCandidate -SettingsOnly) -Pattern $SettingIdPattern
+}
+
+function Invoke-StringScan {
+    [CmdletBinding()]
+    param()
+
+    Write-Host ''
+    Write-Host '== Binaries mentioning repair-ish things ==' -ForegroundColor Cyan
+    Write-Host 'Remember: PushButtonReset hits belong to "Reset this PC", not to the repair.' -ForegroundColor DarkYellow
+
+    Invoke-Scan -Candidate @(Get-ScanCandidate) -Pattern $InterestingPattern
+}
+
+function Invoke-ProtocolScan {
+    <#
+        .SYNOPSIS
+            Lists the ms- URI schemes this machine registers, with the command
+            each one really runs.
+
+        .DESCRIPTION
+            Read-only. Nothing is launched: some of these verbs start
+            destructive flows, so they are only printed.
+    #>
+    [CmdletBinding()]
+    param()
+
+    Write-Host ''
+    Write-Host '== Registered ms- URI schemes ==' -ForegroundColor Cyan
+    Write-Host 'Read-only. Do not fire these blindly: some of them reset the PC.' -ForegroundColor DarkYellow
+
+    Get-ChildItem -LiteralPath 'Registry::HKEY_CLASSES_ROOT' -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSChildName -like 'ms-*' } |
+        ForEach-Object {
+            $scheme = $_.PSChildName
+            $values = Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction SilentlyContinue
+            if ($null -eq $values) { return }
+            if ($values.PSObject.Properties.Name -notcontains 'URL Protocol') { return }
+
+            # Each scheme gets its own lookup; a shared variable would carry the
+            # previous scheme's command over whenever a key has none.
+            $command = '(no open command)'
+            $commandKey = Join-Path $_.PSPath 'shell\open\command'
+            if (Test-Path -LiteralPath $commandKey) {
+                $item = Get-ItemProperty -LiteralPath $commandKey -ErrorAction SilentlyContinue
+                if ($null -ne $item -and $item.PSObject.Properties.Name -contains '(default)') {
+                    $command = $item.'(default)'
+                }
+            }
+
+            Write-Host ('    {0,-34} {1}' -f $scheme, $command)
+        }
 }
 
 function Get-UpdateRegistrySnapshot {
@@ -119,8 +278,8 @@ function Get-UpdateRegistrySnapshot {
 function Get-OrchestratorTask {
     <#
         .SYNOPSIS
-            Lists the Update Orchestrator task files, read straight off disk so
-            no Windows-only cmdlet is needed.
+            Lists the Update Orchestrator task files, read off disk so no
+            Windows-only cmdlet is needed.
     #>
     [CmdletBinding()]
     param()
@@ -132,80 +291,17 @@ function Get-OrchestratorTask {
         Select-Object -ExpandProperty FullName
 }
 
-function Invoke-StringScan {
-    [CmdletBinding()]
-    param()
-
-    Write-Host ''
-    Write-Host '== Scanning binaries for repair-related text ==' -ForegroundColor Cyan
-
-    $system32 = Join-Path $env:SystemRoot 'System32'
-    $candidates = @(
-        'SystemSettings.Handlers.dll',
-        'SystemSettings.DataModel.dll',
-        'usoclient.exe',
-        'UsoCore.dll',
-        'MoUsoCoreWorker.exe',
-        'usocoreworker.exe',
-        'SystemReset.exe',
-        'ResetEngine.dll',
-        'ResetEngOnline.dll'
-    ) | ForEach-Object { Join-Path $system32 $_ }
-
-    # The reset and recovery flows run inside the Cloud Experience Host, which
-    # is also where ms-cxh: verbs are handled, so its binaries are worth reading.
-    $folders = @(
-        (Join-Path $env:SystemRoot 'ImmersiveControlPanel'),
-        (Join-Path $env:SystemRoot 'SystemApps')
-    )
-    foreach ($folder in $folders) {
-        if (-not (Test-Path -LiteralPath $folder)) { continue }
-        $candidates += Get-ChildItem -LiteralPath $folder -Filter '*.dll' -Recurse -ErrorAction SilentlyContinue |
-            Where-Object { $_.Directory.Name -notlike '*Edge*' } |
-            Select-Object -ExpandProperty FullName
-    }
-
-    foreach ($candidate in $candidates) {
-        $hits = @(Get-BinaryString -Path $candidate -Pattern $InterestingPattern | Sort-Object -Unique)
-        if ($hits.Count -eq 0) { continue }
-
-        Write-Host ''
-        Write-Host ("--- {0} ({1} hits)" -f (Split-Path -Leaf $candidate), $hits.Count) -ForegroundColor Yellow
-        $hits | ForEach-Object { Write-Host "    $_" }
-    }
-}
-
-function Invoke-ProtocolScan {
+function Invoke-ButtonWatch {
     <#
         .SYNOPSIS
-            Lists the ms- URI schemes this machine actually registers.
+            Reports what starts and what changes while you press the button.
 
         .DESCRIPTION
-            Answers the "there must be a protocol for it" hunch with the
-            machine's own list instead of guesswork. Nothing is launched: some
-            of these verbs start destructive flows, so they are only printed.
+            Processes are polled rather than subscribed to. An indication
+            subscription printed nothing until it ended, which looks identical
+            to finding nothing; polling shows each new process the moment it
+            appears, so the screen proves the watch is alive.
     #>
-    [CmdletBinding()]
-    param()
-
-    Write-Host ''
-    Write-Host '== Registered ms- URI schemes ==' -ForegroundColor Cyan
-    Write-Host 'Read-only. Do not fire these blindly: some of them reset the PC.' -ForegroundColor DarkYellow
-
-    $classes = 'Registry::HKEY_CLASSES_ROOT'
-    Get-ChildItem -LiteralPath $classes -ErrorAction SilentlyContinue |
-        Where-Object { $_.PSChildName -like 'ms-*' } |
-        ForEach-Object {
-            $values = Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction SilentlyContinue
-            if ($null -eq $values -or -not $values.PSObject.Properties.Name.Contains('URL Protocol')) { return }
-
-            $commandKey = Join-Path $_.PSPath 'shell\open\command'
-            $command = (Get-ItemProperty -LiteralPath $commandKey -ErrorAction SilentlyContinue).'(default)'
-            Write-Host ('    {0,-34} {1}' -f $_.PSChildName, $command)
-        }
-}
-
-function Invoke-ButtonWatch {
     [CmdletBinding()]
     param([int]$Seconds)
 
@@ -216,52 +312,65 @@ function Invoke-ButtonWatch {
     $tasksBefore = @(Get-OrchestratorTask)
     Write-Host ("Baseline: {0} registry values, {1} orchestrator tasks." -f $registryBefore.Count, $tasksBefore.Count)
 
-    Register-CimIndicationEvent -ClassName 'Win32_ProcessStartTrace' -SourceIdentifier $WatchSource | Out-Null
+    $known = @{}
+    foreach ($process in Get-Process -ErrorAction SilentlyContinue) { $known[$process.Id] = $true }
 
     Write-Host ''
-    Write-Host 'Now open Settings > System > Recovery and press "Reinstall now".' -ForegroundColor Green
-    Write-Host ("Recording for {0} seconds. Press Ctrl+C to stop early." -f $Seconds)
+    Write-Host 'Now press "Reinstall now" in Settings > System > Recovery.' -ForegroundColor Green
+    Write-Host ("Watching for {0} seconds. New processes appear below as they start." -f $Seconds)
+    Write-Host ''
 
-    try {
-        Start-Sleep -Seconds $Seconds
-    }
-    finally {
-        $events = @(Get-Event -SourceIdentifier $WatchSource -ErrorAction SilentlyContinue)
-        Unregister-Event -SourceIdentifier $WatchSource -ErrorAction SilentlyContinue
-        Remove-Event -SourceIdentifier $WatchSource -ErrorAction SilentlyContinue
+    $started = [System.Collections.Generic.List[string]]::new()
+    $deadline = (Get-Date).AddSeconds($Seconds)
+    $lastTick = Get-Date
+
+    while ((Get-Date) -lt $deadline) {
+        foreach ($process in Get-Process -ErrorAction SilentlyContinue) {
+            if ($known.ContainsKey($process.Id)) { continue }
+            $known[$process.Id] = $true
+            $started.Add($process.ProcessName)
+            Write-Host ('    {0:HH:mm:ss}  {1} (pid {2})' -f (Get-Date), $process.ProcessName, $process.Id) -ForegroundColor Green
+        }
+
+        # A heartbeat every 30s, so a quiet stretch still looks like progress.
+        if (((Get-Date) - $lastTick).TotalSeconds -ge 30) {
+            $lastTick = Get-Date
+            $remaining = [int]($deadline - (Get-Date)).TotalSeconds
+            Write-Host ("    ... still watching, {0}s left" -f $remaining) -ForegroundColor DarkGray
+        }
+
+        Start-Sleep -Milliseconds 700
     }
 
     Write-Host ''
-    Write-Host '--- Processes started while recording ---' -ForegroundColor Yellow
-    if ($events.Count -eq 0) {
-        Write-Host '    (none captured)'
+    Write-Host '--- Processes started while watching ---' -ForegroundColor Yellow
+    if ($started.Count -eq 0) {
+        Write-Host '    (none)'
     }
     else {
-        $events |
-            ForEach-Object { $_.SourceEventArgs.NewEvent.ProcessName } |
-            Group-Object |
-            Sort-Object -Property Count -Descending |
+        $started | Group-Object | Sort-Object -Property Count -Descending |
             ForEach-Object { Write-Host ('    {0,-40} x{1}' -f $_.Name, $_.Count) }
     }
 
     Write-Host ''
     Write-Host '--- Windows Update registry values that changed ---' -ForegroundColor Yellow
-    $registryAfter = @(Get-UpdateRegistrySnapshot)
-    $registryDelta = @(Compare-Object -ReferenceObject $registryBefore -DifferenceObject $registryAfter)
+    $registryDelta = @(Compare-Object -ReferenceObject $registryBefore -DifferenceObject @(Get-UpdateRegistrySnapshot))
     if ($registryDelta.Count -eq 0) {
         Write-Host '    (nothing changed)'
     }
     else {
-        $registryDelta | ForEach-Object {
-            $sign = if ($_.SideIndicator -eq '=>') { 'new' } else { 'gone' }
-            Write-Host ('    [{0}] {1}' -f $sign, $_.InputObject)
+        foreach ($change in $registryDelta) {
+            $sign = if ($change.SideIndicator -eq '=>') { 'new ' } else { 'gone' }
+            Write-Host ('    [{0}] {1}' -f $sign, $change.InputObject)
         }
     }
 
     Write-Host ''
     Write-Host '--- Update Orchestrator tasks that appeared ---' -ForegroundColor Yellow
-    $tasksDelta = @(Compare-Object -ReferenceObject $tasksBefore -DifferenceObject @(Get-OrchestratorTask) |
-        Where-Object { $_.SideIndicator -eq '=>' })
+    $tasksDelta = @(
+        Compare-Object -ReferenceObject $tasksBefore -DifferenceObject @(Get-OrchestratorTask) |
+            Where-Object { $_.SideIndicator -eq '=>' }
+    )
     if ($tasksDelta.Count -eq 0) {
         Write-Host '    (none)'
     }
@@ -272,11 +381,10 @@ function Invoke-ButtonWatch {
 
 Write-Host 'pcHealth -- repair trigger hunt (read-only)' -ForegroundColor Cyan
 
-if ($Mode -in @('Strings', 'Both')) {
-    Invoke-ProtocolScan
-    Invoke-StringScan
-}
-if ($Mode -in @('Watch', 'Both')) { Invoke-ButtonWatch -Seconds $WatchSeconds }
+if ($Mode -in @('Settings', 'All')) { Invoke-SettingIdScan }
+if ($Mode -in @('Protocols', 'All')) { Invoke-ProtocolScan }
+if ($Mode -in @('Strings', 'All')) { Invoke-StringScan }
+if ($Mode -in @('Watch', 'All')) { Invoke-ButtonWatch -Seconds $WatchSeconds }
 
 Write-Host ''
 Write-Host 'Done. Send the output back so the findings can be turned into a direct call.' -ForegroundColor Cyan
