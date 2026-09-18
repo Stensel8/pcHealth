@@ -1,4 +1,4 @@
-﻿namespace pcHealth.Services;
+namespace pcHealth.Services;
 
 public interface ICliRunner
 {
