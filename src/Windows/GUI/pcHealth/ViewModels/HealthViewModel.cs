@@ -163,6 +163,7 @@ public partial class HealthViewModel : ObservableObject
             cpu.Add(new HealthRow("CPU", "Not found", CheckStatus.Unknown));
 
         // Motherboard + Chipset
+        bool chipsetNamed = false;
         try
         {
             foreach (var inst in session.QueryInstances("root/cimv2", "WQL",
@@ -185,24 +186,32 @@ public partial class HealthViewModel : ObservableObject
                     var label = cs.Platform != null ? $"{cs.Name} ({cs.Platform})" : cs.Name;
                     cpu.Add(new HealthRow("Chipset", label, CheckStatus.Info));
                     cpu.Add(new HealthRow("Chipset release", cs.Year.ToString(), st));
+                    chipsetNamed = true;
                 }
                 break;
             }
         }
         catch (Exception ex) { Log.Debug(ex, "BaseBoard query failed"); }
 
-        // Chipset driver date
+        // Chipset name + driver
         try
         {
-            var (chipDevice, chipDate, chipVer) = GatherChipsetDriverInfo();
-            if (chipDate.HasValue)
+            var (chipsetName, chipDate, chipVer) = GatherChipsetDriverInfo();
+            if (!chipsetNamed && chipsetName != null)
+                cpu.Add(new HealthRow("Chipset", chipsetName, CheckStatus.Info));
+
+            // Intel's chipset INF ships DriverDate 7/18/1968 so that any real
+            // driver outranks it. It is a sorting key, not a release date, and
+            // calling it two decades stale is simply wrong.
+            if (chipDate.HasValue && chipDate.Value.Year >= 2001)
             {
                 int months = (int)((DateTime.Today - chipDate.Value).TotalDays / 30.44);
                 var s = months > 24 ? CheckStatus.Warning : CheckStatus.Good;
                 cpu.Add(new HealthRow("Chipset driver", chipDate.Value.ToString("yyyy-MM-dd"), s));
-                if (chipVer != null)
-                    cpu.Add(new HealthRow("Chipset version", chipVer, CheckStatus.Info));
             }
+
+            if (chipVer != null)
+                cpu.Add(new HealthRow("Chipset version", chipVer, CheckStatus.Info));
         }
         catch (Exception ex) { Log.Debug(ex, "Chipset driver info failed"); }
 
@@ -417,11 +426,20 @@ public partial class HealthViewModel : ObservableObject
         return (null, null, 0, null);
     }
 
-    private static (string? device, DateTime? driverDate, string? driverVersion) GatherChipsetDriverInfo()
+    /// <summary>
+    /// Walks the System device class once for both the chipset name and the
+    /// chipset driver, which live on two different devices in it.
+    /// </summary>
+    private static (string? chipset, DateTime? driverDate, string? driverVersion) GatherChipsetDriverInfo()
     {
         const string classKey = @"SYSTEM\CurrentControlSet\Control\Class\{4D36E97D-E325-11CE-BFC1-08002BE10318}";
         using var cls = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(classKey);
         if (cls == null) return (null, null, null);
+
+        string? chipset = null;
+        DateTime? driverDate = null;
+        string? driverVersion = null;
+        bool haveDriver = false;
 
         foreach (var subName in cls.GetSubKeyNames())
         {
@@ -430,19 +448,42 @@ public partial class HealthViewModel : ObservableObject
             if (sub == null) continue;
 
             var desc = sub.GetValue("DriverDesc") as string ?? "";
-            if (!desc.Contains("SMBus", StringComparison.OrdinalIgnoreCase)) continue;
 
-            var dateStr = sub.GetValue("DriverDate") as string;
-            var verStr = sub.GetValue("DriverVersion") as string;
+            // The LPC/eSPI controller is the device whose name carries the
+            // chipset family. An OEM board product -- "HP 8B41", "Dell 0K1N2M"
+            // -- never does, so without this those machines show no chipset.
+            if (chipset == null && desc.Contains("LPC", StringComparison.OrdinalIgnoreCase))
+                chipset = CleanChipsetName(desc);
 
-            DateTime? driverDate = null;
-            if (!string.IsNullOrEmpty(dateStr)
-                && DateTime.TryParse(dateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
-                driverDate = dt;
+            if (!haveDriver && desc.Contains("SMBus", StringComparison.OrdinalIgnoreCase))
+            {
+                haveDriver = true;
+                driverVersion = sub.GetValue("DriverVersion") as string;
+                if (sub.GetValue("DriverDate") is string dateStr
+                    && DateTime.TryParse(dateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
+                    driverDate = dt;
+            }
 
-            return (desc, driverDate, verStr);
+            if (chipset != null && haveDriver) break;
         }
-        return (null, null, null);
+        return (chipset, driverDate, driverVersion);
+    }
+
+    /// <summary>
+    /// "Intel(R) Raptor Lake-P LPC Controller - 519D" becomes "Intel Raptor
+    /// Lake-P"; the PCI device id and the role are noise on a health page.
+    /// </summary>
+    private static string? CleanChipsetName(string desc)
+    {
+        var s = StripTrademarks(desc);
+        s = Regex.Replace(s, @"\s*-\s*[0-9A-F]{4}\s*$", "", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\s*LPC(?:/eSPI)?\s*(?:Controller|Interface)?", " ", RegexOptions.IgnoreCase);
+        s = Regex.Replace(s, @"\s+", " ").Trim();
+
+        // A vendor on its own ("Intel", from a plain "Intel(R) LPC Controller")
+        // says nothing, and a paragraph is not a name either.
+        bool named = s.Length < 60 && s.Contains(' ');
+        return named ? s : null;
     }
 
     // --- smartctl helpers ---
@@ -1056,8 +1097,21 @@ public partial class HealthViewModel : ObservableObject
 
     // --- CPU helpers ---
 
-    private static (int year, string label) TryGetCpuReleaseYear(string name)
+    /// <summary>
+    /// Win32_Processor reports "13th Gen Intel(R) Core(TM) i7-1360P", not the
+    /// marketing name. Dropping the trademark marks is what lets the patterns
+    /// below read like the name a person would write.
+    /// </summary>
+    private static string StripTrademarks(string name)
     {
+        var s = Regex.Replace(name, @"\((?:R|TM)\)", " ", RegexOptions.IgnoreCase);
+        return Regex.Replace(s, @"\s+", " ").Trim();
+    }
+
+    private static (int year, string label) TryGetCpuReleaseYear(string rawName)
+    {
+        var name = StripTrademarks(rawName);
+
         if (Regex.IsMatch(name, @"Ryzen AI"))
             return (2024, "AMD Ryzen AI");
 
@@ -1065,7 +1119,18 @@ public partial class HealthViewModel : ObservableObject
         if (m.Success)
         {
             var model = m.Groups[1].Value;
-            int gen = model.Length == 4 ? (model[0] - '0') : int.Parse(model[..2]);
+
+            // Intel puts the generation in front of its own name from the 8th
+            // generation on, and that beats guessing from the model number.
+            var gm = Regex.Match(name, @"\b(\d{1,2})th Gen\b");
+
+            // A four-digit model starting with 1 is a mobile part from the 10th
+            // generation on (i7-1065G7, i7-1360P), never a first-generation one:
+            // those were three digits, so they never reach this branch.
+            int gen = gm.Success ? int.Parse(gm.Groups[1].Value)
+                : model.Length == 5 || model[0] == '1' ? int.Parse(model[..2])
+                : model[0] - '0';
+
             int year = gen switch
             {
                 1 => 2010,
