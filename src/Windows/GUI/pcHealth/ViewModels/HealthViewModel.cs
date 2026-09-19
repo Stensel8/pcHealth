@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Management.Infrastructure;
 using NLog;
+using pcHealth.Helpers;
 using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
 using System.Globalization;
@@ -1093,14 +1094,16 @@ public partial class HealthViewModel : ObservableObject
         }
         catch (Exception ex) { Log.Debug(ex, "SMBv1 registry failed"); }
 
+        // VBScript is not here on purpose: it is a capability, not an optional
+        // feature, so asking this class for it always answered "absent".
         var featureMap = new Dictionary<string, (string Label, bool IsCritical)>(StringComparer.OrdinalIgnoreCase)
         {
-            ["VBScript"] = ("VBScript", true),
             ["WindowsMediaPlayer"] = ("Legacy Windows Media Player", false),
             ["MicrosoftWindowsPowerShellV2Root"] = ("PowerShell v2", false),
             ["TelnetClient"] = ("Telnet Client", false),
             ["TFTP"] = ("TFTP Client", false),
             ["DirectPlay"] = ("DirectPlay", false),
+            ["WorkFolders-Client"] = ("Work Folders Client", false),
         };
 
         // Win32_OptionalFeature reports the state DISM does, over the same
@@ -1132,6 +1135,40 @@ public partial class HealthViewModel : ObservableObject
         {
             Log.Debug(ex, "Win32_OptionalFeature query failed");
             rows.Add(new HealthRow("Optional features", "Query failed", CheckStatus.Unknown));
+        }
+
+        // Settings > Optional features lists these, and they stay installed
+        // whether or not anything uses them. Being there is the finding.
+        var capabilityMap = new Dictionary<string, (string Label, bool IsCritical)>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["VBSCRIPT"] = ("VBScript", true),
+            ["Browser.InternetExplorer"] = ("Internet Explorer mode", false),
+            ["Media.WindowsMediaPlayer"] = ("Windows Media Player (app)", false),
+            ["Microsoft.Windows.Notepad.System"] = ("Notepad (system)", false),
+            ["Microsoft.Windows.PowerShell.ISE"] = ("PowerShell ISE", false),
+        };
+
+        var capabilities = DismCapabilities.GetInstalled();
+        if (capabilities == null)
+        {
+            rows.Add(new HealthRow("Optional components", "Query failed", CheckStatus.Unknown));
+        }
+        else
+        {
+            // A capability name carries its version -- "VBSCRIPT~~~~",
+            // "Media.WindowsMediaPlayer~~~~0.0.12.0" -- and the identity is
+            // the part in front of it.
+            var present = new HashSet<string>(
+                capabilities.Select(n => n.Split('~')[0]), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (capability, info) in capabilityMap)
+            {
+                bool active = present.Contains(capability);
+                rows.Add(new HealthRow(
+                    info.Label,
+                    active ? "Installed" : "Not installed",
+                    active ? (info.IsCritical ? CheckStatus.Bad : CheckStatus.Warning) : CheckStatus.Good));
+            }
         }
 
         return rows;
