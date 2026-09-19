@@ -854,7 +854,6 @@ public partial class HealthViewModel : ObservableObject
         int? estimatedRuntimeMin = null;
         int? cycleCount = null;
         bool cycleCountQueried = false;
-        int? batteryAgeMonths = null;
 
         try
         {
@@ -892,28 +891,7 @@ public partial class HealthViewModel : ObservableObject
         }
         catch (Exception ex) { Log.Debug(ex, "BatteryCycleCount WMI failed"); }
 
-        try
-        {
-            foreach (var inst in session.QueryInstances("root/WMI", "WQL",
-                "SELECT ManufactureDate FROM BatteryStaticData"))
-            {
-                var rawDate = inst.CimInstanceProperties["ManufactureDate"]?.Value;
-                uint dateVal = rawDate is uint u ? u : rawDate is ushort us ? (uint)us : 0;
-                if (dateVal > 0)
-                {
-                    int day = (int)(dateVal & 0x1F);
-                    int month = (int)((dateVal >> 5) & 0x0F);
-                    int year = (int)((dateVal >> 9) & 0x7F) + 1980;
-                    if (month is >= 1 and <= 12 && day is >= 1 and <= 31 && year >= 2000)
-                    {
-                        var mfgDate = new DateTime(year, month, day);
-                        batteryAgeMonths = (int)((DateTime.Today - mfgDate).TotalDays / 30.44);
-                    }
-                }
-                break;
-            }
-        }
-        catch (Exception ex) { Log.Debug(ex, "BatteryStaticData WMI failed"); }
+        var batteryAgeMonths = TryGetBatteryAgeMonths(session);
 
         try
         {
@@ -945,6 +923,77 @@ public partial class HealthViewModel : ObservableObject
         return new BatteryInfo(name, chemistry, null, null, null, null, "Unknown",
             estimatedRuntimeMin, cycleCount, cycleCountQueried, batteryAgeMonths);
     }
+
+    /// <summary>
+    /// How old the battery is in months, or null when nothing reports a date.
+    /// </summary>
+    /// <remarks>
+    /// Two sources, because neither is dependable alone. BatteryStaticData is
+    /// the ACPI provider in root/WMI, which a lot of OEM firmware answers with
+    /// "Generic failure" rather than implementing -- that is routine, not a
+    /// fault, so it is noted without a stack trace. Win32_PortableBattery is
+    /// the SMBIOS view of the same battery and needs no ACPI provider, though
+    /// not every firmware fills the date in there either.
+    /// </remarks>
+    private static int? TryGetBatteryAgeMonths(CimSession session)
+    {
+        try
+        {
+            foreach (var inst in session.QueryInstances("root/WMI", "WQL",
+                "SELECT ManufactureDate FROM BatteryStaticData"))
+            {
+                var raw = inst.CimInstanceProperties["ManufactureDate"]?.Value;
+                uint packed = raw is uint u ? u : raw is ushort us ? (uint)us : 0;
+                var date = DecodeSbdsDate(packed);
+                if (date.HasValue) return MonthsSince(date.Value);
+                break;
+            }
+        }
+        catch (CimException ex)
+        {
+            Log.Debug("BatteryStaticData unavailable: {Message}", ex.Message);
+        }
+
+        try
+        {
+            foreach (var inst in session.QueryInstances("root/cimv2", "WQL",
+                "SELECT ManufactureDate FROM Win32_PortableBattery"))
+            {
+                if (inst.CimInstanceProperties["ManufactureDate"]?.Value is DateTime mfg)
+                    return MonthsSince(mfg);
+                break;
+            }
+        }
+        catch (CimException ex)
+        {
+            Log.Debug("Win32_PortableBattery unavailable: {Message}", ex.Message);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The Smart Battery Data spec packs the date into sixteen bits: day in
+    /// the low five, month in the next four, year since 1980 in the top seven.
+    /// </summary>
+    private static DateTime? DecodeSbdsDate(uint packed)
+    {
+        if (packed == 0) return null;
+
+        int day = (int)(packed & 0x1F);
+        int month = (int)((packed >> 5) & 0x0F);
+        int year = (int)((packed >> 9) & 0x7F) + 1980;
+
+        // A garbage word decodes to a garbage date, and the 31st of a 30-day
+        // month throws rather than returning something wrong.
+        if (month is < 1 or > 12 || day < 1 || year < 2000) return null;
+        if (day > DateTime.DaysInMonth(year, month)) return null;
+
+        return new DateTime(year, month, day);
+    }
+
+    private static int MonthsSince(DateTime date) =>
+        (int)((DateTime.Today - date).TotalDays / 30.44);
 
     private static string DecodeBatteryChemistry(ushort code) => code switch
     {
