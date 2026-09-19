@@ -22,9 +22,9 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 | Windows  | ✅  | ✅  | Build 19045 (Windows 10 22H2) |
 | Linux    | ✅  | ✅  | Kernel 6.0                    |
 
-Build 19045 is where WinUI 3 stops rendering, so the CLI and the GUI share one floor rather than drifting apart. Windows 10 22H2 still runs on plenty of BIOS/MBR machines: Boot Repair detects the firmware type and refuses a legacy install rather than half-repairing it. Tools that need winget say so when App Installer is missing (LTSC and stripped images) instead of failing, and `Repair Winget` can add it.
+Build 19045 is where WinUI 3 stops rendering. Also, Windows 10 22H2 still runs on plenty of BIOS/MBR machines: Boot Repair detects the firmware type and refuses a legacy install rather than half-repairing it. Tools that need winget say so when App Installer is missing (LTSC and stripped images) instead of failing, and `Repair Winget` can add it.
 
-On image-based systems (Fedora Silverblue, Bazzite, Kinoite, openSUSE MicroOS) the tools that manage packages or boot files are hidden rather than reimplemented: `/usr` is read-only and the bootloader belongs to the deployment, so `bootc` and `rpm-ostree` own that work. The other 14 Linux tools -- all the diagnostics -- run normally.
+On image-based systems (Fedora Silverblue, Bazzite, Kinoite) the tools that manage packages or boot files are hidden rather than reimplemented: `/usr` is read-only and the bootloader belongs to the deployment, so `bootc` and `rpm-ostree` own that work. The other 14 Linux tools -- all the diagnostics -- run normally.
 
 - Windows release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
 - Linux kernel releases: https://www.kernel.org/
@@ -44,7 +44,7 @@ machine until someone installs it -- a poor first step for a tool you reach for
 |------|-------|--------|
 | `src/Windows/CLI/` | PowerShell 7 | Windows terminal tools |
 | `src/Windows/GUI/` | C# / WinUI 3 | Windows desktop app |
-| `src/Linux/` | Python 3.11+ / GTK4 + libadwaita | Linux terminal menu and desktop app |
+| `src/Linux/` | Python 3.12+ / GTK4 + libadwaita | Linux terminal menu and desktop app |
 | `assets/tools.json` | -- | Shared tool catalogue both stacks read, so the menus cannot drift apart |
 
 Each side owns its platform completely: no `$IsLinux` branches in the
@@ -261,7 +261,7 @@ This repository consolidates and replaces several earlier pcHealth-related proje
 - [pcHealth-GUI](https://github.com/iRepairzone-NL/pcHealth_GUI) - Python GUI variant (deprecated; migrated)
 - [Win_Scan](https://github.com/REALSDEALS/Win_Scan) - standalone Windows scanning utility (deprecated; migrated)
 
-Where that functionality lives today:
+Previous versions of the same project:
 
 | Predecessor | Now in |
 |-------------|--------|
@@ -270,6 +270,5 @@ Where that functionality lives today:
 | pcHealth-GUI (Python) | `src/Linux/pchealth/gui/` -- the Python GUI lineage continues on Linux with GTK4 |
 | Win_Scan | `src/Windows/CLI/tools/Invoke-ScanAndRepair.ps1` -- SFC and DISM in one pass |
 
-Nothing from those projects has been dropped on the way in. Where a tool was
-replaced by a better one, the replacement covers the same job -- and the
-history of every migration is in this repository's git log.
+Nothing from those projects has been dropped. All functionality is merged and brought back into 1 unified repo where this felt possible.
+
