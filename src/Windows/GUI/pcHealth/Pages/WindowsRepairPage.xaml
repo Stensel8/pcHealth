@@ -14,7 +14,7 @@
         <StackPanel Grid.Row="0" Padding="28,20,28,8" Spacing="4">
             <TextBlock Text="Repair Windows"
                        Style="{StaticResource TitleTextBlockStyle}"/>
-            <TextBlock Text="Reinstalls Windows over itself to repair system files, keeping your files and apps."
+            <TextBlock Text="Downloads a clean copy of your Windows version and rebuilds the system from it, keeping your files and apps."
                        Style="{StaticResource BodyTextBlockStyle}"
                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                        TextWrapping="Wrap"/>
@@ -24,8 +24,8 @@
             <StackPanel Padding="28,8,28,8" Spacing="12">
 
                 <InfoBar IsOpen="True" Severity="Warning" IsClosable="False"
-                         Title="This takes a while and ends in a restart"
-                         Message="Windows downloads a repair build of the version you are running and replaces the system files with it. Reckon on half an hour to an hour. Save your work first."/>
+                         Title="Around 8 GB downloaded, and it ends in a restart"
+                         Message="This is not a local repair. Windows fetches a clean build of the version you are running from Microsoft, moves C:\Windows aside to C:\Windows.old and rebuilds it from the download, so 25 to 30 GB of system files are replaced. Keep 25 to 30 GB free, stay on mains power and online, and save your work first. Reckon on half an hour to an hour."/>
 
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -40,7 +40,7 @@
 
                         <TextBlock TextWrapping="Wrap"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                   Text="Runs the same command the Settings button runs, so the repair starts here rather than three clicks away. pcHealth asks you to confirm first, then shows Windows Update so you can watch it download."/>
+                                   Text="Runs the same command the Settings button runs, so the repair starts here rather than three clicks away. pcHealth asks you to confirm, opens Windows Update, and Windows then shows its own prompt to begin."/>
 
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <Button Content="Start repair"
@@ -58,6 +58,10 @@
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
+
+                <InfoBar IsOpen="True" Severity="Informational" IsClosable="False"
+                         Title="Afterwards: reclaiming the space"
+                         Message="C:\Windows.old keeps the old install so nothing is lost, and it costs 25 GB or so. Once the machine is running fine, run cleanmgr.exe as administrator and tick Previous Windows installation(s). Windows also removes it on its own after about ten days."/>
 
             </StackPanel>
         </ScrollViewer>

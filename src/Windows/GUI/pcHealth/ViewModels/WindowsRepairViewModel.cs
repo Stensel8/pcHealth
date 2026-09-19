@@ -35,9 +35,11 @@ public partial class WindowsRepairViewModel : ObservableObject
         bool confirmed = await DialogHelper.ShowConfirmAsync(
             XamlRoot,
             "Repair Windows",
-            "Windows will download a repair build of the version you are running and reinstall it "
-            + "over itself. Your files, apps and settings are kept. It takes roughly half an hour to "
-            + "an hour and ends in a restart.\n\nSave your work before continuing.",
+            "Windows will download a clean copy of the version you are running -- around 8 GB -- and "
+            + "rebuild the system from it. Your files, apps and settings are kept.\n\n"
+            + "The current install is moved aside to C:\\Windows.old, so keep 25 to 30 GB free. It "
+            + "takes roughly half an hour to an hour and ends in a restart. Stay on mains power and "
+            + "online, and save your work first.",
             "Start repair");
 
         if (!confirmed)
@@ -47,12 +49,11 @@ public partial class WindowsRepairViewModel : ObservableObject
         }
 
         IsBusy = true;
-        Status = "Asking Windows to start the repair...";
+        Status = "Opening Windows Update and asking it to start the repair...";
         try
         {
             var result = await _repair.StartAsync(ct);
             Status = result.Message;
-            if (result.Started) _repair.OpenWindowsUpdate();
         }
         catch (OperationCanceledException)
         {

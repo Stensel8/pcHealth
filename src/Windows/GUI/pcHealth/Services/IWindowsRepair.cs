@@ -11,12 +11,9 @@ public interface IWindowsRepair
     /// <summary>False when this Windows build has no admin flow host to ask.</summary>
     bool IsSupported { get; }
 
-    /// <summary>Asks Windows to begin the repair.</summary>
+    /// <summary>Opens Windows Update and asks Windows to begin the repair.</summary>
     Task<RepairStart> StartAsync(CancellationToken ct = default);
 
     /// <summary>Shows the Recovery page without touching anything.</summary>
     void OpenRecovery();
-
-    /// <summary>Shows Windows Update, where the repair build then downloads.</summary>
-    void OpenWindowsUpdate();
 }

@@ -34,6 +34,17 @@ internal sealed class WindowsRepair : IWindowsRepair
     // for the hour the repair itself takes.
     private static readonly TimeSpan HandoffTimeout = TimeSpan.FromSeconds(30);
 
+    // How long to give Settings to come up before asking anyway.
+    private static readonly TimeSpan SettingsTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan SettleDelay = TimeSpan.FromSeconds(2);
+
+    // Windows decides in its own dialog, and its exit code is the same either
+    // way, so this must not claim the repair is running.
+    private const string HandedOff =
+        "Windows is handling it from here. Confirm the prompt it shows to start the download; "
+        + "closing that prompt leaves the machine untouched.";
+
     private readonly ICliRunner _cli;
 
     public WindowsRepair(ICliRunner cli) => _cli = cli;
@@ -46,8 +57,6 @@ internal sealed class WindowsRepair : IWindowsRepair
 
     public void OpenRecovery() => _cli.OpenUri("ms-settings:recovery");
 
-    public void OpenWindowsUpdate() => _cli.OpenUri("ms-settings:windowsupdate");
-
     public async Task<RepairStart> StartAsync(CancellationToken ct = default)
     {
         if (!IsSupported)
@@ -55,6 +64,12 @@ internal sealed class WindowsRepair : IWindowsRepair
             return new RepairStart(false,
                 "This Windows build has no SystemSettingsAdminFlows.exe, so the repair cannot be started from here.");
         }
+
+        // The admin flow shows its dialog inside Settings, so with Settings
+        // closed the command returns without asking anything. Opening the page
+        // first also puts the download where the user can watch it.
+        _cli.OpenUri("ms-settings:windowsupdate");
+        await WaitForSettingsAsync(ct);
 
         var info = new ProcessStartInfo(HostPath)
         {
@@ -75,7 +90,7 @@ internal sealed class WindowsRepair : IWindowsRepair
             Log.Info("Started {Host} {Verb} {Origin}", HostPath, Verb, Origin);
 
             // A quick non-zero exit means the verb was rejected. Still running
-            // after the timeout is normal: it has handed off and is tidying up.
+            // after the timeout is normal: the dialog is waiting on the user.
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeout.CancelAfter(HandoffTimeout);
             try
@@ -84,7 +99,7 @@ internal sealed class WindowsRepair : IWindowsRepair
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                return new RepairStart(true, "Repair started. Windows Update is fetching the repair build.");
+                return new RepairStart(true, HandedOff);
             }
 
             if (process.ExitCode != 0)
@@ -94,12 +109,33 @@ internal sealed class WindowsRepair : IWindowsRepair
                     $"Windows refused the repair (exit code {process.ExitCode}). Check Windows Update for an update already in progress.");
             }
 
-            return new RepairStart(true, "Repair started. Windows Update is fetching the repair build.");
+            Log.Info("Repair host exited with 0");
+            return new RepairStart(true, HandedOff);
         }
         catch (System.ComponentModel.Win32Exception ex)
         {
             Log.Error(ex, "Could not run the repair host");
             return new RepairStart(false, $"Could not run the repair host: {ex.Message}");
         }
+    }
+
+    private static async Task WaitForSettingsAsync(CancellationToken ct)
+    {
+        var deadline = DateTime.UtcNow + SettingsTimeout;
+        while (DateTime.UtcNow < deadline && !SettingsIsRunning())
+        {
+            await Task.Delay(PollInterval, ct);
+        }
+
+        // Being in the process list is not the same as being ready to broker a
+        // call, and there is nothing to poll for that.
+        await Task.Delay(SettleDelay, ct);
+    }
+
+    private static bool SettingsIsRunning()
+    {
+        var running = Process.GetProcessesByName("SystemSettings");
+        foreach (var p in running) p.Dispose();
+        return running.Length > 0;
     }
 }
