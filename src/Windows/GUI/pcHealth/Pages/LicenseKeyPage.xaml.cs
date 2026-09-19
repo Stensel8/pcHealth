@@ -1,9 +1,12 @@
+using NLog;
 using pcHealth.ViewModels;
 
 namespace pcHealth.Pages;
 
 public sealed partial class LicenseKeyPage : Page
 {
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
     public LicenseKeyViewModel ViewModel { get; } = App.Services.GetRequiredService<LicenseKeyViewModel>();
 
     private DispatcherQueueTimer? _copyResetTimer;
@@ -86,7 +89,23 @@ public sealed partial class LicenseKeyPage : Page
         _copyResetTimer.Start();
     }
 
+    // async void: anything that escapes here reaches no caller, so the process
+    // fail-fasts. The whole body is guarded for that reason, and the catch is
+    // broad because killing the app is worse than any exception it may hide.
     private async void SaveBtn_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await SaveReportAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Saving the license key report failed");
+            await ShowSaveFailedAsync(ex.Message);
+        }
+    }
+
+    private async Task SaveReportAsync()
     {
         var result = ViewModel.Result;
         if (result?.BestKey is null) return;
@@ -96,7 +115,11 @@ public sealed partial class LicenseKeyPage : Page
             SuggestedStartLocation = PickerLocationId.Desktop,
             SuggestedFileName = "windows-license-key",
         };
-        picker.FileTypeChoices.Add("Text file", ["txt"]);
+
+        // The leading dot is not decoration: FileTypeChoices rejects an
+        // extension without one, and from an async void handler that rejection
+        // took the app down rather than the dialog.
+        picker.FileTypeChoices.Add("Text file", [".txt"]);
 
         if (App.MainWindow is null) return;
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(App.MainWindow));
@@ -124,21 +147,20 @@ public sealed partial class LicenseKeyPage : Page
                 : "",
         };
 
-        try
+        await Windows.Storage.FileIO.WriteLinesAsync(file, lines);
+        Log.Info("Saved the license key report to {Path}", file.Path);
+    }
+
+    private async Task ShowSaveFailedAsync(string message)
+    {
+        var dialog = new ContentDialog
         {
-            await Windows.Storage.FileIO.WriteLinesAsync(file, lines);
-        }
-        catch (Exception ex)
-        {
-            var dialog = new ContentDialog
-            {
-                Title = "Save failed",
-                Content = $"Could not save the report: {ex.Message}",
-                CloseButtonText = "OK",
-                XamlRoot = XamlRoot,
-            };
-            await dialog.ShowAsync();
-        }
+            Title = "Save failed",
+            Content = $"Could not save the report: {message}",
+            CloseButtonText = "OK",
+            XamlRoot = XamlRoot,
+        };
+        await dialog.ShowAsync();
     }
 
     private void BackBtn_Click(object sender, RoutedEventArgs e)
