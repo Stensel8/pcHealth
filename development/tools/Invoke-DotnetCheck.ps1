@@ -12,7 +12,7 @@
 [CmdletBinding()]
 param(
     # Path to the .csproj. Defaults to the GUI project.
-    [string] $Project = (Join-Path $PSScriptRoot '..\..\src\GUI\pcHealth\pcHealth.csproj'),
+    [string] $Project = (Join-Path $PSScriptRoot '..\..\src\Windows\GUI\pcHealth\pcHealth.csproj'),
 
     # Auto-fix formatting instead of just checking.
     [switch] $Fix,

@@ -87,3 +87,12 @@ coverage.xml
 .env.*.local
 /.claude
 .claude*
+
+# Python (src/Linux)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/

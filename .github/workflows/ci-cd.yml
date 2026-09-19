@@ -21,6 +21,8 @@ concurrency:
 #
 #  dotnet-build    → dotnet build (GUI/ WinUI 3 app)
 #  dotnet-format   → dotnet format --verify-no-changes (code style)
+#  python-lint     → ruff + mypy (Linux app, src/Linux)
+#  installer-build → wix build (MSI authoring compiles)
 #  pr-title        → conventional commits (PR title format)
 #  commit-lint     → conventional commits (commit message format)
 #  markdown-lint   → markdownlint (README, SECURITY, .github docs)
@@ -53,10 +55,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore "src/GUI/pcHealth/pcHealth.csproj"
+        run: dotnet restore "src/Windows/GUI/pcHealth/pcHealth.csproj"
 
       - name: Build
-        run: dotnet build "src/GUI/pcHealth/pcHealth.csproj" -c Release --no-restore
+        run: dotnet build "src/Windows/GUI/pcHealth/pcHealth.csproj" -c Release --no-restore
 
   # ----------------------------------------------------------
   # DOTNET FORMAT
@@ -78,10 +80,105 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore "src/GUI/pcHealth/pcHealth.csproj"
+        run: dotnet restore "src/Windows/GUI/pcHealth/pcHealth.csproj"
 
       - name: Check formatting
-        run: dotnet format "src/GUI/pcHealth/pcHealth.csproj" --verify-no-changes --verbosity diagnostic
+        run: dotnet format "src/Windows/GUI/pcHealth/pcHealth.csproj" --verify-no-changes --verbosity diagnostic
+
+  # ----------------------------------------------------------
+  # PYTHON LINT
+  # ruff (lint + format) and mypy for the Linux app.
+  # Runs on Linux because that is the only platform it targets.
+  # The runner image already ships Python, so no setup step is needed.
+  # ----------------------------------------------------------
+  python-lint:
+    name: Python lint (Linux app)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: src/Linux
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install tooling
+        run: python3 -m pip install --disable-pip-version-check ruff mypy
+
+      - name: Lint
+        run: python3 -m ruff check .
+
+      - name: Check formatting
+        run: python3 -m ruff format --check .
+
+      - name: Type check
+        run: python3 -m mypy pchealth
+
+      # Guards the split: the shared catalogue and the Python registry must
+      # list the same tools, or the menu shows an entry that cannot run.
+      - name: Catalogue matches registry
+        run: python3 -c "from pchealth import catalog; from pchealth.tools import REGISTRY; missing = [t.id for t in catalog.load() if t.id not in REGISTRY]; assert not missing, f'no implementation for {missing}'; print(f'{len(REGISTRY)} tools wired')"
+
+  # ----------------------------------------------------------
+  # INSTALLER AUTHORING
+  # Compiles installer/pcHealth.wxs against a stub payload so a
+  # broken installer is caught on push instead of at release
+  # time, when a failed build means a release without its MSI.
+  # Windows runner: WiX warns that it supports Windows only and
+  # that everything after that point is undefined.
+  # ----------------------------------------------------------
+  installer-build:
+    name: Installer authoring (WiX)
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+        with:
+          dotnet-version: '10.0.x'
+
+      # WiX v7 refuses to build until the Open Source Maintenance Fee EULA is
+      # accepted (error WIX7015), which -acceptEula below does.
+      #
+      # Accepted by the pcHealth maintainers (@Stensel8, REALSDEALS). The fee
+      # itself does not apply here: it is owed by organisations above $10,000
+      # annual revenue that use WiX to generate revenue, and pcHealth is a
+      # FOSS project well under that line. Only the acceptance is required.
+      # https://docs.firegiant.com/wix/osmf/
+      - name: Install WiX
+        shell: pwsh
+        run: dotnet tool install --global wix --version 7.0.0
+
+      # A stub stands in for the publish output: this job checks the
+      # authoring, not the app. The real payload is built by
+      # development/tools/Build-Release.ps1.
+      - name: Create stub payload
+        shell: pwsh
+        run: |
+          $null = New-Item stub-publish -ItemType Directory -Force
+          Set-Content stub-publish/pcHealth.exe 'stub'
+          Set-Content stub-publish/Microsoft.WindowsAppRuntime.Bootstrap.dll 'stub'
+
+      - name: Build MSI from authoring
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          wix build installer/pcHealth.wxs `
+            -acceptEula wix7 `
+            -arch x64 `
+            -d "Version=$version" `
+            -d "PublishDir=$((Resolve-Path stub-publish).Path)" `
+            -out (Join-Path $PWD 'pcHealth-authoring-check.msi')
+
+      - name: Confirm the MSI was produced
+        shell: pwsh
+        run: |
+          $msi = Get-Item pcHealth-authoring-check.msi -ErrorAction SilentlyContinue
+          if (-not $msi -or $msi.Length -eq 0) { throw 'wix produced no MSI' }
+          "MSI authoring builds ($([Math]::Round($msi.Length / 1KB)) KB)"
 
   # ----------------------------------------------------------
   # PR TITLE CHECK
