@@ -40,7 +40,7 @@
 
                         <TextBlock TextWrapping="Wrap"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                   Text="Windows has no API for this repair, so pcHealth opens the Recovery page and presses the button for you. You get to see the exact button it found before anything happens."/>
+                                   Text="Runs the same command the Settings button runs, so the repair starts here rather than three clicks away. pcHealth asks you to confirm first, then shows Windows Update so you can watch it download."/>
 
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <Button Content="Start repair"
