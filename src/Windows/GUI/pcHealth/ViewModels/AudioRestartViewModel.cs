@@ -82,6 +82,7 @@ public partial class AudioRestartViewModel : ObservableObject
 
     private static void Stop(string name)
     {
+        Log.Info("Stopping service {Service}", name);
         using var service = new ServiceController(name);
         if (service.Status != ServiceControllerStatus.Stopped
             && service.Status != ServiceControllerStatus.StopPending)
@@ -91,6 +92,7 @@ public partial class AudioRestartViewModel : ObservableObject
 
     private static void Start(string name)
     {
+        Log.Info("Starting service {Service}", name);
         using var service = new ServiceController(name);
         if (service.Status != ServiceControllerStatus.Running
             && service.Status != ServiceControllerStatus.StartPending)

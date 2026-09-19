@@ -1,3 +1,6 @@
+using NLog;
+using System.Diagnostics;
+
 namespace pcHealth.Services;
 
 /// <summary>
@@ -10,6 +13,8 @@ namespace pcHealth.Services;
 /// </remarks>
 internal sealed class WinGetClient : IWinGet
 {
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
     private readonly WinGetComClient _com;
     private readonly WinGetCliClient _cli;
 
@@ -31,16 +36,33 @@ internal sealed class WinGetClient : IWinGet
         IProgress<WinGetProgress>? progress = null,
         bool force = false,
         CancellationToken ct = default) =>
-        Task.Run(() => Active.InstallAsync(packageId, progress, force, ct), ct);
+        Task.Run(() => LogAsync("Install", packageId, Active.InstallAsync(packageId, progress, force, ct)), ct);
 
     public Task<WinGetResult> UpgradeAsync(
         string packageId,
         IProgress<WinGetProgress>? progress = null,
         CancellationToken ct = default) =>
-        Task.Run(() => Active.UpgradeAsync(packageId, progress, ct), ct);
+        Task.Run(() => LogAsync("Upgrade", packageId, Active.UpgradeAsync(packageId, progress, ct)), ct);
 
     public Task<WinGetResult> UpgradeAllAsync(
         IProgress<WinGetProgress>? progress = null,
         CancellationToken ct = default) =>
-        Task.Run(() => Active.UpgradeAllAsync(progress, ct), ct);
+        Task.Run(() => LogAsync("Upgrade", "all packages", Active.UpgradeAllAsync(progress, ct)), ct);
+
+    // Every package operation passes through here, so this is where a failed
+    // install stops being something only the button text remembers.
+    private static async Task<WinGetResult> LogAsync(string verb, string packageId, Task<WinGetResult> operation)
+    {
+        Log.Info("{Verb} {PackageId}", verb, packageId);
+        var started = Stopwatch.GetTimestamp();
+
+        var result = await operation;
+
+        Log.Info("{Verb} {PackageId} {Outcome} after {Seconds:0.0}s: {Message}",
+            verb, packageId, result.Succeeded ? "succeeded" : "FAILED",
+            Stopwatch.GetElapsedTime(started).TotalSeconds, result.Message);
+        if (result.RebootRequired) Log.Info("{PackageId} wants a reboot", packageId);
+
+        return result;
+    }
 }

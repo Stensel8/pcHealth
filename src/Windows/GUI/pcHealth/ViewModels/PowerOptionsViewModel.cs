@@ -1,11 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using NLog;
 using System.Diagnostics;
 
 namespace pcHealth.ViewModels;
 
 public partial class PowerOptionsViewModel : ObservableObject
 {
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
     // Confirmation dialogs stay in code-behind (need XamlRoot).
     // The page calls these methods after user confirms.
 
@@ -20,6 +23,7 @@ public partial class PowerOptionsViewModel : ObservableObject
 
     private static void RunShutdown(params string[] args)
     {
+        Log.Info("shutdown.exe {Args}", string.Join(' ', args));
         var psi = new ProcessStartInfo { FileName = "shutdown.exe", CreateNoWindow = true };
         foreach (var a in args) psi.ArgumentList.Add(a);
         Process.Start(psi);
