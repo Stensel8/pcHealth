@@ -182,6 +182,27 @@ public partial class HealthViewModel : ObservableObject
         if (cpu.Count == 0)
             cpu.Add(new HealthRow("CPU", "Not found", CheckStatus.Unknown));
 
+        // System model
+        // An OEM board product is an internal code -- "HP 8B41" -- so the
+        // machine model is the only name here a person can look up.
+        try
+        {
+            foreach (var inst in session.QueryInstances("root/cimv2", "WQL",
+                "SELECT Manufacturer, Model FROM Win32_ComputerSystem"))
+            {
+                var sysMfr = (inst.CimInstanceProperties["Manufacturer"]?.Value?.ToString() ?? "").Trim();
+                var sysModel = (inst.CimInstanceProperties["Model"]?.Value?.ToString() ?? "").Trim();
+                if (sysModel.Length == 0) break;
+
+                var display = sysMfr.Length == 0
+                    || sysModel.StartsWith(sysMfr, StringComparison.OrdinalIgnoreCase)
+                    ? sysModel : $"{sysMfr} {sysModel}";
+                cpu.Add(new HealthRow("System", display, CheckStatus.Info));
+                break;
+            }
+        }
+        catch (Exception ex) { Log.Debug(ex, "ComputerSystem query failed"); }
+
         // Motherboard + Chipset
         bool chipsetNamed = false;
         try
