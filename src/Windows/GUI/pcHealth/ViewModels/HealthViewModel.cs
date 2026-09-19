@@ -2,10 +2,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Management.Infrastructure;
 using NLog;
-using pcHealth.Helpers;
 using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -1148,7 +1148,7 @@ public partial class HealthViewModel : ObservableObject
             ["Microsoft.Windows.PowerShell.ISE"] = ("PowerShell ISE", false),
         };
 
-        var capabilities = DismCapabilities.GetInstalled();
+        var capabilities = GatherInstalledCapabilities();
         if (capabilities == null)
         {
             rows.Add(new HealthRow("Optional components", "Query failed", CheckStatus.Unknown));
@@ -1172,6 +1172,55 @@ public partial class HealthViewModel : ObservableObject
         }
 
         return rows;
+    }
+
+    /// <summary>
+    /// The Features on Demand installed on this machine, or null when the
+    /// query would not answer -- which is not the same as none being there.
+    /// </summary>
+    /// <remarks>
+    /// The native route is DismApi.dll, and pcHealth took it first. A wrong
+    /// P/Invoke signature there is an access violation, which no catch block
+    /// can hold, and it took the whole app down on a live machine. This asks
+    /// the same servicing stack through the DISM PowerShell module instead:
+    /// a child process that misbehaves costs a row, not the app.
+    ///
+    /// The command prints one capability name per line, so there is no prose
+    /// and no localised text to read around. It is passed base64 encoded
+    /// because that is the one form a command line cannot mangle.
+    /// </remarks>
+    private static HashSet<string>? GatherInstalledCapabilities()
+    {
+        const string script =
+            "Get-WindowsCapability -Online | "
+            + "Where-Object { $_.State -eq 'Installed' } | "
+            + "ForEach-Object { $_.Name }";
+
+        var host = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System),
+            "WindowsPowerShell", "v1.0", "powershell.exe");
+        if (!File.Exists(host))
+        {
+            Log.Debug("No Windows PowerShell at {Host}", host);
+            return null;
+        }
+
+        var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
+        var output = RunCapture(host, $"-NoProfile -NonInteractive -EncodedCommand {encoded}");
+        if (output == null) return null;
+
+        var installed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in output.Split('\n'))
+        {
+            // Every capability name carries its version behind a tilde, so a
+            // line without one is not one of them.
+            var name = line.Trim();
+            if (name.Contains('~')) installed.Add(name);
+        }
+
+        // Every Windows install has capabilities, so an empty answer means the
+        // command did not run rather than that the machine is clean.
+        return installed.Count > 0 ? installed : null;
     }
 
     // --- CPU helpers ---
