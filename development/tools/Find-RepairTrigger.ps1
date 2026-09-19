@@ -36,13 +36,13 @@
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Settings', 'Strings', 'Protocols', 'Watch', 'Deep', 'All')]
+    [ValidateSet('Settings', 'Strings', 'Protocols', 'Watch', 'Deep', 'Locate', 'Hunt', 'All')]
     [string]$Mode = 'All',
 
     [ValidateRange(30, 1800)]
     [int]$WatchSeconds = 300,
 
-    # Deep mode only: the binary to read and what to look for in it.
+    # Deep mode: the binary to read. Locate mode: the file name to find.
     [string]$File,
     [string]$Pattern = 'Ipu|Uso|Orchestrator|Reinstall|Repair|Recovery|IUpdate'
 )
@@ -135,6 +135,13 @@ function Get-ScanCandidate {
 
     $paths = [System.Collections.Generic.List[string]]::new()
     foreach ($name in $named) { $paths.Add((Join-Path $system32 $name)) }
+
+    # SystemSettings.Handlers.dll only launches the admin flow host; the real
+    # per-area handlers are separate DLLs sitting next to it.
+    foreach ($glob in @('SettingsHandlers*.dll', 'SystemSettings*.dll', '*Uso*.dll', '*Uso*.exe')) {
+        Get-ChildItem -LiteralPath $system32 -Filter $glob -File -ErrorAction SilentlyContinue |
+            ForEach-Object { $paths.Add($_.FullName) }
+    }
 
     $folders = @((Join-Path $env:SystemRoot 'ImmersiveControlPanel'))
     if (-not $SettingsOnly) {
@@ -291,6 +298,80 @@ function Invoke-DeepScan {
     $hits = @(Get-BinaryString -Path $Path -Pattern $Match -MinimumLength 4 | Sort-Object -Unique)
     Write-Host ("{0} distinct matches." -f $hits.Count) -ForegroundColor Yellow
     $hits | ForEach-Object { Write-Host "    $_" }
+}
+
+function Invoke-Locate {
+    <#
+        .SYNOPSIS
+            Finds a file anywhere under the Windows directory.
+
+        .DESCRIPTION
+            Guessing a path wastes a round trip. MoUsoCoreWorker plainly exists,
+            since it runs, so the machine can simply be asked where it is.
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Name)
+
+    Write-Host ''
+    Write-Host ("== Looking for {0} under {1} ==" -f $Name, $env:SystemRoot) -ForegroundColor Cyan
+
+    $found = @(
+        Get-ChildItem -LiteralPath $env:SystemRoot -Filter $Name -Recurse -File -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty FullName
+    )
+
+    if ($found.Count -eq 0) {
+        Write-Host '    Not found.' -ForegroundColor Red
+        Write-Host '    If it is running, this gives the path directly:'
+        Write-Host ("    Get-Process {0} | Select-Object -Unique Path" -f [System.IO.Path]::GetFileNameWithoutExtension($Name))
+        return
+    }
+
+    $found | ForEach-Object { Write-Host "    $_" -ForegroundColor Green }
+}
+
+function Invoke-Hunt {
+    <#
+        .SYNOPSIS
+            Reads every binary under System32 looking for one pattern.
+
+        .DESCRIPTION
+            The slow, last-resort sweep, for when a distinctive string is known
+            but not which file writes it. Opt-in because it reads gigabytes.
+        #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Match)
+
+    Write-Host ''
+    Write-Host ("== Sweeping System32 for {0} ==" -f $Match) -ForegroundColor Cyan
+    Write-Host 'This reads a lot of files and takes a few minutes.' -ForegroundColor DarkYellow
+
+    $files = @(
+        Get-ChildItem -LiteralPath (Join-Path $env:SystemRoot 'System32') -Include '*.dll', '*.exe' `
+            -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Length -lt 40MB }
+    )
+    Write-Host ("{0} files to read." -f $files.Count)
+
+    $index = 0
+    $hitCount = 0
+    foreach ($file in $files) {
+        $index++
+        if ($index % 250 -eq 0) {
+            Write-Host ("    ... {0}/{1}, {2} file(s) with hits" -f $index, $files.Count, $hitCount) -ForegroundColor DarkGray
+        }
+
+        $hits = @(Get-BinaryString -Path $file.FullName -Pattern $Match -MinimumLength 4 | Sort-Object -Unique)
+        if ($hits.Count -eq 0) { continue }
+
+        $hitCount++
+        Write-Host ''
+        Write-Host ("--- {0}" -f $file.FullName) -ForegroundColor Yellow
+        $hits | ForEach-Object { Write-Host "    $_" }
+    }
+
+    Write-Host ''
+    Write-Host ("Swept {0} files, {1} had hits." -f $files.Count, $hitCount)
 }
 
 function Get-UpdateRegistrySnapshot {
@@ -458,6 +539,15 @@ if ($Mode -eq 'Deep') {
         Invoke-DeepScan -Path $File -Match $Pattern
     }
 }
+if ($Mode -eq 'Locate') {
+    if ([string]::IsNullOrWhiteSpace($File)) {
+        Write-Host 'Locate mode needs -File, for example -File "MoUsoCoreWorker.exe"' -ForegroundColor Red
+    }
+    else {
+        Invoke-Locate -Name $File
+    }
+}
+if ($Mode -eq 'Hunt') { Invoke-Hunt -Match $Pattern }
 if ($Mode -in @('Watch', 'All')) { Invoke-ButtonWatch -Seconds $WatchSeconds }
 
 Write-Host ''
