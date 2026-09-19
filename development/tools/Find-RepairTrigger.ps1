@@ -36,11 +36,15 @@
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('Settings', 'Strings', 'Protocols', 'Watch', 'All')]
+    [ValidateSet('Settings', 'Strings', 'Protocols', 'Watch', 'Deep', 'All')]
     [string]$Mode = 'All',
 
     [ValidateRange(30, 1800)]
-    [int]$WatchSeconds = 300
+    [int]$WatchSeconds = 300,
+
+    # Deep mode only: the binary to read and what to look for in it.
+    [string]$File,
+    [string]$Pattern = 'Ipu|Uso|Orchestrator|Reinstall|Repair|Recovery|IUpdate'
 )
 
 Set-StrictMode -Version Latest
@@ -49,9 +53,10 @@ Set-StrictMode -Version Latest
 $NotableProcess = 'SystemSettingsAdminFlows|MoUsoCoreWorker|usoclient|UsoCoreWorker|TiWorker|TrustedInstaller|SetupHost|WaaSMedic'
 
 # Words worth finding in a binary that knows about this repair.
-$InterestingPattern = 'Reinstall|CloudDownload|RepairVersion|repair version|SelfHeal|Self-heal|' +
-                      'RecoveryReinstall|FixProblem|ms-settings:recovery|StartRepair|RemediationRequired|' +
-                      'ms-cxh|Ipu[A-Z]|AdminFlow'
+# Matched case-sensitively, which is what keeps Ipu from hitting "manIPULation".
+$InterestingPattern = 'Reinstall|CloudDownload|RepairVersion|SelfHeal|RecoveryReinstall|FixProblem|' +
+                      'ms-settings:recovery|StartRepair|RemediationRequired|ms-cxh|' +
+                      'Ipu[A-Z]|IpuInitiated|AdminFlow|Orchestrator|UpdateSessionOrchestrator|UsoSvc'
 
 # Settings names every control it owns as SystemSettings_<Area>_<Setting>, so
 # the repair button has an id of its own and that id is the real lead.
@@ -92,7 +97,7 @@ function Get-BinaryString {
         [System.Text.Encoding]::Unicode.GetString($bytes, 1, $bytes.Length - 1)
     )) {
         foreach ($match in [regex]::Matches($text, $runPattern)) {
-            if ($match.Value -notmatch $Pattern) { continue }
+            if ($match.Value -cnotmatch $Pattern) { continue }
 
             # One blob of concatenated error names can be tens of kilobytes and
             # tells us nothing, so long runs are clipped rather than dumped.
@@ -132,7 +137,10 @@ function Get-ScanCandidate {
     foreach ($name in $named) { $paths.Add((Join-Path $system32 $name)) }
 
     $folders = @((Join-Path $env:SystemRoot 'ImmersiveControlPanel'))
-    if (-not $SettingsOnly) { $folders += (Join-Path $env:SystemRoot 'SystemApps') }
+    if (-not $SettingsOnly) {
+        $folders += (Join-Path $env:SystemRoot 'SystemApps')
+        $folders += (Join-Path $env:SystemRoot 'UUS')
+    }
 
     foreach ($folder in $folders) {
         if (-not (Test-Path -LiteralPath $folder)) { continue }
@@ -162,8 +170,11 @@ function Invoke-Scan {
 
     foreach ($path in $Candidate) {
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-            $found = Get-ChildItem -LiteralPath (Join-Path $env:SystemRoot 'System32') `
-                -Filter (Split-Path -Leaf $path) -Recurse -File -ErrorAction SilentlyContinue |
+            $found = @(Join-Path $env:SystemRoot 'System32'), (Join-Path $env:SystemRoot 'UUS') |
+                Where-Object { Test-Path -LiteralPath $_ } |
+                ForEach-Object {
+                    Get-ChildItem -LiteralPath $_ -Filter (Split-Path -Leaf $path) -Recurse -File -ErrorAction SilentlyContinue
+                } |
                 Select-Object -First 1
             if ($null -eq $found) {
                 $missing.Add($path)
@@ -252,6 +263,36 @@ function Invoke-ProtocolScan {
         }
 }
 
+function Invoke-DeepScan {
+    <#
+        .SYNOPSIS
+            Dumps one binary's strings against a pattern you choose.
+
+        .DESCRIPTION
+            The broad scan answers "which file knows about this". This answers
+            "what exactly does that file say", which is the next question every
+            time the broad scan points somewhere.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Match
+    )
+
+    Write-Host ''
+    Write-Host ("== Deep read of {0} ==" -f $Path) -ForegroundColor Cyan
+    Write-Host ("Pattern (case-sensitive): {0}" -f $Match)
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        Write-Host '    File not found.' -ForegroundColor Red
+        return
+    }
+
+    $hits = @(Get-BinaryString -Path $Path -Pattern $Match -MinimumLength 4 | Sort-Object -Unique)
+    Write-Host ("{0} distinct matches." -f $hits.Count) -ForegroundColor Yellow
+    $hits | ForEach-Object { Write-Host "    $_" }
+}
+
 function Get-UpdateRegistrySnapshot {
     <#
         .SYNOPSIS
@@ -336,6 +377,7 @@ function Invoke-ButtonWatch {
     $deadline = (Get-Date).AddSeconds($Seconds)
     $lastTick = Get-Date
 
+    try {
     while ((Get-Date) -lt $deadline) {
         foreach ($process in Get-CimInstance -ClassName Win32_Process -ErrorAction SilentlyContinue) {
             if ($known.ContainsKey($process.ProcessId)) { continue }
@@ -360,6 +402,8 @@ function Invoke-ButtonWatch {
 
         Start-Sleep -Milliseconds 700
     }
+    }
+    finally {
 
     Write-Host ''
     Write-Host '--- Processes started while watching ---' -ForegroundColor Yellow
@@ -396,6 +440,8 @@ function Invoke-ButtonWatch {
     else {
         $tasksDelta | ForEach-Object { Write-Host ('    {0}' -f $_.InputObject) }
     }
+
+    }
 }
 
 Write-Host 'pcHealth -- repair trigger hunt (read-only)' -ForegroundColor Cyan
@@ -403,6 +449,15 @@ Write-Host 'pcHealth -- repair trigger hunt (read-only)' -ForegroundColor Cyan
 if ($Mode -in @('Settings', 'All')) { Invoke-SettingIdScan }
 if ($Mode -in @('Protocols', 'All')) { Invoke-ProtocolScan }
 if ($Mode -in @('Strings', 'All')) { Invoke-StringScan }
+if ($Mode -eq 'Deep') {
+    if ([string]::IsNullOrWhiteSpace($File)) {
+        Write-Host 'Deep mode needs -File, for example:' -ForegroundColor Red
+        Write-Host '    .\Find-RepairTrigger.ps1 -Mode Deep -File "$env:SystemRoot\System32\SystemSettings.Handlers.dll"'
+    }
+    else {
+        Invoke-DeepScan -Path $File -Match $Pattern
+    }
+}
 if ($Mode -in @('Watch', 'All')) { Invoke-ButtonWatch -Seconds $WatchSeconds }
 
 Write-Host ''
