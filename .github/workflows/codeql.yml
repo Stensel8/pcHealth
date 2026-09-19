@@ -47,7 +47,7 @@ jobs:
           build-mode: manual
 
       - name: Build for CodeQL
-        run: dotnet build "src/GUI/pcHealth/pcHealth.csproj" -c Release
+        run: dotnet build "src/Windows/GUI/pcHealth/pcHealth.csproj" -c Release
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@9e0d7b8d25671d64c341c19c0152d693099fb5ba # v4.35.5

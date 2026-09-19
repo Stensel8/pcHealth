@@ -8,14 +8,22 @@
 
 ## Project Structure
 
-This project has **two separate codebases**. Know which one you're in:
+This project has **three separate codebases**. Know which one you're in:
 
 | Part | Location | Language | Purpose |
 |---|---|---|---|
-| CLI | `src/CLI/` | PowerShell 7 + Bash | Cross-platform terminal health tool |
-| GUI | `src/GUI/pcHealth/` | C# / WinUI 3 (.NET) | Windows-only graphical frontend |
+| Windows CLI | `src/Windows/CLI/` | PowerShell 7 | Windows terminal health tool |
+| Windows GUI | `src/Windows/GUI/pcHealth/` | C# / WinUI 3 (.NET) | Windows-only graphical frontend |
+| Linux app | `src/Linux/pchealth/` | Python 3.11+ / GTK4 | Linux terminal menu and desktop app |
 
-Do not mix patterns between them. C# APIs do not belong in PowerShell scripts and vice versa.
+Do not mix patterns between them. C# APIs do not belong in PowerShell scripts, and neither belongs in the Python package.
+
+The tool list is shared: `assets/tools.json` is read by both stacks. A new tool
+is added there first, then implemented on each side that should have it.
+
+**Each side owns its platform completely.** There are no `$IsLinux` branches in
+the PowerShell any more, and no Windows paths in the Python. A Linux tool
+belongs in `src/Linux/pchealth/tools/`, never in `src/Windows/`.
 
 ---
 
@@ -42,7 +50,7 @@ https://github.com/JuliusBrussee/caveman
 
 ## Deprecated APIs — Avoid These
 
-### C# / .NET (GUI — `src/GUI/`)
+### C# / .NET (GUI — `src/Windows/GUI/`)
 
 The GUI uses WinUI 3 on .NET. Replace legacy APIs with their modern equivalents:
 
@@ -74,7 +82,7 @@ foreach (var instance in session.QueryInstances(
     Console.WriteLine(instance.CimInstanceProperties["Caption"].Value);
 ```
 
-### PowerShell 7 (CLI — `src/CLI/`)
+### PowerShell 7 (CLI — `src/Windows/CLI/`)
 
 | Deprecated / Avoid | Preferred | Why |
 |---|---|---|
@@ -86,16 +94,23 @@ foreach (var instance in session.QueryInstances(
 | String concatenation for paths (`"$dir\$file"`) | `Join-Path $dir $file` | Handles both `\` and `/` correctly on Windows and Linux |
 | Bare `ls`, `cat`, `cp` aliases | `Get-ChildItem`, `Get-Content`, `Copy-Item` | Aliases are unreliable in strict or non-interactive environments |
 | `(& somecmd args).Trim()` | `Get-PcCommandOutput 'somecmd' @('args')` | A missing or silent command returns `$null`, and `.Trim()` on it throws — which aborts the whole tool, not just that field. On Linux this is routine: no systemd in containers and WSL, no `mokutil`/`lspci` on minimal installs |
-| `sudo <cmd>` inside a tool | Call the command directly | pcHealth already exits unless it is running as root on Linux. Re-elevating is a no-op where sudo exists and a hard failure where it does not. `sudo -u <user>` to *drop* privileges is still correct |
-| `$env:USER` / `$env:HOME` on Linux | `Get-PcDesktopUser` | Under `sudo pwsh` both describe root, not the person at the keyboard |
+| `$IsLinux` branches | Nothing -- the Windows CLI is Windows-only | Linux is `src/Linux/`, in Python. A platform branch here means the tool is in the wrong stack |
 
-### Bash (CLI Linux — `src/CLI/start.sh`)
+### Python (Linux app — `src/Linux/pchealth/`)
 
-| Avoid | Prefer | Why |
+| Deprecated / Avoid | Preferred | Why |
 |---|---|---|
-| Unquoted variables (`$VAR`) | Quoted (`"$VAR"`) | Breaks on paths with spaces |
-| `ls` in scripts | `find` or explicit glob | `ls` output is not reliably parseable |
-| `[ ]` (single bracket) | `[[ ]]` (double bracket) | Double bracket is safer and supports regex |
+| `subprocess.run(..., shell=True)` | An argv list, no shell | A shell turns any interpolated value into possible code. Every call in `system.py` passes a list |
+| `os.system`, backticks, `shell=True` pipelines | `system.run` / `system.stream` | They centralise the missing-command, timeout and encoding handling |
+| Bare `subprocess` calls in a tool | `system.run`, `system.output`, `system.stream` | A missing binary is the normal case on Linux, not an edge case; these return instead of raising |
+| `os.geteuid() == 0` checks scattered in tools | `system.run_root` / `system.elevated` | Privilege is raised per action via pkexec so the GUI never runs as root |
+| `print()` inside a tool, or any formatted text | `ui.section` / `ui.fields` / `ui.note` / `ui.run` | A tool describes results; the front-end decides whether they become text or widgets. A tool that emits `"[>>] ..."` has decided it lives in a terminal |
+| Running a command by hand and printing its output | `ui.run(argv, label=...)` / `ui.run_all(...)` | Handles the step, its raw output, the exit code, and a single elevation prompt for a batch |
+| `$HOME` / `os.environ["USER"]` | `system.desktop_user()` | Under sudo or pkexec both describe root, not the person at the keyboard |
+| Touching GTK from a worker thread | `GLib.idle_add` | GTK may only be called from the main loop |
+
+Run `python3 -m ruff check .`, `python3 -m ruff format --check .` and
+`python3 -m mypy pchealth` from `src/Linux/` before committing. CI runs all three.
 
 ---
 
@@ -103,19 +118,13 @@ foreach (var instance in session.QueryInstances(
 
 Both CLI and C# code must guard platform-specific calls:
 
-**PowerShell:**
-```powershell
-if ($IsWindows) { Get-CimInstance Win32_Processor }
-if ($IsLinux)   { & lscpu }
-```
+The Windows CLI and the WinUI GUI are Windows-only, so CIM, the registry and
+`Get-PnpDevice` need no platform guard there -- but they still need error
+handling, because a key or a class can be missing on any given machine.
 
-**C#:**
-```csharp
-if (OperatingSystem.IsWindows()) { /* registry, CIM, WinUI */ }
-```
-
-Never call `Get-CimInstance`, registry reads, `Get-PnpDevice`, or WinUI APIs
-without a platform guard. The CLI runs on Linux too.
+The Python side guards differently: a missing command is the normal case, so
+everything goes through `system.run`, `system.output` or `system.stream`, which
+return instead of raising.
 
 ---
 

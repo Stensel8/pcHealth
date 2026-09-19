@@ -1,5 +1,85 @@
 # Changelog.md - pcHealth
 
+## 18-09-2026 (4) - @Stensel8
+
+Both GUIs stop being terminals in a window.
+
+- **The tool contract is structural instead of line-based.** `ctx.line(text, style)` gave a front-end nothing to render but text, which is why the GTK window looked like a console. A tool now calls `ui.section()`, `ui.fields()`, `ui.note()` and `ui.run()`; the terminal turns those into text and the GTK window into groups, rows and an expander. Raw command output belongs to the step that produced it and stays folded away.
+- `ui.run()` / `ui.run_all()` absorb the six lines every tool repeated around each command -- label, stream with an indent, check the exit code, report OK or the failure -- and keep the single elevation prompt.
+- **Windows: `ICliRunner.RunScript` is gone** (it was dead code) and so is `RunWinget`, which opened a real pwsh window that waited for a keypress. Installing a program now reports its progress on its own card.
+- **Windows: command output moved behind a `Details` expander** on the seven pages that opened onto a wall of monospace log text -- Scan + Repair, Boot Repair, Network Reset, Continuous Ping, System Update, Winget Repair and HP Update. The redundant card border inside it went with it. The CBS log and licence key pages keep their text: there the text *is* the result.
+
+## 18-09-2026 (3) - @Stensel8
+
+One password prompt per tool, instead of one per command.
+
+- **Fixed: pkexec asked for the admin password once per privileged command.** Disk Cleanup ran six of them, so it asked six times; Hardware Information asked once per disk; the Health page asked for nearly every section. Each of those is one prompt now.
+- `privileged.py` is elevated once and runs the whole batch, streaming each line back as it arrives. It holds no logic and takes no decisions: it runs exactly the argv lists it is handed on stdin as JSON, with no shell involved, and exits when the batch is done -- there is no long-lived root process listening on a pipe.
+- Boot Repair passes `stop_on_error`, so `grub-mkconfig` can never run after `grub-install` failed.
+- The Health report no longer elevates at all for the firewall state. A report that asks for the root password to tell you whether ufw is running is not worth the interruption; it says the state needs root instead.
+- Reading SMART is now one batch for every disk, so Hardware Information and Health ask once rather than once per drive.
+
+## 18-09-2026 (2) - @Stensel8
+
+Health report for Linux, and two fixes the screencast turned up.
+
+- **New: a Health page**, the Linux counterpart of the WinUI 3 Health tab. Seven sections -- Overview, Processor, Graphics, Memory, Storage, Battery and Security/Services -- each check carrying a status so both front-ends can colour it. It reads the same `assets/hardware-db.json` the Windows app uses, for CPU and GPU release years.
+- What it checks differs from Windows because the systems differ: no Defender or BitLocker, but CPU mitigations, the active LSM (SELinux/AppArmor), the firewall, failed systemd units and boot time.
+- **Fixed: a firmware refresh flooded the output with 300+ lines** of `Downloading…: 41.4%`. fwupd, apt and dnf redraw a progress line with carriage returns; through a pipe those become separate lines. `ProgressFilter` now keeps one progress line per second plus the last one, so movement is still visible but the four lines that say something are not buried.
+- **Fixed: output colours were read from the theme once at startup**, so switching light/dark mid-session left them wrong. The tags now repaint on `notify::dark`.
+- `smart.py` extracted: Hardware Information and the Health report read SMART through one module instead of each parsing smartctl's JSON their own way.
+
+Note: the `Adwaita-WARNING` about `gtk-application-prefer-dark-theme` comes from the desktop's own GTK configuration, not from pcHealth, and is harmless.
+
+## 18-09-2026 - @Stensel8
+
+Linux GUI rebuilt to match the WinUI 3 app.
+
+- **Tools no longer render menus of their own.** They used to print `[1] [2] [B]` and ask for a line of text, which the GUI could only present as a text box -- a terminal pretending to be an app. A tool now *declares* its options (`ctx.choose`) and each front-end renders them its own way: a numbered list in the terminal, real buttons in the GUI. Affects Power Options, System Logs, BIOS Password Recovery and Boot Repair.
+- `ctx.ask` (free text) is gone with it. Boot Repair's "type CONFIRM" is now two explicit confirmations, which is what the Windows tool does anyway.
+- **Fixed: categories repeated in the sidebar.** The tool list started a new heading on every change of category, and since the catalogue is in menu order, categories interleave -- UPDATES, HARDWARE and INFORMATION each appeared several times. They are grouped properly now.
+- **Fixed: output from the previous tool stayed on screen** after selecting another one. Each tool now has its own page and its own output.
+- Laid out like the Windows app: a navigation sidebar, a Tools page of grouped cards with icons, and one page per tool with its title, description and Run button.
+- The "Actions ask for elevation" note moved out of the window controls into the sidebar footer.
+
+
+## 17-09-2026 (3) - @Stensel8
+
+Self-contained builds and an MSI installer.
+
+- The GUI is now published **self-contained**: the .NET runtime and the Windows App SDK travel inside the app, so the target machine needs neither installed first. Previously a release ZIP was useless until the technician installed two runtimes on the machine they were there to repair.
+- **New: an MSI installer** (`pcHealth-<version>-win-x64.msi` and `-win-arm64.msi`), built with WiX v6 from `installer/pcHealth.wxs`. Per-machine install to Program Files, Start menu shortcut, and a fixed UpgradeCode so a new version replaces the old one instead of installing beside it. `msiexec /qn` works for unattended deployment.
+- The portable ZIP stays, with the same name, so the existing WinGet manifest keeps working.
+- `Build-Release.ps1` switched from `dotnet build --no-self-contained` to `dotnet publish --self-contained`, and gained `-SingleFile` (opt-in; the Windows App SDK's native binaries cannot all be merged into the exe) and `-RequireMsi` (used by CI so a release can never silently ship without its installer).
+- Trimming is explicitly disabled: WinUI 3 resolves XAML types by reflection, so a trimmed build fails at runtime rather than at build time.
+- CI gained an `installer-build` job that compiles the WiX authoring against a stub payload on every push, so a broken installer surfaces then rather than during a release.
+- **WiX is pinned to v7.0.0** and the builds pass `-acceptEula`. v6 and up refuse to build until the [Open Source Maintenance Fee](https://docs.firegiant.com/wix/osmf/) EULA is accepted; the maintainers accepted it. The fee itself is owed by organisations above $10,000 annual revenue that use WiX to generate revenue, which does not include this project -- only the acceptance was needed.
+
+## 17-09-2026 (2) - @Stensel8
+
+Split the codebase into a Windows stack and a Linux stack.
+
+- `src/CLI` and `src/GUI` moved to `src/Windows/CLI` and `src/Windows/GUI`. Windows keeps PowerShell 7 plus WinUI 3.
+- **New: `src/Linux/`** -- the Linux app in Python 3.11+, with a terminal menu and a GTK4 / libadwaita desktop app. All 18 Linux tools ported: system and hardware info, battery, journal logs, ping, traceroute, network reset, audio restart, disk cleanup and trim, scan + repair, package updates, topgrade, firmware and boot repair.
+- Reason for Python: PowerShell 7 is not installed on a Linux machine until someone installs it, which is a poor first step for a tool you reach for because something is already broken. Python 3 ships with every distro pcHealth targets.
+- **New: `assets/tools.json`** -- one tool catalogue that both stacks read, so the menus cannot drift apart. CI fails if the catalogue lists a tool the Python registry cannot run.
+- Neither Linux front-end runs as root. Privilege is raised per action through `pkexec` (falling back to `sudo`), because a root process cannot reach the user's Wayland session and a root-owned toolkit is a bad idea regardless.
+- The PowerShell CLI is now Windows-only: `tools/linux/` and every `$IsLinux` branch are gone, along with the helpers that only served them (`Get-PcDesktopUser`, `Get-PcPackageManager`, `Get-LinuxDistroInfo`, `Test-PcImageBasedSystem`, `Get-PcCommandOutput`). The originals stay in git history.
+- Fixed: the `VERSION` lookup in `app.ps1` still pointed two directories up after the move, which resolved to `src/` instead of the repo root.
+- CI gained a `python-lint` job (ruff, ruff format, mypy) and a catalogue/registry consistency check.
+
+## 17-09-2026 - @Stensel8
+
+Support floors lowered so older devices are usable again — Windows 10 22H2 and Linux kernel 6.0.
+
+- **Windows floor lowered from build 26200 to 19045** (Windows 10 22H2) for both the CLI and the GUI. 19045 is where WinUI 3 stops rendering, so the two share one floor instead of drifting apart. Builds between 19045 and 26200 run normally and get a note naming the recommended build.
+- `TargetPlatformMinVersion` was still pinned at 10.0.26100.0 while the GUI launcher already allowed 19045 — the launcher promised what the build did not deliver. It is now 10.0.19041.0, the nearest real SDK version; `TargetFramework` stays on the newest SDK.
+- **Linux kernel floor lowered from 7.0 to 6.0**, covering the LTS kernels still shipping on current distros.
+- Title bar customization is now applied only where `AppWindowTitleBar.IsCustomizationSupported()` is true (Windows 11), so Windows 10 keeps the system caption instead of relying on version-dependent fallback behaviour.
+- Added `Test-PcWinget` helper: LTSC and stripped-down images ship without App Installer, and a missing native command throws under `$ErrorActionPreference = 'Stop'`, taking the whole menu down. The tools that need winget (`Invoke-SystemUpdate`, `Invoke-HPUpdate`, the Programs menu) now report it and point at "Repair Winget".
+- Boot Repair is unchanged and still UEFI-only: Windows 10 22H2 runs on plenty of BIOS/MBR machines, and those are detected and refused rather than half-repaired.
+- Updated `README.md` and `SECURITY.md` with the support levels.
+
 ## 02-05-2026 - @Stensel8
 
 Linux — Topgrade integration replaces distro-specific package update script.
