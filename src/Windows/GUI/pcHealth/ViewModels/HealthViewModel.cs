@@ -115,7 +115,27 @@ public partial class HealthViewModel : ObservableObject
         { "23H2", new DateTime(2023, 10, 31) },
         { "24H2", new DateTime(2024, 10,  1) },
         { "25H2", new DateTime(2025, 11,  1) },
+        { "26H2", new DateTime(2026, 10,  1) },
     };
+
+    /// <summary>
+    /// Windows names a release YYHN and ships the first half around April and
+    /// the second around October, so a version missing from the table above
+    /// still dates to within a month or two. Without that fallback an old
+    /// release reads as "Unknown" rather than as the dead version it is, and a
+    /// version newer than this build of pcHealth reads the same way.
+    /// </summary>
+    private static DateTime? LookupWindowsRelease(string? displayVer)
+    {
+        if (string.IsNullOrEmpty(displayVer)) return null;
+        if (_winReleaseDates.TryGetValue(displayVer, out var known)) return known;
+
+        var m = Regex.Match(displayVer, @"^(\d{2})H([12])$");
+        if (!m.Success) return null;
+
+        int year = 2000 + int.Parse(m.Groups[1].Value);
+        return new DateTime(year, m.Groups[2].Value == "1" ? 4 : 10, 1);
+    }
 
     private static HealthData GatherData()
     {
@@ -312,11 +332,12 @@ public partial class HealthViewModel : ObservableObject
                 string.IsNullOrEmpty(displayVer) ? edition : $"{edition} {displayVer}",
                 CheckStatus.Info));
 
-            if (!string.IsNullOrEmpty(displayVer) && _winReleaseDates.TryGetValue(displayVer, out var released))
+            var released = LookupWindowsRelease(displayVer);
+            if (released.HasValue)
             {
-                int months = (int)((DateTime.Today - released).TotalDays / 30.44);
+                int months = (int)((DateTime.Today - released.Value).TotalDays / 30.44);
                 var s = months > 24 ? CheckStatus.Bad : months > 18 ? CheckStatus.Warning : CheckStatus.Good;
-                winVer.Add(new HealthRow("Released", released.ToString("MMM yyyy"), s));
+                winVer.Add(new HealthRow("Released", released.Value.ToString("MMM yyyy"), s));
             }
             else if (!string.IsNullOrEmpty(displayVer))
             {
