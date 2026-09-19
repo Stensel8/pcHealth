@@ -36,14 +36,18 @@ internal sealed class CliRunner : ICliRunner
     // ShellExecute hands a protocol off to a handler that is already running --
     // Settings, a browser -- without creating a process, so a null return here
     // means someone took the request, not that it failed.
-    public void OpenUri(string uri) =>
+    public void OpenUri(string uri)
+    {
+        Log.Info("Open {Uri}", uri);
         Process.Start(new ProcessStartInfo { FileName = uri, UseShellExecute = true })?.Dispose();
+    }
 
     public void OpenApp(string exeName, string registryName = "")
     {
         var path = GetAppPathsExe(exeName)
             ?? (!string.IsNullOrEmpty(registryName) ? GetInstallLocationExe(registryName, exeName) : null)
             ?? exeName;
+        Log.Info("Open {Path}", path);
         Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
     }
 

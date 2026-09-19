@@ -1,3 +1,4 @@
+using NLog;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
@@ -5,6 +6,8 @@ namespace pcHealth.Services;
 
 internal sealed partial class ProcessRunner : IProcessRunner
 {
+    private static readonly Logger Log = LogManager.GetCurrentClassLogger();
+
     public async Task<int> RunAsync(
         string fileName,
         string arguments,
@@ -21,6 +24,9 @@ internal sealed partial class ProcessRunner : IProcessRunner
             StandardOutputEncoding = System.Text.Encoding.UTF8,
             StandardErrorEncoding = System.Text.Encoding.UTF8,
         };
+
+        Log.Info("Run {FileName} {Arguments}", fileName, arguments);
+        long started = Stopwatch.GetTimestamp();
 
         using var proc = new Process { StartInfo = psi };
         proc.OutputDataReceived += (_, e) => { if (e.Data is not null) onLine(StripAnsi(e.Data)); };
@@ -46,6 +52,8 @@ internal sealed partial class ProcessRunner : IProcessRunner
         catch (OperationCanceledException)
         {
             proc.Kill(entireProcessTree: true);
+            Log.Info("Killed {FileName} after {Seconds:0.0}s",
+                fileName, Stopwatch.GetElapsedTime(started).TotalSeconds);
             throw;
         }
         finally
@@ -53,6 +61,8 @@ internal sealed partial class ProcessRunner : IProcessRunner
             timeoutCts?.Dispose();
         }
 
+        Log.Info("Exit {ExitCode} from {FileName} after {Seconds:0.0}s",
+            proc.ExitCode, fileName, Stopwatch.GetElapsedTime(started).TotalSeconds);
         return proc.ExitCode;
     }
 

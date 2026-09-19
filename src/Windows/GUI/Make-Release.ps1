@@ -5,9 +5,9 @@
 # and launches the resulting exe. Stays PS 5.1-compatible so it can bootstrap
 # a fresh machine that has neither pwsh nor the .NET SDK yet.
 #
-# This is the "does it work like a user sees it" path. For development, use
-# Start.ps1 next to this file: it builds Debug and keeps the log live in the
-# terminal instead of handing you a detached exe.
+# This is the "does it work like a user sees it" path. While developing use
+# Run-Debug.ps1 next to this file: it builds Debug and keeps the log live in
+# the terminal instead of handing you a detached exe.
 # ============================================================================
 
 $ErrorActionPreference = 'Stop'
@@ -85,7 +85,7 @@ function Assert-Dep {
                 [System.Environment]::GetEnvironmentVariable('Path', 'User')
 
     if (-not (& $IsInstalled)) {
-        Write-Host "[!!] $Label installed but not detected. Please restart and re-run BuildRelease.ps1." -ForegroundColor Red
+        Write-Host "[!!] $Label installed but not detected. Please restart and re-run Make-Release.ps1." -ForegroundColor Red
         Read-Host 'Press Enter to exit'
         exit 1
     }

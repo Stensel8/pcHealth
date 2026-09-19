@@ -3,33 +3,22 @@
 # pcHealth -- GUI development runner (Windows)
 #
 # Builds Debug and runs the app with its log streaming into this terminal,
-# the way an IDE does: the process stays in the foreground, every Debug line,
-# warning and exception appears as it happens, and the exit code is decoded
-# when it stops.
+# the way an IDE does: the process stays in the foreground, every line the
+# app writes appears as it happens, and the exit code is decoded when it
+# stops.
 #
 # A WinUI 3 app is a GUI subsystem binary, so it has no console of its own
 # and Console.WriteLine goes nowhere. The log is the live feed: NLog.config
-# already writes every Debug line to
+# already writes every line to
 # %LOCALAPPDATA%\pcHealth\pcHealth_<date>.log, and this tails it from the
 # byte where this run started, so nothing from earlier runs is shown.
 #
-# Use BuildRelease.ps1 next to this file for the Release build a user gets,
+# Use Make-Release.ps1 next to this file for the Release build a user gets,
 # and for bootstrapping a machine that has no dependencies yet.
 #
 # Usage:
-#   pwsh -File src/Windows/GUI/Start.ps1
-#   pwsh -File src/Windows/GUI/Start.ps1 -Configuration Release
-#   pwsh -File src/Windows/GUI/Start.ps1 -NoBuild
+#   pwsh -File src/Windows/GUI/Run-Debug.ps1
 # ============================================================================
-
-[CmdletBinding()]
-param(
-    [ValidateSet('Debug', 'Release')]
-    [string] $Configuration = 'Debug',
-
-    # Skips the build and runs whatever was compiled last.
-    [switch] $NoBuild
-)
 
 $ErrorActionPreference = 'Stop'
 
@@ -41,9 +30,7 @@ $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIden
     [Security.Principal.WindowsBuiltInRole]::Administrator
 )
 if (-not $isAdmin) {
-    $forwarded = @('-NoExit', '-ExecutionPolicy', 'Bypass', '-NoProfile', '-File', $PSCommandPath,
-        '-Configuration', $Configuration)
-    if ($NoBuild) { $forwarded += '-NoBuild' }
+    $forwarded = @('-NoExit', '-ExecutionPolicy', 'Bypass', '-NoProfile', '-File', $PSCommandPath)
 
     Write-Host '[pcHealth] Elevating; the live log continues in the new window.' -ForegroundColor Yellow
     Start-Process -FilePath (Get-Process -Id $PID).Path -Verb RunAs -ArgumentList $forwarded
@@ -52,7 +39,7 @@ if (-not $isAdmin) {
 
 # -- Project paths -------------------------------------------------------------
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
-    Write-Host '[!!] No .NET SDK on PATH. Run BuildRelease.ps1 once to install it.' -ForegroundColor Red
+    Write-Host '[!!] No .NET SDK on PATH. Run Make-Release.ps1 once to install it.' -ForegroundColor Red
     exit 1
 }
 
@@ -64,23 +51,15 @@ $rid = if ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitect
 # Read the TargetFramework from the csproj so this path never drifts from it.
 $tfm = ([xml](Get-Content $projectFile)).Project.PropertyGroup.TargetFramework |
            Where-Object { $_ } | Select-Object -First 1
-$exePath = Join-Path $PSScriptRoot "pcHealth\bin\$Configuration\$tfm\$rid\pcHealth.exe"
+$exePath = Join-Path $PSScriptRoot "pcHealth\bin\Debug\$tfm\$rid\pcHealth.exe"
 
 # -- Build ---------------------------------------------------------------------
-if (-not $NoBuild) {
+Write-Host ''
+Write-Host "[pcHealth] Building Debug ($rid)..." -ForegroundColor Cyan
+dotnet build $projectFile -c Debug -r $rid --nologo -v minimal
+if ($LASTEXITCODE -ne 0) {
     Write-Host ''
-    Write-Host "[pcHealth] Building $Configuration ($rid)..." -ForegroundColor Cyan
-    dotnet build $projectFile -c $Configuration -r $rid --nologo -v minimal
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host ''
-        Write-Host '[!!] Build failed. The errors are above.' -ForegroundColor Red
-        exit 1
-    }
-}
-
-if (-not (Test-Path $exePath)) {
-    Write-Host "[!!] No executable at $exePath" -ForegroundColor Red
-    Write-Host '     Run without -NoBuild to compile it first.' -ForegroundColor Yellow
+    Write-Host '[!!] Build failed. The errors are above.' -ForegroundColor Red
     exit 1
 }
 

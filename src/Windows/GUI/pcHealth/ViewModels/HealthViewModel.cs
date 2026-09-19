@@ -31,7 +31,11 @@ public partial class HealthViewModel : ObservableObject
         ErrorMessage = "";
         try
         {
+            Log.Info("Health scan started");
+            long started = Stopwatch.GetTimestamp();
             Data = await Task.Run(GatherData);
+            Log.Info("Health scan finished in {Seconds:0.0}s",
+                Stopwatch.GetElapsedTime(started).TotalSeconds);
         }
         catch (Exception ex)
         {

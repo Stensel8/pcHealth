@@ -100,6 +100,10 @@ public sealed partial class MainWindow : Window
     private void ContentFrame_Navigated(object sender, NavigationEventArgs args)
     {
         NavView.IsBackEnabled = ContentFrame.CanGoBack;
+
+        // Every menu click and every drill-in passes through here, so this one
+        // line is what makes a log read like a session rather than a crash dump.
+        Log.Info("Navigated to {Page}", args.SourcePageType.Name);
     }
 
     internal void NavigateTo(string? tag)
