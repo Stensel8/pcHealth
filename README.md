@@ -11,7 +11,7 @@ Check the health of your Windows or Linux installation, drivers, updates, batter
 
 ## Overview
 
-pcHealth is a cross-platform toolkit for IT technicians and power users. It runs on **Windows and Linux** using a single PowerShell 7 codebase. The goal is to offer the same functionality everywhere: tools are shown or hidden based on the detected OS, and platform-specific actions (like updating packages) automatically use the right method for the current system.
+pcHealth is a cross-platform toolkit for IT technicians and power users. It runs on **Windows and Linux**, each with a terminal tool and a native desktop app. The goal is the same functionality everywhere: tools are shown or hidden based on what the machine actually has, and platform-specific actions use the right method for the current system.
 
 ---
 
@@ -20,22 +20,13 @@ pcHealth is a cross-platform toolkit for IT technicians and power users. It runs
 | Platform | CLI | GUI | Minimum                       |
 |----------|-----|-----|-------------------------------|
 | Windows  | ✅  | ✅  | Build 19045 (Windows 10 22H2) |
-| Linux    | ✅  | ❌  | Kernel 6.0                    |
-
-### Windows support levels
-
-| Level       | Build   | Windows     | Behaviour                                  |
-|-------------|---------|-------------|--------------------------------------------|
-| Recommended | ≥ 26200 | 11 25H2     | What every release is tested on            |
-| Supported   | ≥ 19045 | 10 22H2, 11 | Runs; a note on start names the recommended build |
-| Blocked     | < 19045 | older       | Exits immediately                          |
+| Linux    | ✅  | ✅  | Kernel 6.0                    |
 
 Build 19045 is where WinUI 3 stops rendering, so the CLI and the GUI share one floor rather than drifting apart. Windows 10 22H2 still runs on plenty of BIOS/MBR machines: Boot Repair detects the firmware type and refuses a legacy install rather than half-repairing it. Tools that need winget say so when App Installer is missing (LTSC and stripped images) instead of failing, and `Repair Winget` can add it.
 
 On image-based systems (Fedora Silverblue, Bazzite, Kinoite, openSUSE MicroOS) the tools that manage packages or boot files are hidden rather than reimplemented: `/usr` is read-only and the bootloader belongs to the deployment, so `bootc` and `rpm-ostree` own that work. The other 14 Linux tools -- all the diagnostics -- run normally.
 
-- Windows 11 release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
-- Windows 10 release info: https://learn.microsoft.com/en-us/windows/release-health/release-information
+- Windows release info: https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information
 - Linux kernel releases: https://www.kernel.org/
 
 See [SECURITY.md](SECURITY.md) for version and end-of-life details.
