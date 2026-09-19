@@ -122,14 +122,24 @@ A Linux GUI is available separately -- WinUI 3 is Windows-only, so the Linux des
 | Windows App SDK | Included via NuGet on build |
 | WiX v7 | `dotnet tool install --global wix --version 7.0.0` (only for the MSI) |
 
+**Running it while developing.** A WinUI 3 app is a GUI subsystem binary, so it has no console of its own and prints nothing to the terminal you started it from. `Start.ps1` bridges that: it builds Debug, runs the app, and streams the NLog output into the terminal as it happens, colouring warnings and errors. When the app stops it decodes the exit code, so a native crash (`0xC0000005`) reads as one instead of as a window that silently vanished.
+
+```powershell
+pwsh -File src/Windows/GUI/Start.ps1                        # build Debug and run with the log live
+pwsh -File src/Windows/GUI/Start.ps1 -NoBuild               # run what was built last
+pwsh -File src/Windows/GUI/Start.ps1 -Configuration Release # the Release build, same live log
+```
+
+**Building and launching the way a user gets it**, including installing any missing dependencies on a fresh machine:
+
+```powershell
+pwsh -File src/Windows/GUI/BuildRelease.ps1
+```
+
 **Building the release artifacts** (self-contained app, ZIPs and MSI):
 
 ```powershell
 pwsh -File development/tools/Build-Release.ps1 -Architecture x64
-```
-
-```powershell
-dotnet build "src/Windows/GUI/pcHealth/pcHealth.csproj" -c Release
 ```
 
 Or open `src/Windows/GUI/pcHealth/pcHealth.csproj` in Visual Studio 2026.

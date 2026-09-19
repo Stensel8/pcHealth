@@ -1,134 +1,199 @@
-﻿#Requires -Version 5.1
+﻿#Requires -Version 7.0
 # ============================================================================
-# pcHealth -- GUI Launcher (Windows)
-# Checks dependencies, elevates to admin, builds and launches the WinUI 3 app.
-# Stays PS 5.1-compatible so it can bootstrap dependencies on fresh systems.
+# pcHealth -- GUI development runner (Windows)
+#
+# Builds Debug and runs the app with its log streaming into this terminal,
+# the way an IDE does: the process stays in the foreground, every Debug line,
+# warning and exception appears as it happens, and the exit code is decoded
+# when it stops.
+#
+# A WinUI 3 app is a GUI subsystem binary, so it has no console of its own
+# and Console.WriteLine goes nowhere. The log is the live feed: NLog.config
+# already writes every Debug line to
+# %LOCALAPPDATA%\pcHealth\pcHealth_<date>.log, and this tails it from the
+# byte where this run started, so nothing from earlier runs is shown.
+#
+# Use BuildRelease.ps1 next to this file for the Release build a user gets,
+# and for bootstrapping a machine that has no dependencies yet.
+#
+# Usage:
+#   pwsh -File src/Windows/GUI/Start.ps1
+#   pwsh -File src/Windows/GUI/Start.ps1 -Configuration Release
+#   pwsh -File src/Windows/GUI/Start.ps1 -NoBuild
 # ============================================================================
+
+[CmdletBinding()]
+param(
+    [ValidateSet('Debug', 'Release')]
+    [string] $Configuration = 'Debug',
+
+    # Skips the build and runs whatever was compiled last.
+    [switch] $NoBuild
+)
 
 $ErrorActionPreference = 'Stop'
 
-# -- 0. Windows only -----------------------------------------------------------
-# $IsLinux / $IsMacOS are PS6+ variables; on PS 5.1 they are $null (falsy).
-if ($IsLinux -or $IsMacOS) {
-    Write-Host '[!!] The pcHealth GUI is not available on Linux or macOS.' -ForegroundColor Red
-    Write-Host '     Use src/Windows/CLI/Start.ps1 for the Windows CLI.'         -ForegroundColor Yellow
-    exit 1
-}
-
-# Recommended and hard minimum Windows build versions (see README.md).
-# 19045 is WinUI 3's own floor; the CLI uses the same one so the two never
-# disagree about which machines pcHealth supports.
-$recommendedBuild = 26200   # 25H2+
-$hardMinimumBuild = 19045   # 22H2 (hard minimum -- WinUI 3's own floor)
-$build = [System.Environment]::OSVersion.Version.Build
-
-if ($build -lt $hardMinimumBuild) {
-    Write-Host "[!!] pcHealth requires at least Windows build $hardMinimumBuild (22H2)." -ForegroundColor Red
-    Write-Host "     Your build: $build" -ForegroundColor Red
-    Write-Host "     WinUI 3 does not run on older builds." -ForegroundColor Yellow
-    Write-Host "     Update Windows and try again." -ForegroundColor Yellow
-    Read-Host 'Press Enter to exit'
-    exit 1
-} elseif ($build -lt $recommendedBuild) {
-    Write-Host "[!] Recommended Windows build is $recommendedBuild (25H2+)." -ForegroundColor Yellow
-    Write-Host "    Your build: $build" -ForegroundColor Yellow
-    Write-Host "    pcHealth will continue but some features may be limited." -ForegroundColor DarkGray
-}
-
-# -- 1. Elevate ----------------------------------------------------------------
+# -- Elevate -------------------------------------------------------------------
+# pcHealth's manifest is requireAdministrator, and Start-Process cannot both
+# elevate and redirect output. So this window elevates itself first and then
+# starts the app as an ordinary child, which keeps the redirection.
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator
 )
 if (-not $isAdmin) {
-    $shellName = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell' }
-    $shellPath = (Get-Command $shellName -ErrorAction Stop).Source
-    Start-Process -FilePath $shellPath -ArgumentList "-ExecutionPolicy Bypass -NoProfile -File `"$PSCommandPath`"" -Verb RunAs
+    $forwarded = @('-NoExit', '-ExecutionPolicy', 'Bypass', '-NoProfile', '-File', $PSCommandPath,
+        '-Configuration', $Configuration)
+    if ($NoBuild) { $forwarded += '-NoBuild' }
+
+    Write-Host '[pcHealth] Elevating; the live log continues in the new window.' -ForegroundColor Yellow
+    Start-Process -FilePath (Get-Process -Id $PID).Path -Verb RunAs -ArgumentList $forwarded
     exit
 }
 
-# -- 2. Dependency check and install -------------------------------------------
-Write-Host ''
-Write-Host '[pcHealth] Checking dependencies...' -ForegroundColor Cyan
-
-# Checks one dependency. Installs automatically via winget if missing.
-# Exits with an error if the dependency cannot be satisfied.
-function Assert-Dep {
-    param($Label, $WingetId, $ManualUrl, [scriptblock]$IsInstalled)
-
-    $dots = '.' * [Math]::Max(2, 22 - $Label.Length)
-
-    if (& $IsInstalled) {
-        Write-Host "  $Label $dots OK" -ForegroundColor Green
-        return
-    }
-
-    Write-Host "  $Label $dots NOT FOUND" -ForegroundColor Red
-    Write-Host ''
-
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host "[!!] winget is not available. Install $Label manually:" -ForegroundColor Red
-        Write-Host "     $ManualUrl" -ForegroundColor Cyan
-        Read-Host 'Press Enter to exit'
-        exit 1
-    }
-
-    Write-Host "[pcHealth] Installing $Label..." -ForegroundColor Cyan
-    winget install --source winget --id $WingetId -e --silent `
-        --accept-package-agreements --accept-source-agreements
-
-    $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
-                [System.Environment]::GetEnvironmentVariable('Path', 'User')
-
-    if (-not (& $IsInstalled)) {
-        Write-Host "[!!] $Label installed but not detected. Please restart and re-run Start.ps1." -ForegroundColor Red
-        Read-Host 'Press Enter to exit'
-        exit 1
-    }
-
-    Write-Host "[OK] $Label installed." -ForegroundColor Green
-    Write-Host ''
-}
-
-Assert-Dep 'PowerShell 7'     'Microsoft.PowerShell'        'https://aka.ms/powershell' `
-    { [bool](Get-Command pwsh -ErrorAction SilentlyContinue) }
-
-Assert-Dep '.NET 10 SDK'      'Microsoft.DotNet.SDK.10'     'https://dotnet.microsoft.com/download/dotnet/10.0' `
-    { (Get-Command dotnet -ErrorAction SilentlyContinue) -and ((dotnet --list-sdks 2>$null) -match '^10\.') }
-
-Assert-Dep 'Windows Terminal' 'Microsoft.WindowsTerminal'   'https://aka.ms/terminal' `
-    { [bool](Get-Command wt -ErrorAction SilentlyContinue) }
-
-Assert-Dep 'smartmontools'    'smartmontools.smartmontools' 'https://www.smartmontools.org/wiki/Download' `
-    { (Test-Path (Join-Path $env:ProgramFiles 'smartmontools\bin\smartctl.exe')) -or
-      [bool](Get-Command smartctl -ErrorAction SilentlyContinue) }
-
-# -- 4. Detect architecture and derive output EXE path from csproj ------------
-$projectFile = Join-Path $PSScriptRoot 'pcHealth\pcHealth.csproj'
-
-# Detect the native architecture; default to win-x64 for everything else.
-$rid = if ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture -eq
-           [System.Runtime.InteropServices.Architecture]::Arm64) { 'win-arm64' } else { 'win-x64' }
-
-# Read TargetFramework from the csproj so this path never drifts from the project.
-$tfm     = ([xml](Get-Content $projectFile)).Project.PropertyGroup.TargetFramework |
-               Where-Object { $_ } | Select-Object -First 1
-$exePath = Join-Path $PSScriptRoot "pcHealth\bin\Release\$tfm\$rid\pcHealth.exe"
-
-# -- 5. Build ------------------------------------------------------------------
-Write-Host ''
-Write-Host "[pcHealth] All dependencies satisfied. Building pcHealth ($rid)..." -ForegroundColor Green
-Write-Host ''
-
-dotnet build $projectFile -c Release -r $rid --nologo -v minimal
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host ''
-    Write-Host '[!!] Build failed. See output above for details.' -ForegroundColor Red
-    Read-Host 'Press Enter to exit'
+# -- Project paths -------------------------------------------------------------
+if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+    Write-Host '[!!] No .NET SDK on PATH. Run BuildRelease.ps1 once to install it.' -ForegroundColor Red
     exit 1
 }
 
-# -- 6. Launch -----------------------------------------------------------------
+$projectFile = Join-Path $PSScriptRoot 'pcHealth\pcHealth.csproj'
+
+$rid = if ([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture -eq
+           [System.Runtime.InteropServices.Architecture]::Arm64) { 'win-arm64' } else { 'win-x64' }
+
+# Read the TargetFramework from the csproj so this path never drifts from it.
+$tfm = ([xml](Get-Content $projectFile)).Project.PropertyGroup.TargetFramework |
+           Where-Object { $_ } | Select-Object -First 1
+$exePath = Join-Path $PSScriptRoot "pcHealth\bin\$Configuration\$tfm\$rid\pcHealth.exe"
+
+# -- Build ---------------------------------------------------------------------
+if (-not $NoBuild) {
+    Write-Host ''
+    Write-Host "[pcHealth] Building $Configuration ($rid)..." -ForegroundColor Cyan
+    dotnet build $projectFile -c $Configuration -r $rid --nologo -v minimal
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ''
+        Write-Host '[!!] Build failed. The errors are above.' -ForegroundColor Red
+        exit 1
+    }
+}
+
+if (-not (Test-Path $exePath)) {
+    Write-Host "[!!] No executable at $exePath" -ForegroundColor Red
+    Write-Host '     Run without -NoBuild to compile it first.' -ForegroundColor Yellow
+    exit 1
+}
+
+# -- Log tail ------------------------------------------------------------------
+# Reads whole lines only: a writer can be mid-line, and the rest arrives on the
+# next pass. Byte offsets rather than characters, so the count stays exact.
+function Show-LogTail {
+    param(
+        [Parameter(Mandatory)] [string] $Path,
+        [Parameter(Mandatory)] [ref]    $Offset
+    )
+
+    if (-not (Test-Path $Path)) { return }
+
+    $stream = [System.IO.File]::Open($Path, 'Open', 'Read', 'ReadWrite')
+    try {
+        # NLog rolls the file at midnight; start over rather than seek past it.
+        if ($stream.Length -lt $Offset.Value) { $Offset.Value = 0 }
+        if ($stream.Length -eq $Offset.Value) { return }
+
+        $null   = $stream.Seek($Offset.Value, [System.IO.SeekOrigin]::Begin)
+        $buffer = [byte[]]::new([int] ($stream.Length - $Offset.Value))
+        $read   = $stream.Read($buffer, 0, $buffer.Length)
+        $text   = [System.Text.Encoding]::UTF8.GetString($buffer, 0, $read)
+    }
+    finally { $stream.Dispose() }
+
+    $cut = $text.LastIndexOf("`n")
+    if ($cut -lt 0) { return }
+
+    $complete = $text.Substring(0, $cut + 1)
+    $Offset.Value += [System.Text.Encoding]::UTF8.GetByteCount($complete)
+
+    foreach ($line in ($complete -split "`r?`n")) {
+        if (-not $line) { continue }
+        $colour = switch -Regex ($line) {
+            '\[(FATAL|ERROR)\]' { 'Red';      break }
+            '\[WARN\]'          { 'Yellow';   break }
+            '\[INFO\]'          { 'White';    break }
+            default             { 'DarkGray' }
+        }
+        Write-Host $line -ForegroundColor $colour
+    }
+}
+
+$logDir  = Join-Path $env:LOCALAPPDATA 'pcHealth'
+$logFile = Join-Path $logDir ('pcHealth_{0}.log' -f (Get-Date -Format 'yyyy-MM-dd'))
+
+# Start where today's log currently ends, so only this run is shown.
+$offset = if (Test-Path $logFile) { (Get-Item $logFile).Length } else { 0 }
+
+# A GUI binary writes nothing here on a good day, but the CLR prints an
+# unhandled exception to stderr on its way out, which is worth keeping.
+$stdoutFile = Join-Path $env:TEMP 'pcHealth-dev-stdout.log'
+$stderrFile = Join-Path $env:TEMP 'pcHealth-dev-stderr.log'
+
 Write-Host ''
-Write-Host '[pcHealth] Build succeeded. Launching pcHealth...' -ForegroundColor Green
-Start-Process -FilePath $exePath
+Write-Host "[pcHealth] Running  : $exePath"  -ForegroundColor Green
+Write-Host "[pcHealth] Log      : $logFile"  -ForegroundColor DarkGray
+Write-Host '[pcHealth] Ctrl+C stops the app and this runner.' -ForegroundColor DarkGray
+Write-Host ''
+
+$proc = Start-Process -FilePath $exePath -PassThru `
+    -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+
+try {
+    while (-not $proc.HasExited) {
+        Show-LogTail -Path $logFile -Offset ([ref] $offset)
+        Start-Sleep -Milliseconds 250
+    }
+}
+finally {
+    if (-not $proc.HasExited) {
+        Write-Host ''
+        Write-Host '[pcHealth] Stopping the app...' -ForegroundColor Yellow
+        Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+    }
+    # Whatever was written between the last pass and the exit.
+    Show-LogTail -Path $logFile -Offset ([ref] $offset)
+}
+
+# -- Exit ----------------------------------------------------------------------
+foreach ($capture in @(@{ Label = 'stdout'; Path = $stdoutFile }, @{ Label = 'stderr'; Path = $stderrFile })) {
+    if ((Test-Path $capture.Path) -and (Get-Item $capture.Path).Length -gt 0) {
+        Write-Host ''
+        Write-Host "[pcHealth] $($capture.Label):" -ForegroundColor Magenta
+        Get-Content $capture.Path | ForEach-Object { Write-Host "  $_" -ForegroundColor Magenta }
+    }
+    Remove-Item $capture.Path -ErrorAction SilentlyContinue
+}
+
+$code = $proc.ExitCode
+$hex  = '0x{0:X8}' -f $code
+
+# A native crash never reaches a catch block, so the exit code is the only
+# thing that names it. These are the ones worth recognising on sight.
+$reason = switch ($hex) {
+    '0xC0000005' { 'access violation -- a native crash, which no catch block can hold' }
+    '0xC0000409' { 'fail-fast or stack buffer overrun' }
+    '0xC000013A' { 'terminated by Ctrl+C' }
+    '0xE0434352' { 'unhandled .NET exception' }
+    default      { '' }
+}
+
+Write-Host ''
+if ($code -eq 0) {
+    Write-Host '[pcHealth] Exited cleanly (0).' -ForegroundColor Green
+}
+else {
+    Write-Host "[!!] Exited with $code ($hex)" -ForegroundColor Red
+    if ($reason) { Write-Host "     $reason" -ForegroundColor Red }
+    Write-Host '     Windows records these under Event Viewer > Windows Logs >' -ForegroundColor Yellow
+    Write-Host '     Application, source "Application Error" or ".NET Runtime".' -ForegroundColor Yellow
+}
+
+exit $code
